@@ -1,0 +1,10 @@
+{{- if eq .Values.global.ingress "nginx" }}
+apiVersion: v1
+kind: Secret
+metadata:
+    name: ssl
+type: Opaque
+data:
+    tls.crt: {{ .Values.global.crt }}
+    tls.key: {{ .Values.global.key }}
+{{- end }}

@@ -1,0 +1,38 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}-deployment
+  labels:
+    environment: {{ .Values.global.environment }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template: # create pods using pod definition in this template
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/usercode-configmap.yaml") . | sha256sum }}
+      labels:
+        environment: {{ .Values.global.environment }}
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}
+    spec:
+      initContainers:
+      - name: init-wait
+        image: alpine
+        command: ["sh", "-c", "until nc -zvw1 postgresql 5432 ; do echo waiting for postgresql; sleep 2; done;"]
+      containers:
+        - name: {{ .Values.appName }}
+          image: {{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:latest
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 9080
+          volumeMounts:
+            - name: {{ .Values.appName }}-config
+              mountPath: /ebsmnt/conf
+      volumes:
+        - name: {{ .Values.appName }}-config
+          configMap:
+            name: {{ .Values.appName }}-config

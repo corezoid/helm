@@ -1,0 +1,16 @@
+dependencies:
+  - name: pgbouncer
+    version: 0.1.0
+    condition: global.db.internal
+
+  - name: redis
+    version: 0.1.0
+    condition: global.redis.internal
+
+  - name: elasticsearch
+    version: 0.1.0
+    condition: global.elasticsearch.internal
+
+  - name: rabbitmq
+    version: 0.1.0
+    condition: global.mq.internal

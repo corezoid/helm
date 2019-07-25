@@ -1,0 +1,5 @@
+appName: pgbouncer
+image:
+  registry: docker-hub.middleware.biz
+  repository: /pgbouncer
+  tag: 1.9.0

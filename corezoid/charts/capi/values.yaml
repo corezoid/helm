@@ -1,0 +1,8 @@
+appName: capi
+image:
+  registry: docker-hub.middleware.biz
+  repository: /conveyor_api
+  imagePullPolicy: Always
+
+containers:
+  containerPort: 9080

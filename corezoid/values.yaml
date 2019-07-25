@@ -1,0 +1,140 @@
+
+global:
+  #license
+  repotype: public
+  license: license-mwtrial-production
+
+  #first level domain / core domain (example - domain.com)
+  domain: "middleware.loc"
+  # sitename - sitename.domain.com (example - sitename)
+  subdomain: "corezoid-k8s"
+
+  #admin user in email format for login in UI
+  superuser_login: admin@corezoid.loc
+  #password for admin user
+  superuser_passwd: 7qShRvFUdf81U6zOWy
+
+  environment: default
+  product: corezoid
+
+
+  # Ingress: aws or nginx
+  ingress: nginx
+
+  # AWS ELB
+  alb: internet-facing
+  certificatearn: arn:aws:acm:eu-west-1:000000000000:certificate/000000-000000-0000-000-0000000000
+
+  #Nginx ingress options
+  # default self signed ssl for corezoid-k8s.middleware.loc
+  # generate ssl
+  #openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  #-out tls.crt \
+  #-keyout tls.key \
+  #-subj "/CN=corezoid.loc/O=ssl"
+  #get base64 tls.crt for crt
+  crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN4akNDQWE0Q0NRQ0pQL3ozdUpEWGp6QU5CZ2txaGtpRzl3MEJBUXNGQURBbE1SVXdFd1lEVlFRRERBeGoKYjNKbGVtOXBaQzVzYjJNeEREQUtCZ05WQkFvTUEzTnpiREFlRncweE9UQTNNVGt4TXpJMk5URmFGdzB5TURBMwpNVGd4TXpJMk5URmFNQ1V4RlRBVEJnTlZCQU1NREdOdmNtVjZiMmxrTG14dll6RU1NQW9HQTFVRUNnd0RjM05zCk1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBNUhBZlZvMEllUUVoQ1RsOEpZNEUKS3oxMG1KajNCMmZkTXhRazJiMUg2NytWd1ZmaGNrYUZ1SVNLN01nUW5haFJ5VnFWMGRrMXphb0pzQ0pMRlhxVQozRG0vVjUvNWFYNVNhMW9oZnRCUVVFc2N3Ung2VmVCbWZZUXR1dll5U0pzdWlZcGJwNmlGY05UdkI5bE8yV2RMClRjQVJ5OU9oblFqUmR0MWVsWmU0OXRQcjhFYmRYWVcvTXNPdVgrekdPcUx1ZzN6WlFzeFdaWlF3UjJSSEVVanYKbEdmMGNEZnNXWW5YZHVDM0ZLMHRiMzk0bEtSRDFUQWdrbW4rZWQwUUVnUVJxakNSeVVSTWI2eVRTbzNyUk02RQp3YWMwQzJ5UnUxbkVQd0JTWmdKYzJCMVFZZ3JJdzdCTFpiTFkvbkx0MzM0TG1HZUJ6ZmkxWld4cEpoV3VuMU5nCnRRSURBUUFCTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFDdk1EeHdmeW1VblM3Z2NpekVmNHZ1bHJpb3BBQkcKeGRjaFd4S1N2ODRzR3c2ZWVxUTVRd2tmNmdTWlkvWW5VZEJ6VGcxR2NVUVZmc0RlaFd4L2M0c2pzb2pyTWwrZAp6aGd5c29tcnN6VHNjbTRnczVsQVJtckFzZ0U5U2l3WjFTK0Y4RlRIZEFIckNTcGlRZmhVTE9pamlqVDVOZ1ltCnRzdndjSkcrYmRhVVFNclNDRXFEQVJheUpwbDMzSUljYk1LY2NpTU1jd2I1T0N6VUlqbUlVWTlyMmxNaG1uQTkKNkpSTCtOZmV2SlAvOE5GNk95ZEt4MHEwbEJQcHZnSmVXRm5FRnpTMWt3cE5DRFpUTVNxMUp6cVl0UndqNE5zLwpyaFZWOHJod1BaUUJqSUpWc3B1QWhBT2VxVTJ4OWVKLzZhdDN1L2ptakcrZFJHY3FrRFZyelpORwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  #get base64 tls.key for key
+  key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRRGtjQjlXalFoNUFTRUoKT1h3bGpnUXJQWFNZbVBjSFo5MHpGQ1RadlVmcnY1WEJWK0Z5Um9XNGhJcnN5QkNkcUZISldwWFIyVFhOcWdtdwpJa3NWZXBUY09iOVhuL2xwZmxKcldpRiswRkJRU3h6QkhIcFY0R1o5aEMyNjlqSklteTZKaWx1bnFJVncxTzhICjJVN1paMHROd0JITDA2R2RDTkYyM1Y2Vmw3ajIwK3Z3UnQxZGhiOHl3NjVmN01ZNm91NkRmTmxDekZabGxEQkgKWkVjUlNPK1VaL1J3Tit4WmlkZDI0TGNVclMxdmYzaVVwRVBWTUNDU2FmNTUzUkFTQkJHcU1KSEpSRXh2ckpOSwpqZXRFem9UQnB6UUxiSkc3V2NRL0FGSm1BbHpZSFZCaUNzakRzRXRsc3RqK2N1M2ZmZ3VZWjRITitMVmxiR2ttCkZhNmZVMkMxQWdNQkFBRUNnZ0VCQUxFOHpSTzZHUGpKaDNoQXdiSGhuaHB1ZENoeGhqaVl2V2NFR2hOV2FKYmcKN3JBMEh4Y3E0RlZwZ09CMTJXNTVTZnVQN080RU9WcDRzMHVWVCt3NlQ0VU95UWFUZUZBQlVyRTRIUVRuVzJqdwozajUyZWZSblJ4M2JrQitmSlNSd1FvczBiaWlHK0FHek5FSkN1SXExT2hmNURkVzNQWTA1YWt0dk5oT2F4RWU4CmJkY2tieWg5T2ZLc2xIL0Z5OWg3L2w2eFVJYXFTbWRjZ1JqdTNUUlR1UkNMQWlLQWVPR3FqL0U0a0I0TU9JcHMKQ2RBQ3NOSGlZenI1QU81VlRUeHNhUkJFZG44R2lPVDlNdy8vZ1pTL2F0V0UyV1NIRmp1QlV3Nzc3anZ6ZDdtSApWY2p6dDJvRFhHeGxjZ25hTEZJRmtsZEZrNUF5Z1FmUHlvZFFDUmZjcEFFQ2dZRUE5NGVScnBsQWJMeVdFWUlaCjIzOTNMbU9sMElZU3ByZm9lTWxValVYUlZLU1lYZHA1VWgrVjVvYTBVbTBLdVFPc3UrTnRHZ3lZUU11VjJiVGgKVDZaeSttU2V2RytvVHpXSVR4c01xaDlrM3l0OUJRaENvNjR1OVFRVHV3Uk9yYW1FZjJwNGczblhhb2NuQVBsMgpJVXJoQXpod0J6RTRpelREOFBndXo4M05EVmtDZ1lFQTdFRk9OQVNteDZyOUZWQVQ4aWFYR0IycXB5VjRySWRLCjJUZVR1UGtpOU5BMm1tSXRUbjY2ZjRvbVE2ek85OFZnUDdGUVNyVUFwaDBLUytHMXNTL1Q3RVhTNHdiUW9hanoKK1YxOCtpZ2xnQnF0YVVrK1FYMzhMUkxrMzBiSjBXNjQ5ZkNZalZDajEzSWNocjZGb1FVak5xRHZDL3VjeTZZRgpWaEc4UVdCbDlyMENnWUJtSmI3N3cyaHZ0djlpNkVLTmJ6T2FwQ3FZTzh2VW13NUhVaVlmU3BHUkVYK0RNNVpmClNvT01wMGdndjdqdUV0TWtranpDeERITWczY3FhVmVWakFYa3lNTXMxaE1wNU5pRWRKQXNZRm83TW5JY01vVjEKa0hyMlI2Rnd5dDFCRXpTSGRFT1pWaDJNYTR1di9rSStpTzBFYkRUbTh1djNubVhCdWxsdkRlbXh1UUtCZ0FWYgpYYmlVT212Z2xxaDdEbGk1UTBmS3RHbmgwYUNuMkt5Z00vdEh1dUV1TDI3RXR4NUdoVmdLKzk4ZzlmaHNRMGh1CmJ0R2kxUWJ2TmFLTzFaM1U1Y3Mvc2c1dnd4OUhRM0R1Qzcxb1Y2RlYrWVNmb29lOW9aQXNFNEIwakhMeFBjUmwKMWkrdUdtanlMMjltdG9UMkp0eEFQZXRab3k2Qzd6QUthdWhZbFRkSkFvR0FmeUNqQVZCS3luN0VldzBQL0JCUApDOUxsaXpVYWFmc2E2bVk2cmh0dExmazJJZ1B5TzJQamVibUcwRnZFclFOZ3IyUmZTSkd4QklnRjQwYzJnV0tLCjV1bTdLWWtsSkxvNG51OXZlQURWaXYrLzFCa2RsdmpzbkhiNE1CT0ZEZEJpdVVXeVRDZHJYbzN2L05vNGJ6ZWgKRnhzZGhsUGVFZ0wyQTNtNzZScnBuZkE9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+
+
+
+######## Settings for Corezoid services  ########
+  ##Settings for API Corezoid
+  capi:
+    ## secret for work with api-multipart ( it is a solt for sign user cookies )
+    capi_api_secret: "VFOnsFerDn0LLuQnMn"
+    ## Auth hash for cookie (it is solt for password when we use corezoid auth method(login+password))
+    capi_auth_hash: "0PqNKlo0QH30dcYNGUqzYj2QnQuSDGsd"
+    #Key for captcha when login in UI
+    capi_front_captcha_key: ""
+    #We can disable or enable  captcha
+    capi_front_captcha_key_disabled: true
+    capi_backend_captcha_key: ""
+    capi_backend_captcha_key_disabled: true
+    ## Setting for configure frontend
+    front_setting:
+      ui:
+        # enabled Market button
+        market: false
+        #button Create -> Company
+        company: true
+        #button Create -> Bot platform
+        bot_platform: false
+        #process search enable
+        search: true
+        #Set default company name
+        default_company: My Corezoid
+    #max allowed threads for api logic
+    api_max_threads: 200
+
+    # api limit counters by user_id
+    user_limits:
+      #default limit interface requests, ban after for 1 min
+      max_interface_rate: 100
+      #default limit for task create/modify, other will get 429 error
+      max_user_rate: 2000
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ####### Postgre SQL ########
+  ## Supported version  from > 9.5 - 9.6.12R1 <
+  ## for RDS minimum instance - db.t2.small / master user set "postgres"
+  db:
+    #if internal true - create and use internal db container
+    #if internal false - enable external db, like rds
+    internal: true
+    dbhost: ".eu-west-1.rds.amazonaws.com"
+    ## dbsuperuser - for init db and roles
+    ## dbuser - for work from Corezoid services
+    ## dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
+    dbuser: "internal_user"
+    ## password - for dbuser
+    dbpwd: "g4BOBiM7PClavM07lbAkYpy"
+
+    dbsuperuser: "postgres"
+    ## password - for postgres
+    dbsuperuserpwd: "M7PClavkYpyM07lbg4BOBiA"
+
+    dbport: 5432
+    ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
+    #be careful in defining this variable
+    #count of shards created in psql, if unset, default - 10
+    shards_count: 10
+    #count of shards created in psql, if unset, default - 10 - in array format
+    shards: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+
+  ####### Redis  ########
+  ## Supported version  from > 3.2.4 - 3.2.12 <
+  ## NO CLUSTER Mode!
+  redis:
+    #if internal true - create and use internal k8s redis container
+    #if internal false - enable external redis, like elasticache
+    internal: true
+    host: "redis.cache.amazonaws.com"
+    port: 6379
+    password: ""
+
+
+
+  #######  RabbitMQ ########
+  ## Supported version  from > 3.6.7 <
+  mq:
+    #if internal true - create and use internal k8s db container
+    #if internal false - enable external elk, like rds
+    internal: true
+    host: "192.168.0.1"
+    port: "5672"
+    username: "app-user"
+    password: "SL9SXNHjd@fInYkn1RFT6@zvCFPYEr@r"

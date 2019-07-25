@@ -1,2 +1,0 @@
-# helm
-Corezoid Helm Charts

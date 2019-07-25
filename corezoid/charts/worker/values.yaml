@@ -1,0 +1,4 @@
+appName: worker
+image:
+  registry: docker-hub.middleware.biz
+  repository: /conveyor-worker

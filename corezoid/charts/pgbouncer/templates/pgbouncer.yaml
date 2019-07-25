@@ -1,0 +1,125 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.appName }}-service
+  labels:
+    environment: {{ .Values.global.environment }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName}}
+    service: {{ .Values.appName }}
+spec:
+  selector:
+    environment: {{ .Values.global.environment }}
+    service: {{ .Values.appName }}
+    app: {{ .Values.global.product }}
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
+
+---
+apiVersion: v1
+data:
+  # for correct hash do: postgres=# select passwd from pg_shadow;
+  userlist.txt: |
+    "internal_user" "md5bb973659e13c6fef11f90b9a4c6f78a3"
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-userlist
+  resourceVersion: "3.4"
+  labels:
+    environment: {{ .Values.global.environment }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName}}
+    service: {{ .Values.appName }}
+
+---
+apiVersion: v1
+data:
+  pgbouncer.ini: |
+    ################## Auto generated ##################
+    [databases]
+    * = host=postgresql port=5432 user=internal_user
+
+    [pgbouncer]
+    listen_addr = 0.0.0.0
+    listen_port = 5432
+    unix_socket_dir =
+    user = postgres
+    auth_file = /etc/pgbouncer/userlist.txt
+    auth_type = md5
+    ignore_startup_parameters = extra_float_digits
+    admin_users = postgres
+    max_client_conn = 10000
+    ################## end file ##################
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-pgbouncer-ini
+  resourceVersion: "3.4"
+  labels:
+    environment: {{ .Values.global.environment }}
+    app: {{ .Values.global.product }}
+    service: {{ .Values.appName }}
+
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}-deployment
+  labels:
+    environment: {{ .Values.global.environment }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName}}
+    service: {{ .Values.appName }}
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template: # create pods using pod definition in this template
+    metadata:
+      labels:
+        environment: {{ .Values.global.environment }}
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName}}
+        service: {{ .Values.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.appName }}
+          image: {{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.image.tag }}
+          env:
+            - name: DB_USER
+              value: {{ .Values.global.db.dbuser }}
+            - name: DB_PASSWORD
+              value: {{ .Values.global.db.dbpwd }}
+            - name: DB_HOST
+              value: postgresql
+            - name: DB_NAME
+              value: conveyor
+          ports:
+          - containerPort: 5432
+          volumeMounts:
+            - name: {{ .Values.appName }}-userlist
+              mountPath: /etc/pgbouncer/userlist.txt
+              subPath: userlist.txt
+            - name: {{ .Values.appName }}-pgbouncer-ini
+              mountPath: /etc/pgbouncer/pgbouncer.ini
+              subPath: pgbouncer.ini
+          resources:
+            limits:
+              cpu: 200m
+              memory: 200Mi
+            requests:
+              cpu: 10m
+              memory: 100Mi
+            {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: {{ .Values.global.imagePullSecrets.name }}
+            {{- end }}
+      volumes:
+        - name: {{ .Values.appName }}-userlist
+          configMap:
+            name: {{ .Values.appName }}-userlist
+        - name: {{ .Values.appName }}-pgbouncer-ini
+          configMap:
+            name: {{ .Values.appName }}-pgbouncer-ini

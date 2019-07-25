@@ -1,0 +1,42 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  labels:
+    environment: {{ .Values.global.environment }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/web-configmap-nginx.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/web-configmap-site.yaml") . | sha256sum }}
+      labels:
+        environment: {{ .Values.global.environment }}
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.appName }}
+          image: {{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:2.37.2
+          ports:
+          - containerPort: 80
+          volumeMounts:
+            - name: web-config-nginx
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: web-config-site
+              mountPath: /etc/nginx/conf.d/corezoid.conf
+              subPath: corezoid.conf
+      volumes:
+        - name: web-config-nginx
+          configMap:
+            name: {{ .Values.appName }}-main
+        - name: web-config-site
+          configMap:
+            name: {{ .Values.appName }}-site
+
