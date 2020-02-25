@@ -22,8 +22,18 @@ global:
   ingress: nginx
 
   # AWS ELB
-  alb: internet-facing
-  certificatearn: arn:aws:acm:eu-west-1:000000000000:certificate/000000-000000-0000-000-0000000000
+  alb:
+    scheme: internet-facing
+    certificatearn: arn:aws:acm:eu-west-1:000000000000:certificate/000000-000000-0000-000-0000000000
+    oidc:
+      enabled: false
+      issuer: https://idp.com
+      endpoints:
+        authorize: https://idp.com/oauth2/v1/authorize
+        token: https://idp.com/oauth2/v1/token
+        userinfo: https://idp.com/oauth2/v1/userinfo
+      clientId: identifier
+      clientSecret: secret
 
   #Nginx ingress options
   # default self signed ssl for corezoid-k8s.middleware.loc
