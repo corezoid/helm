@@ -1,0 +1,25 @@
+{{- if eq .Values.global.ingress "aws-dual" }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Values.appName }}-{{ .Values.global.environment }}-internet-facing
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.global.alb.certificatearn }}
+    alb.ingress.kubernetes.io/healthcheck-path: /ping
+    alb.ingress.kubernetes.io/success-codes: '200'
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain }}.{{ .Values.global.domain }}
+    {{- if .Values.global.alb.oidc.enabled }}
+    alb.ingress.kubernetes.io/auth-type: oidc
+    alb.ingress.kubernetes.io/auth-idp-oidc: '{"Issuer": "{{ .Values.global.alb.oidc.issuer }}","AuthorizationEndpoint": "{{ .Values.global.alb.oidc.endpoints.authorize }}","TokenEndpoint": "{{ .Values.global.alb.oidc.endpoints.token }}","UserInfoEndpoint": "{{ .Values.global.alb.oidc.endpoints.userinfo }}","SecretName": "{{ .Values.appName }}-{{ .Values.global.environment }}-alb-oidc"}'
+    {{ end }}
+  labels:
+    environment: {{ .Values.global.environment }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  backend:
+    serviceName: "corezoid-web-adm"
+    servicePort: 80
+{{- end }}
