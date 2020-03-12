@@ -1,0 +1,21 @@
+{{- if eq .Values.global.ingress "aws-dual" }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Values.appName }}-{{ .Values.global.environment }}-internal
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.global.alb.certificatearn }}
+    alb.ingress.kubernetes.io/healthcheck-path: /ping
+    alb.ingress.kubernetes.io/success-codes: '200'
+    alb.ingress.kubernetes.io/scheme: internal
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain }}.{{ .Values.global.domain }}
+  labels:
+    environment: {{ .Values.global.environment }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  backend:
+    serviceName: "corezoid-web-adm"
+    servicePort: 80
+{{- end }}

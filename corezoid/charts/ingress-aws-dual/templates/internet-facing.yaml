@@ -1,14 +1,14 @@
-{{- if eq .Values.global.ingress "aws" }}
+{{- if eq .Values.global.ingress "aws-dual" }}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ .Values.appName }}-{{ .Values.global.environment }}
+  name: {{ .Values.appName }}-{{ .Values.global.environment }}-internet-facing
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/certificate-arn: {{ .Values.global.alb.certificatearn }}
     alb.ingress.kubernetes.io/healthcheck-path: /ping
     alb.ingress.kubernetes.io/success-codes: '200'
-    alb.ingress.kubernetes.io/scheme: {{ .Values.global.alb.scheme }}
+    alb.ingress.kubernetes.io/scheme: internet-facing
     external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain }}.{{ .Values.global.domain }}
     {{- if .Values.global.alb.oidc.enabled }}
     alb.ingress.kubernetes.io/auth-type: oidc
