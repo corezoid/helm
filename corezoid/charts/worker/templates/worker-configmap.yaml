@@ -3,31 +3,178 @@ data:
   worker.config: |
     [
 
+       {corezoid_license_client, [
+         {path_to_license, "/ebsmnt/certs/corezoid_license"}
+       ]},
+
+       {corezoid_global_stats, [
+         {disabled, true}
+       ]},
+
+      %% for clustering components
+      {corezoid_cluster, [
+          {backend, redis}, %% maybe if future list will increase
+          {redis, [
+        {{- if eq .Values.global.redis.internal false }}
+              {host, "${REDIS_HOST}"},
+              {port, ${REDIS_PORT}},
+              {password,"${REDIS_PASSWORD}"},
+        {{- else }}
+              {host, "redis-master"},
+              {port, 6379},
+              {password,""},
+        {{- end }}
+              {database, 10}
+          ]}
+      ]},
+
+        {conf_agent, [
+         {pgsql, [
+          {{- if .Values.global.db.bouncer }}
+            {host, "pgbouncer-service"},
+          {{- else }}
+            {host, "${POSTGRES_DBHOST}"},
+          {{- end }}
+           {user, "${POSTGRES_DBUSER}"},
+           {dbname, "settings"},
+           {password, "${POSTGRES_DBPWD}"},
+           {min_size, 10},
+           {max_size, 10},
+           {start_size, 1}
+         ]},
+
+         {port, 8585},
+         {is_admin, true},
+
+        {publish_request, [
+                    {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                  [
+                    {host, "${MQ_HOST}"},
+                    {port, ${MQ_PORT}},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
+          {{- else }}
+                  [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
+          {{- end }}
+            ]},
+        {queues_count, 1},
+        {min_size, 1},
+        {max_size, 1},
+        {start_size, 1}
+        ]},
+
+        {consumer_response, [
+            {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                  [
+                    {host, "${MQ_HOST}"},
+                    {port, ${MQ_PORT}},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
+          {{- else }}
+                  [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
+          {{- end }}
+            ]},
+        {connections_per_queue, 1},
+        {channels_per_connection, 1},
+        {messages_prefetch_size_per_channel, 50}
+        ]}
+        ]},
+
+        %% dns cache. Support multiply dnses cache
+        %% name - unical name will be able to use in publish/consumer rabbitmq instead of server name
+        %% dns - DNS name
+        %% ns - NS name
+        %% ttl - auto reload info from DNS server (in seconds)
+
+        {dns_cache, [
+          {servers, [
+          [
+            {name, main},
+          {{- if eq .Values.global.mq.internal false }}
+            {dns, "${MQ_HOST}"},
+          {{- else }}
+            {dns, "rabbit-service"},
+          {{- end }}
+            {ttl, 60}
+          ],
+          [
+            {name, name5},
+          {{- if eq .Values.global.mq.internal false }}
+            {dns, "${MQ_HOST}"},
+          {{- else }}
+            {dns, "rabbit-service"},
+          {{- end }}
+            {ttl, 60}
+          ]
+          ]}
+        ]},
+
+        {corezoid_queues_gc, [
+          {disabled, false},
+          {{- if eq .Values.global.mq.internal false }}
+          {host, "${MQ_HOST}"},
+          {port, 15672},
+          {login, "${MQ_USERNAME}"},
+          {password, "${MQ_PASSWORD}"},
+          {{- else }}
+          {host, "rabbit-service"},
+          {port, 15672},
+          {login, "${MQ_USERNAME}"},
+          {password, "${MQ_PASSWORD}"},
+          {{- end }}
+          {vhost, "${MQ_VHOST}"},
+          {gc_queues_regexp, ["api.ctrl", "settings"]}
+        ]},
+
       {conv_params, [
-          {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid.
+          {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid
                            %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
       ]},
 
-      {kernel, [
-        {inet_dist_listen_min, 5566},   %% for worker cluster the minimum port that can use
-        {inet_dist_listen_max, 5566}    %% for worker cluster the maximum port that can use
+      {enigma, [
+        {is_enabled, {{ .Values.global.enigma.enabled }}},
+        {private_key_id, "{{ .Values.global.worker.enigma_pk_id }}"},
+        {key_manager_host, "http://enigma-key-manager-service:8080"},
+        {rotors_pool, [
+          {min_size, 3},
+          {max_size, 50},
+          {start_size, 3}
+        ]}
       ]},
+
 
       { worker,
         [
         %% server id
         %% It's important to be unique
-        { worker_id, <<"worker-{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">> },
+        { worker_id, <<"">> },
 
-        %% license server credential
-        {license_server, [
-          {host, "license-service"},    %% license host
-          {port, 5010},                 %% license port
-          {transport, tcp},             %% license communicate method
-          {company_id, <<"mwtrial">>},    %% license company_id
-          {cluster_id, <<"production01">>}, %% license cluster_id
-          {path_to_pub_key, "/ebsmnt/license/mwtrial_production01.pub"}   %% license path_to_pub_key
+        {{- if .Values.global.enigma.encryption }}
+        %% for ENCRYPT/DECRYPT data
+        {encrypt_decrypt, [
+           queue, %% now it's encode-decode RabbitMQ
+           cache, %% Redis
+           db     %% PostgreSQL
         ]},
+        {{- end }}
 
         {nodes, [
           ''
@@ -71,55 +218,73 @@ data:
         %% node[Node].public_callback_corezoid
         %% node[Node].public_callback_corezoid
         %% It should be in binary format
-        {public_callback_prefix, <<"{{ .Values.global.main_domain }}">>},
+        {public_callback_prefix, <<"https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},
 
         %% DB settings
         { pgsql,
           [
-          {{- if eq .Values.global.db.internal false }}
-                { host, "{{ .Values.global.db.dbhost }}" },
-            { hosts, [
-              { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-          {{- range $i, $e := .Values.global.db.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "{{ .Values.global.db.dbhost }}" }
-            ]},
-            { user, "{{ .Values.global.db.dbuser }}" },
-            { password, "{{ .Values.global.db.dbpwd }}" },
-          {{- else }}
+          {{- if .Values.global.db.bouncer }}
             { host, "pgbouncer-service" },
             { hosts, [
               { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
             ]},
-            { user, "{{ .Values.global.db.dbuser }}" },
-            { password, "{{ .Values.global.db.dbpwd }}" },
+          {{- else }}
+            { host, "${POSTGRES_DBHOST}" },
+            { hosts, [
+              { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
+          {{- range $i, $e := .Values.global.db.shards }}
+          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
+            ]},
           {{- end }}
+            { user, "${POSTGRES_DBUSER}" },
+            { password, "${POSTGRES_DBPWD}" },
             { dbname, "conveyor" },
             { start_size, 2 },
             { min_size, 2 },
-            { max_size, 1000 }
+            { max_size, 5 }
           ]
         },
 
         % postgresql settings for statistics db
         {pgsql_statistics, [
-          {{- if eq .Values.global.db.internal false }}
-          {host, "{{ .Values.global.db.dbhost }}"},
-          {user, "{{ .Values.global.db.dbuser }}"},
-          {password, "{{ .Values.global.db.dbpwd }}"},
-          {{- else }}
+          {{- if .Values.global.db.bouncer }}
           {host, "pgbouncer-service"},
-          {user, "{{ .Values.global.db.dbuser }}"},
-          {password, "{{ .Values.global.db.dbpwd }}"},
+          {{- else }}
+          {host, "${POSTGRES_DBHOST}"},
           {{- end }}
+          {user, "${POSTGRES_DBUSER}"},
+          {password, "${POSTGRES_DBPWD}"},
           {dbname, "conveyor_statistics"},
           {min_size, 2},
-          {max_size, 50},
+          {max_size, 25},
           {start_size, 2}
         ]},
 
         {statistics, true},    % true|false for enable or disable statistic workers by default is true
+
+        %%  postgresql archive db
+        { pgsql_archive, [
+          {{- if .Values.global.db.bouncer }}
+            { hosts, [
+              { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
+          {{- range $i, $e := .Values.global.db.shards }}
+          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
+            ]},
+          {{- else }}
+            { hosts, [
+              { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
+          {{- range $i, $e := .Values.global.db.shards }}
+          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
+            ]},
+          {{- end }}
+            { user, "${POSTGRES_DBUSER}" },
+            { password, "${POSTGRES_DBPWD}" },
+            { start_size, 1 },
+            { min_size, 1 },
+            { max_size, 25 }
+          ]},
 
         %% for custom db-s
         { pgsql2, [] },
@@ -132,18 +297,18 @@ data:
         { redis, [
           [
           {{- if eq .Values.global.redis.internal false }}
-            {host, "{{ .Values.global.redis.host }}"},
-            {port, {{ .Values.global.redis.port }}},
-            {password,"{{ .Values.global.redis.password }}"},
+            {host, "${REDIS_HOST}"},
+            {port, ${REDIS_PORT}},
+            {password,"${REDIS_PASSWORD}"},
           {{- else }}
             {host, "redis-master"},
             {port, 6379},
             {password,""},
           {{- end }}
             {database,1},
-            {start_size, 50},
-            {min_size, 50},
-            {max_size, 2000}
+            {start_size, 5},
+            {min_size, 5},
+            {max_size, 200}
           ]
         ]},
 
@@ -152,9 +317,9 @@ data:
         { redis_api_sum, [
           [
           {{- if eq .Values.global.redis.internal false }}
-            {host, "{{ .Values.global.redis.host }}"},
-            {port, {{ .Values.global.redis.port }}},
-            {password,"{{ .Values.global.redis.password }}"},
+            {host, "${REDIS_HOST}"},
+            {port, ${REDIS_PORT}},
+            {password,"${REDIS_PASSWORD}"},
           {{- else }}
             {host, "redis-master"},
             {port, 6379},
@@ -162,8 +327,8 @@ data:
           {{- end }}
 
             {database,2},
-            {start_size, 50},
-            {min_size, 50},
+            {start_size, 5},
+            {min_size, 5},
             {max_size, 200}
           ]
         ]},
@@ -172,9 +337,9 @@ data:
         { redis2, [
           [
           {{- if eq .Values.global.redis.internal false }}
-            {host, "{{ .Values.global.redis.host }}"},
-            {port, {{ .Values.global.redis.port }}},
-            {password,"{{ .Values.global.redis.password }}"},
+            {host, "${REDIS_HOST}"},
+            {port, ${REDIS_PORT}},
+            {password,"${REDIS_PASSWORD}"},
           {{- else }}
             {host, "redis-master"},
             {port, 6379},
@@ -182,9 +347,9 @@ data:
           {{- end }}
 
             {database,3},
-            {start_size, 100},
-            {min_size, 100},
-            {max_size, 4000}
+            {start_size, 5},
+            {min_size, 5},
+            {max_size, 400}
           ]
         ]},
 
@@ -193,9 +358,9 @@ data:
         {redis_timers, [
           [
           {{- if eq .Values.global.redis.internal false }}
-            {host, "{{ .Values.global.redis.host }}"},
-            {port, {{ .Values.global.redis.port }}},
-            {password,"{{ .Values.global.redis.password }}"},
+            {host, "${REDIS_HOST}"},
+            {port, ${REDIS_PORT}},
+            {password,"${REDIS_PASSWORD}"},
           {{- else }}
             {host, "redis-master"},
             {port, 6379},
@@ -203,62 +368,40 @@ data:
           {{- end }}
 
             {database,4},
-            {min_size, 100},
-            {max_size, 4000},
-            {start_size, 100}
+            {start_size, 5},
+            {min_size, 5},
+            {max_size, 100}
           ]
         ]},
 
         %% cache size in redis2
         {redis2_ttl, 43200},
 
-        %% dns cache. Support multiply dnses cache
-        %% name - unical name will be able to use in publish/consumer rabbitmq instead of server name
-        %% dns - DNS name
-        %% ns - NS name
-        %% ttl - auto reload info from DNS server (in seconds)
-
-        {dns_cache, [
-          [
-            {name, main},
-          {{- if eq .Values.global.mq.internal false }}
-            {dns, "{{ .Values.global.mq.host }}"},
-          {{- else }}
-            {dns, "rabbit-service"},
-          {{- end }}
-            {ttl, 60}
-          ],
-          [
-            {name, name5},
-          {{- if eq .Values.global.mq.internal false }}
-            {dns, "{{ .Values.global.mq.host }}"},
-          {{- else }}
-            {dns, "rabbit-service"},
-          {{- end }}
-            {ttl, 60}
-          ]
-        ]},
-
 
         %%These section to publish tasks in rabbitmq
         {publish_unload_archive_task, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
-          {min_size, 50},
-          {max_size, 150},
-          {start_size, 50}
+                ]},
+          {min_size, 5},
+          {max_size, 5},
+          {start_size, 5}
         ]},
 
         %% These section to consume tasks in rabbitmq
@@ -267,20 +410,25 @@ data:
         %% Examples: 500 / 10 - good
         %% 500 / 15 - bad.
         {consumer_unload_archive_task, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
           {messages_prefetch_size_per_channel, 1000},    %% The number of queues within the channel
@@ -291,128 +439,158 @@ data:
         %% Logic copy task producer
         %% deprecated, producer of copy_task requests
         {publish_copy_task_request, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {queues_count, 1},
-          {min_size, 5},
+          {min_size, 1},
           {max_size, 5},
-          {start_size, 5}
+          {start_size, 1}
           %%{is_sharded, true} %% Legacy: will be removed
         ]},
 
         %% deprecated, consumer for responses of copy_tasks
         {consumer_copy_task_response, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
-          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
+                ]},
+          {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
           {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
         ]},
 
         %% producer of timer requests
         {publish_timer_request, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
-          {min_size, 5},
-          {max_size, 5},
-          {start_size, 5}
+                ]},
+          {min_size, 1},
+          {max_size, 1},
+          {start_size, 1}
         ]},
 
         %% consumer for timer responses
         {consumer_timer_response, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
-          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
+                ]},
+          {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
           {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
         ]},
 
         %% producer of http reqeuests, API logic
         {publish_http_request, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {queues_count, 1},
-          {min_size, 10},
-          {max_size, 10},
-          {start_size, 10}
+          {min_size, 5},
+          {max_size, 5},
+          {start_size, 5}
         ]},
 
         %% consumer for http responses, API logic
         {consumer_http_response, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
           {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
@@ -421,20 +599,25 @@ data:
         %% Logic call process
         %% producer of rpc requests, RPC logic
         {publish_rpc_request, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {queues_count, 1},
           {min_size, 5},
           {max_size, 5},
@@ -444,20 +627,25 @@ data:
 
         %% consumer for rpc responses, RPC logic
         {consumer_rpc_response, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
           {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
@@ -466,86 +654,162 @@ data:
         %% logic usercode
         %% producer of usercode requests, CODE logic
         {publish_cce_request, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {queues_count, 4},
-          {min_size, 10},
-          {max_size, 10},
-          {start_size, 10}
-        ]},
-
-        %% consumer for usercode responses, CODE logic
-        {consumer_cce_response, [
-          {servers, [[
-          {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
-          {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
-          {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
-          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
-          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
-        ]},
-
-        %% logic get task
-        %% producer of get_task requests, QUEUE logic
-        {publish_get_task_request, [
-          {servers, [[
-          {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
-          {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
-          {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
-          {queues_count, 1},
           {min_size, 5},
           {max_size, 5},
           {start_size, 5}
         ]},
 
+        %% consumer for usercode responses, CODE logic
+        {consumer_cce_response, [
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+        ]},
+
+        %% logic db call
+        %% producer
+        {publish_db_call_request, [
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          {min_size, 1},
+          {max_size, 1},
+          {start_size, 1}
+        ]},
+
+
+        %% consumer
+        {consumer_db_call_response, [
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          {queues_count, 10},
+          {connections_per_queue, 1},
+          {channels_per_connection, 1},
+          {messages_prefetch_size_per_channel, 50}
+        ]},
+
+
+        %% logic get task
+        %% producer of get_task requests, QUEUE logic
+        {publish_get_task_request, [
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          {queues_count, 1},
+          {min_size, 3},
+          {max_size, 3},
+          {start_size, 3}
+        ]},
+
         %% consumer for get_task requests, QUEUE logic
         {consumer_get_task_response, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
           {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
@@ -554,20 +818,25 @@ data:
         %% logic modify task
         %% producer of modify requests, QUEUE logic
         {publish_modify_request, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {min_size, 5},
           {max_size, 5},
           {start_size, 5}
@@ -578,44 +847,54 @@ data:
         %% components. Api, http_worker, worker, cce, ... communicate
         %% through settings queue
         {publish_settings, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
-          {min_size, 5},
-          {max_size, 5},
-          {start_size, 5}
+                ]},
+          {min_size, 2},
+          {max_size, 2},
+          {start_size, 2}
         ]},
 
         %% consumer for settings
         %% this messages inform app-s about changes in a structure of processes,
         %% users, rights etc...
         {consumer_settings, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
-          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
+                ]},
+          {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
           {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
         ]},
@@ -650,67 +929,77 @@ data:
             { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}] , [[
-              {host, '{{ .Values.global.mq.host }}'}
+              {host, "${MQ_HOST}"}
             ]]}
           ]},
-          {port, {{ .Values.global.mq.port }}},
-          {username, <<"{{ .Values.global.mq.username }}">>},
-          {password, <<"{{ .Values.global.mq.password }}">>},
+          {port, ${MQ_PORT}},
+          {username, <<"${MQ_USERNAME}">>},
+          {password, <<"${MQ_PASSWORD}">>},
           {{- else }}
                 { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}] , [[
-              {host, 'rabbit-service'}
+              {host, "rabbit-service"}
             ]]}
           ]},
           {port, 5672},
-          {username, <<"app-user">>},
-          {password, <<"password">>},
+          {username, <<"${MQ_USERNAME}">>},
+          {password, <<"${MQ_PASSWORD}">>},
           {{- end }}
-          {vhost, <<"/conveyor">>},
+          {vhost, <<"${MQ_VHOST}">>},
           {min_size, 5},
-          {max_size, 50},
-          {start_size, 10}
+          {max_size, 5},
+          {start_size, 5}
         ]},
 
         %% consumer for to_worker
         {consumer_shard_response, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
-          {connections_per_queue, 5},   %% The specified number of tcp connections will be created for each queue
+                ]},
+          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+          {messages_prefetch_size_per_channel, 50}    %% The number of queues within the channel
         ]},
 
         %% logic git call
         %% producer
         {publish_git_call_request, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {queues_count, 1},
           {min_size, 1},
           {max_size, 1},
@@ -719,20 +1008,25 @@ data:
 
         %% concierge answers git_call
         {consumer_git_call_response, [
-          {servers, [[
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-            {host, '{{ .Values.global.mq.host }}'},
-            {port, {{ .Values.global.mq.port }} },
-            {username, <<"{{ .Values.global.mq.username }}">>},
-            {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-            {host, 'rabbit-service'},
-            {port, 5672},
-            {username, <<"app-user">>},
-            {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-            {vhost, <<"/conveyor">>}
-          ]]},
+                ]},
           {queues_count, 10},
           {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
@@ -752,9 +1046,11 @@ data:
           {log_root, "/ebsmnt/erlang/worker/log"},
 
           {handlers, [
-            {lager_console_backend, [{level, info}]},
+            {lager_console_backend, info},
             {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 734003200}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 734003200}, {date, "$D0"}, {count, 1}]}
+            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 734003200}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 734003200}, {date, "$D0"}, {count, 1}]}
+
           ]},
 
           %% What colors to use with what log levels

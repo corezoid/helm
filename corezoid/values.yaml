@@ -1,130 +1,61 @@
-
+## Global values for subcharts | production | Corezoid 5.0
 global:
-  #license
+  #if secretalreadyexist true - all sensitive data will be taken from secrets and skipping from values
+  #if secretalreadyexist false - all sensitive data will be taken from  values below
+  secretalreadyexist: false
+  # repotype, posible values - corezoid / public
   repotype: public
-  license: license-mwtrial-production
+  # second level domain only! / core domain (example: corezoid.com)
+  domain: "corezoid.com"
+  # subdomain for sitename - k8s.corezoid.com (example: k8s)
+  subdomain: "k8s"
 
-  #first level domain / core domain (example - domain.com)
-  domain: "middleware.loc"
-  # sitename - sitename.domain.com (example - sitename)
-  subdomain: "corezoid-k8s"
-
-  #admin user in email format for login in UI
-  superuser_login: admin@corezoid.loc
-  #password for admin user
-  superuser_passwd: 7qShRvFUdf81U6zOWy
-
-  environment: default
+  # product name
   product: corezoid
 
+  # Ingress class: alb or nginx or aws-dual.
+  # internal: false - for ALB
+  ingress:
+    internal: false
+    class: alb
 
-  # Ingress: aws or nginx or aws-dual
-  ingress: nginx
-
-  # AWS ELB
+  # AWS ELB options: internet-facing / internal
   alb:
     scheme: internet-facing
-    certificatearn: arn:aws:acm:eu-west-1:000000000000:certificate/000000-000000-0000-000-0000000000
+    certificatearn: arn:aws:acm:eu-west-1:000000000000:certificate/00000000-0000-0000-0000-000000000000
+    # oidc support
     oidc:
       enabled: false
-      issuer: https://idp.com
+      issuer: ""
       endpoints:
-        authorize: https://idp.com/oauth2/v1/authorize
-        token: https://idp.com/oauth2/v1/token
-        userinfo: https://idp.com/oauth2/v1/userinfo
-      clientId: identifier
-      clientSecret: secret
+        authorize: ""
+        token: ""
+        userinfo: ""
+      clientId: ""
+      clientSecret: ""
 
-  # If using aws-dual you will need two instances of external-dns running
-  # Here is an example helmfile, filtering on load balancer scheme and selecting
-  # appropriate AWS Route53 zone types
-  #   - name: external-dns-public
-  #     namespace: kube-system
-  #     chart: stable/external-dns
-  #     values:
-  #     - annotationFilter: alb.ingress.kubernetes.io/scheme=internet-facing
-  #     - aws:
-  #         zoneType: public
-  #
-  #   - name: external-dns-private
-  #     namespace: kube-system
-  #     chart: stable/external-dns
-  #     values:
-  #         - annotationFilter: alb.ingress.kubernetes.io/scheme=internal
-  #         - aws:
-  #             zoneType: private
+  # Define global storage class: efs / ceph / nfs / manual  (see README.md, efs is preferred)
+  storage: manual
 
+######## Settings AWS EFS filesystem   ########
 
-  #Nginx ingress options
-  # default self signed ssl for corezoid-k8s.middleware.loc
-  # generate ssl
-  #openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  #-out tls.crt \
-  #-keyout tls.key \
-  #-subj "/CN=corezoid.loc/O=ssl"
-  #get base64 tls.crt for crt
-  crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN4akNDQWE0Q0NRQ0pQL3ozdUpEWGp6QU5CZ2txaGtpRzl3MEJBUXNGQURBbE1SVXdFd1lEVlFRRERBeGoKYjNKbGVtOXBaQzVzYjJNeEREQUtCZ05WQkFvTUEzTnpiREFlRncweE9UQTNNVGt4TXpJMk5URmFGdzB5TURBMwpNVGd4TXpJMk5URmFNQ1V4RlRBVEJnTlZCQU1NREdOdmNtVjZiMmxrTG14dll6RU1NQW9HQTFVRUNnd0RjM05zCk1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBNUhBZlZvMEllUUVoQ1RsOEpZNEUKS3oxMG1KajNCMmZkTXhRazJiMUg2NytWd1ZmaGNrYUZ1SVNLN01nUW5haFJ5VnFWMGRrMXphb0pzQ0pMRlhxVQozRG0vVjUvNWFYNVNhMW9oZnRCUVVFc2N3Ung2VmVCbWZZUXR1dll5U0pzdWlZcGJwNmlGY05UdkI5bE8yV2RMClRjQVJ5OU9oblFqUmR0MWVsWmU0OXRQcjhFYmRYWVcvTXNPdVgrekdPcUx1ZzN6WlFzeFdaWlF3UjJSSEVVanYKbEdmMGNEZnNXWW5YZHVDM0ZLMHRiMzk0bEtSRDFUQWdrbW4rZWQwUUVnUVJxakNSeVVSTWI2eVRTbzNyUk02RQp3YWMwQzJ5UnUxbkVQd0JTWmdKYzJCMVFZZ3JJdzdCTFpiTFkvbkx0MzM0TG1HZUJ6ZmkxWld4cEpoV3VuMU5nCnRRSURBUUFCTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCQVFDdk1EeHdmeW1VblM3Z2NpekVmNHZ1bHJpb3BBQkcKeGRjaFd4S1N2ODRzR3c2ZWVxUTVRd2tmNmdTWlkvWW5VZEJ6VGcxR2NVUVZmc0RlaFd4L2M0c2pzb2pyTWwrZAp6aGd5c29tcnN6VHNjbTRnczVsQVJtckFzZ0U5U2l3WjFTK0Y4RlRIZEFIckNTcGlRZmhVTE9pamlqVDVOZ1ltCnRzdndjSkcrYmRhVVFNclNDRXFEQVJheUpwbDMzSUljYk1LY2NpTU1jd2I1T0N6VUlqbUlVWTlyMmxNaG1uQTkKNkpSTCtOZmV2SlAvOE5GNk95ZEt4MHEwbEJQcHZnSmVXRm5FRnpTMWt3cE5DRFpUTVNxMUp6cVl0UndqNE5zLwpyaFZWOHJod1BaUUJqSUpWc3B1QWhBT2VxVTJ4OWVKLzZhdDN1L2ptakcrZFJHY3FrRFZyelpORwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
-  #get base64 tls.key for key
-  key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRRGtjQjlXalFoNUFTRUoKT1h3bGpnUXJQWFNZbVBjSFo5MHpGQ1RadlVmcnY1WEJWK0Z5Um9XNGhJcnN5QkNkcUZISldwWFIyVFhOcWdtdwpJa3NWZXBUY09iOVhuL2xwZmxKcldpRiswRkJRU3h6QkhIcFY0R1o5aEMyNjlqSklteTZKaWx1bnFJVncxTzhICjJVN1paMHROd0JITDA2R2RDTkYyM1Y2Vmw3ajIwK3Z3UnQxZGhiOHl3NjVmN01ZNm91NkRmTmxDekZabGxEQkgKWkVjUlNPK1VaL1J3Tit4WmlkZDI0TGNVclMxdmYzaVVwRVBWTUNDU2FmNTUzUkFTQkJHcU1KSEpSRXh2ckpOSwpqZXRFem9UQnB6UUxiSkc3V2NRL0FGSm1BbHpZSFZCaUNzakRzRXRsc3RqK2N1M2ZmZ3VZWjRITitMVmxiR2ttCkZhNmZVMkMxQWdNQkFBRUNnZ0VCQUxFOHpSTzZHUGpKaDNoQXdiSGhuaHB1ZENoeGhqaVl2V2NFR2hOV2FKYmcKN3JBMEh4Y3E0RlZwZ09CMTJXNTVTZnVQN080RU9WcDRzMHVWVCt3NlQ0VU95UWFUZUZBQlVyRTRIUVRuVzJqdwozajUyZWZSblJ4M2JrQitmSlNSd1FvczBiaWlHK0FHek5FSkN1SXExT2hmNURkVzNQWTA1YWt0dk5oT2F4RWU4CmJkY2tieWg5T2ZLc2xIL0Z5OWg3L2w2eFVJYXFTbWRjZ1JqdTNUUlR1UkNMQWlLQWVPR3FqL0U0a0I0TU9JcHMKQ2RBQ3NOSGlZenI1QU81VlRUeHNhUkJFZG44R2lPVDlNdy8vZ1pTL2F0V0UyV1NIRmp1QlV3Nzc3anZ6ZDdtSApWY2p6dDJvRFhHeGxjZ25hTEZJRmtsZEZrNUF5Z1FmUHlvZFFDUmZjcEFFQ2dZRUE5NGVScnBsQWJMeVdFWUlaCjIzOTNMbU9sMElZU3ByZm9lTWxValVYUlZLU1lYZHA1VWgrVjVvYTBVbTBLdVFPc3UrTnRHZ3lZUU11VjJiVGgKVDZaeSttU2V2RytvVHpXSVR4c01xaDlrM3l0OUJRaENvNjR1OVFRVHV3Uk9yYW1FZjJwNGczblhhb2NuQVBsMgpJVXJoQXpod0J6RTRpelREOFBndXo4M05EVmtDZ1lFQTdFRk9OQVNteDZyOUZWQVQ4aWFYR0IycXB5VjRySWRLCjJUZVR1UGtpOU5BMm1tSXRUbjY2ZjRvbVE2ek85OFZnUDdGUVNyVUFwaDBLUytHMXNTL1Q3RVhTNHdiUW9hanoKK1YxOCtpZ2xnQnF0YVVrK1FYMzhMUkxrMzBiSjBXNjQ5ZkNZalZDajEzSWNocjZGb1FVak5xRHZDL3VjeTZZRgpWaEc4UVdCbDlyMENnWUJtSmI3N3cyaHZ0djlpNkVLTmJ6T2FwQ3FZTzh2VW13NUhVaVlmU3BHUkVYK0RNNVpmClNvT01wMGdndjdqdUV0TWtranpDeERITWczY3FhVmVWakFYa3lNTXMxaE1wNU5pRWRKQXNZRm83TW5JY01vVjEKa0hyMlI2Rnd5dDFCRXpTSGRFT1pWaDJNYTR1di9rSStpTzBFYkRUbTh1djNubVhCdWxsdkRlbXh1UUtCZ0FWYgpYYmlVT212Z2xxaDdEbGk1UTBmS3RHbmgwYUNuMkt5Z00vdEh1dUV1TDI3RXR4NUdoVmdLKzk4ZzlmaHNRMGh1CmJ0R2kxUWJ2TmFLTzFaM1U1Y3Mvc2c1dnd4OUhRM0R1Qzcxb1Y2RlYrWVNmb29lOW9aQXNFNEIwakhMeFBjUmwKMWkrdUdtanlMMjltdG9UMkp0eEFQZXRab3k2Qzd6QUthdWhZbFRkSkFvR0FmeUNqQVZCS3luN0VldzBQL0JCUApDOUxsaXpVYWFmc2E2bVk2cmh0dExmazJJZ1B5TzJQamVibUcwRnZFclFOZ3IyUmZTSkd4QklnRjQwYzJnV0tLCjV1bTdLWWtsSkxvNG51OXZlQURWaXYrLzFCa2RsdmpzbkhiNE1CT0ZEZEJpdVVXeVRDZHJYbzN2L05vNGJ6ZWgKRnhzZGhsUGVFZ0wyQTNtNzZScnBuZkE9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+  efs:
+    awsRegion: "eu-west-1"
+    efsFileSystemId: "fs-00000000"
 
-
-
-######## Settings for Corezoid services  ########
-  ##Settings for API Corezoid
-  capi:
-    ## secret for work with api-multipart ( it is a solt for sign user cookies )
-    capi_api_secret: "VFOnsFerDn0LLuQnMn"
-    ## Auth hash for cookie (it is solt for password when we use corezoid auth method(login+password))
-    capi_auth_hash: "0PqNKlo0QH30dcYNGUqzYj2QnQuSDGsd"
-    #Key for captcha when login in UI
-    capi_front_captcha_key: ""
-    #We can disable or enable  captcha
-    capi_front_captcha_key_disabled: true
-    capi_backend_captcha_key: ""
-    capi_backend_captcha_key_disabled: true
-    ## Setting for configure frontend
-    front_setting:
-      ui:
-        # enabled Market button
-        market: false
-        #button Create -> Company
-        company: true
-        #button Create -> Bot platform
-        bot_platform: false
-        #process search enable
-        search: true
-        #Set default company name
-        default_company: My Corezoid
-    #max allowed threads for api logic
-    api_max_threads: 200
-
-    # api limit counters by user_id
-    user_limits:
-      #default limit interface requests, ban after for 1 min
-      max_interface_rate: 100
-      #default limit for task create/modify, other will get 429 error
-      max_user_rate: 2000
-
-
-
-
-
-
-
-
-
-
-
+######## Settings for statful services ########
 
 
   ####### Postgre SQL ########
-  ## Supported version  from > 9.5 - 9.6.12R1 <
+  ## Supported version  from > 9.5 - 9.6.14R1 <
   ## for RDS minimum instance - db.t2.small / master user set "postgres"
   db:
     #if internal true - create and use internal db container
     #if internal false - enable external db, like rds
     internal: true
+    #dbhost/dbport/dbuser/dbpwd/dbsuperuser/dbsuperpwd deps from secretalreadyexist
     dbhost: ".eu-west-1.rds.amazonaws.com"
+
     ## dbsuperuser - for init db and roles
     ## dbuser - for work from Corezoid services
     ## dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
@@ -142,7 +73,23 @@ global:
     #count of shards created in psql, if unset, default - 10
     shards_count: 10
     #count of shards created in psql, if unset, default - 10 - in array format
+    #TODO - make array from int and remove array env
     shards: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+    # set false to disable if you don't want to use PGBouncer (default - true)
+    bouncer: true
+    #Config for pg_bouncer
+    #Maximum number of client connections allowed.
+    maxclientconn: 100000
+    #How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
+    default_pool_size: 1500
+    # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
+    # transaction | session
+    default_pool_mode: transaction
+
+    # Postgres corezoid schema version
+    postgres_schema:
+      version: 5.0.0
 
 
   ####### Redis  ########
@@ -150,21 +97,170 @@ global:
   ## NO CLUSTER Mode!
   redis:
     #if internal true - create and use internal k8s redis container
-    #if internal false - enable external redis, like elasticache
+    #if internal false - enable external redis, like elasticache (Engine Version Compatibility: 3.2.10)
     internal: true
-    host: "redis.cache.amazonaws.com"
+    # host/port/password deps from secretalreadyexist
+    host: ".cache.amazonaws.com"
     port: 6379
     password: ""
 
 
+  ####### Elasticsearch  ########
+  ## Supported version  from >= 6.7
+  elasticsearch:
+    tag: 6.7.1
+    #if internal true - create and use internal k8s elastic container
+    #if internal false - enable external elk, like aws elasticsearch service
+    internal: true
+    #host/port deps from secretalreadyexist
+    host: "https://.eu-west-1.es.amazonaws.com"
+    ##be careful with port - in internal install used 9200, in aws uses 443
+    port: "443"
 
   #######  RabbitMQ ########
   ## Supported version  from > 3.6.7 <
   mq:
-    #if internal true - create and use internal k8s db container
-    #if internal false - enable external elk, like rds
+    #if internal true - create and use internal k8s rmq container
+    #if internal false - enable external rmq (on ec2 as example )
     internal: true
-    host: "192.168.0.1"
+    #host/port/vhost/username/password deps from secretalreadyexist
+    host: ""
     port: "5672"
+    vhost: "/conveyor"
     username: "app-user"
     password: "SL9SXNHjd@fInYkn1RFT6@zvCFPYEr@r"
+    # vm_memory_high_watermark.relative
+    memoryHighWatermark: 0.3
+
+######## Settings for Corezoid services  ########
+  ##Settings for API Corezoid
+  capi:
+    tag: 7.0.0.3
+    minReplicas: 2
+    maxReplicas: 4
+    # capi secret and auth_hash deps from secretalreadyexist
+    ## secret for work with api-multipart ( it is a solt for sign user cookies )
+    ## Auth hash for cookie (it is a solt for password when we use corezoid auth method(login+password))
+    capi_auth_hash: "0PqNKlo0QH30dcYNGUqzYj2QnQuSDGsd"
+    #Key for captcha when login in UI
+    capi_front_captcha_key: ""
+    #We can disable or enable  captcha
+    capi_front_captcha_key_disabled: true
+    capi_backend_captcha_key: ""
+    capi_backend_captcha_key_disabled: true
+    #max req/sec of create|modify|delete for conv|folder|dashboard in 1 sec
+    max_reqs_limit: 5
+    ## Setting for configure frontend
+    front_setting:
+      host:
+        # documentation (navigate by clicking on DOCS link)
+        doc: "doc.corezoid.com"
+      ui:
+        # enabled Market button
+        market: false
+        # button Create -> Bot platform
+        bot_platform: false
+        # billing button display
+        billing: false
+        # display of the git_call button
+        git_call: false
+        # button Create -> Company
+        company: true
+        # set default company name
+        default_company: "My Corezoid"
+        # disable or enable logo on main page
+        disabled_auth_logo: false
+    ldap_server: "ldap.company.loc"
+    ldap_port: "389"
+    ldap_base: "ou=people,o=company"
+    ldap_filter: "uid"
+    #then this param is true, bind_user_name, bind_user_pass should be filled. if it's false it is not necessary
+    ldap_first_bind_user: true
+    ldap_bind_user_name: "uid=ldap,ou=people,o=company"
+    ldap_bind_user_pass: ""
+    ldap_user_nick_entry: "cn"
+    ldap_tls: false
+    # api limit counters by user_id
+    user_limits:
+      #default limit interface requests, ban after for 1 min
+      max_interface_rate: 100
+      #default limit for task create/modify, other will get 429 error
+      max_user_rate: 2000
+    logic_settings:
+      #max allowed threads for api logic
+      api_max_thread: 200
+      sender_max_threads: 25
+      timer_default: 5 # 30
+    # enigma private_key_id
+    enigma_pk_id: ""
+
+######## Settings for services ########
+
+# http-worker
+  http:
+    tag: 3.0.0.1
+    minReplicas: 2
+    maxReplicas: 4
+    max_http_resp_size: "5242880"
+    # enigma private_key_id
+    enigma_pk_id: ""
+
+# usercode
+  usercode:
+    tag: 6.0.3
+    minReplicas: 2
+    maxReplicas: 4
+    # enigma private_key_id
+    enigma_pk_id: ""
+
+# conveyor-worker
+  worker:
+    tag: 4.0.0.2
+    minReplicas: 2
+    maxReplicas: 4
+    # enigma private_key_id
+    enigma_pk_id: ""
+
+# mult
+  mult:
+    tag: 2.0.0.3
+    minReplicas: 2
+    maxReplicas: 4
+    # enigma private_key_id
+    enigma_pk_id: ""
+
+# webadm
+  webadm:
+    tag: 2.43
+    minReplicas: 2
+
+# web-superadm
+  web_superadm:
+    tag: 0.0.1
+    minReplicas: 1
+
+# syncapi
+  syncapi:
+    subdomain: "syncapi-public"
+    tag: 1.1.3-e19 #
+    replicas: 1 # statefull set
+
+# merchant
+  merchant:
+    tag: v0.0.27.2
+    #login/secret for corezoid-merchant comunications
+    merchant_login: apiLogin1
+    merchant_secret: I9EmB170XUbe
+    minReplicas: 1
+    maxReplicas: 1
+
+# enigma global settings
+  enigma:
+    enabled: false # under develop
+    encryption: false # under develop
+
+# single-account
+  sa:
+    enabled: false # under develop
+  sa_web:
+    subdomain: ""

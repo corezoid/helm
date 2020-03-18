@@ -1,0 +1,5 @@
+appName: syncapi-web
+image:
+  registry: docker-hub.middleware.biz
+  repository: /conveyor_adm_web
+

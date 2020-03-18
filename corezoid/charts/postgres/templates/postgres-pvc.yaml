@@ -1,0 +1,57 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
+{{- if eq .Values.global.storage "efs" }}
+  annotations:
+    volume.beta.kubernetes.io/storage-class: efs-{{ .Release.Namespace }}
+{{- end }}
+  labels:
+    tier: {{ .Values.appName }}
+spec:
+{{- if eq .Values.global.storage "manual" }}
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}
+  storageClassName: manual
+{{- else }}
+  {{- if eq .Values.global.storage "ceph" }}
+  storageClassName: csi-cephfs
+  {{- else }}
+  storageClassName: {{ .Values.global.storage}}-{{ .Release.Namespace }}
+  {{- end }}
+{{- end }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Values.appName }}-{{ .Values.global.storage}}-{{ .Release.Name }}-migrator
+{{- if eq .Values.global.storage "efs" }}
+  annotations:
+    volume.beta.kubernetes.io/storage-class: efs-{{ .Release.Namespace }}
+{{- end }}
+  labels:
+    tier: {{ .Values.appName }}
+spec:
+{{- if eq .Values.global.storage "manual" }}
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}-migrator
+  storageClassName: manual
+{{- else }}
+  {{- if eq .Values.global.storage "ceph" }}
+  storageClassName: csi-cephfs
+  {{- else }}
+  storageClassName: {{ .Values.global.storage}}-{{ .Release.Namespace }}
+  {{- end }}
+{{- end }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

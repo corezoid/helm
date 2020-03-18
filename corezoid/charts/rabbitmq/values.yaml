@@ -1,6 +1,0 @@
-appName: rabbit
-image:
-  registry: docker-hub.middleware.biz
-  repository: /rabbitmq
-  tag: 3.7.8
-  imagePullPolicy: Always

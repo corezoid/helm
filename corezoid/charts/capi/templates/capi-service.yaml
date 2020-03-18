@@ -3,15 +3,20 @@ kind: Service
 metadata:
   name: {{ .Values.appName }}-service
   labels:
-    environment: {{ .Values.global.environment }}
+    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
   selector:
-    environment: {{ .Values.global.environment }}
+    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
   ports:
   - protocol: TCP
+    name: main
     port: {{ .Values.containers.containerPort }}
     targetPort: {{ .Values.containers.containerPort }}
+  - protocol: TCP
+    name: confagent
+    port: 8585
+    targetPort: 8585

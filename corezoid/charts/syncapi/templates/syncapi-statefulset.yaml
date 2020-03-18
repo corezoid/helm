@@ -1,0 +1,174 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.appName }}
+  labels:
+    environment: {{ .Release.Namespace }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  serviceName: {{ .Values.appName }}
+  replicas: {{ .Values.global.syncapi.replicas }} # tells deployment to run 2 pods matching the template
+  updateStrategy:
+    type: RollingUpdate
+  template: # create pods using pod definition in this template
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/syncapi-configmap.yaml") . | sha256sum }}
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9100"
+        prometheus.io/scrape: "true"
+      labels:
+        environment: {{ .Release.Namespace }}
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}
+    spec:
+      terminationGracePeriodSeconds: 40
+      initContainers:
+        - name: init-wait
+          image: alpine
+          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} nc -zvw1 postgresql 5432 {{- if not .Values.global.db.internal }} && nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }} {{- if .Values.global.mq.internal }} && nc -zvw1 rabbit-service 5672 {{- else }} && nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }}; do echo waiting for dependences; sleep 2; done;"]
+          env:
+            {{- if eq .Values.global.secretalreadyexist true }}
+            - name: MQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_host
+            - name: MQ_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_port
+            - name: POSTGRES_DBHOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbhost
+            - name: POSTGRES_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbport
+            {{- else}}
+            - name: MQ_HOST
+              value: {{ .Values.global.mq.host }}
+            - name: MQ_PORT
+              value: {{ .Values.global.mq.port | quote }}
+            - name: POSTGRES_DBHOST
+              value: {{ .Values.global.db.dbhost }}
+            - name: POSTGRES_DBPORT
+              value: {{ .Values.global.db.dbport | quote }}
+            {{- end }}
+      containers:
+        - name: {{ .Values.appName }}
+          image: {{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.syncapi.tag }}
+          imagePullPolicy: Always
+          env:
+            - name: RELX_REPLACE_OS_VARS
+              value: "true"
+            {{- if eq .Values.global.secretalreadyexist true }}
+            - name: MQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_host
+            - name: MQ_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_port
+            - name: MQ_VHOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_vhost
+            - name: MQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_username
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_password
+            - name: POSTGRES_DBHOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbhost
+            - name: POSTGRES_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbuser
+            - name: POSTGRES_DBPWD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbpwd
+            - name: POSTGRES_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbport
+            {{- else}}
+            - name: MQ_HOST
+              value: {{ .Values.global.mq.host }}
+            - name: MQ_PORT
+              value: {{ .Values.global.mq.port | quote }}
+            - name: MQ_VHOST
+              value: {{ .Values.global.mq.vhost }}
+            - name: MQ_USERNAME
+              value: {{ .Values.global.mq.username }}
+            - name: MQ_PASSWORD
+              value: {{ .Values.global.mq.password }}
+            - name: POSTGRES_DBHOST
+              value: {{ .Values.global.db.dbhost }}
+            - name: POSTGRES_DBUSER
+              value: {{ .Values.global.db.dbuser }}
+            - name: POSTGRES_DBPWD
+              value: {{ .Values.global.db.dbpwd }}
+            - name: POSTGRES_DBPORT
+              value: {{ .Values.global.db.dbport | quote }}
+            {{- end }}
+          ports:
+          - containerPort: 8090
+          volumeMounts:
+            - name: {{ .Values.appName }}-config
+              mountPath: /ebsmnt/conf/corezoid_api_sync.config
+              subPath: corezoid_api_sync.config
+          resources:
+            limits:
+              cpu: 600m
+              memory: 700Mi
+            requests:
+              cpu: 100m
+              memory: 200Mi
+          livenessProbe:
+            httpGet:
+              path: /is_ready
+              port: 8383
+            initialDelaySeconds: 30
+            periodSeconds: 3
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /is_ready
+              port: 8383
+            initialDelaySeconds: 30
+            periodSeconds: 3
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+      {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: corezoid-secret
+      {{- end }}
+      volumes:
+        - name: {{ .Values.appName }}-config
+          configMap:
+            name: {{ .Values.appName }}-config

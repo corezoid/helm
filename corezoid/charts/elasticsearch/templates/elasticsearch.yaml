@@ -4,11 +4,11 @@ kind: Service
 metadata:
   name: {{ .Values.appName }}-service
   labels:
-    environment: {{ .Values.global.environment }}
+    environment: {{ .Release.Namespace }}
     app: {{ .Values.appName }}
 spec:
   selector:
-    environment: {{ .Values.global.environment }}
+    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
   ports:
@@ -22,7 +22,7 @@ kind: Deployment
 metadata:
   name: {{ .Values.appName }}-deployment
   labels:
-    environment: {{ .Values.global.environment }}
+    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
@@ -30,15 +30,49 @@ spec:
   template:
     metadata:
       labels:
-        environment: {{ .Values.global.environment }}
+        environment: {{ .Release.Namespace }}
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      initContainers:
+        - name: increase-vm-max-map
+          image: busybox
+          command: ["sysctl", "-w", "vm.max_map_count=262144"]
+          securityContext:
+            privileged: true
+        - name: increase-fd-ulimit
+          image: busybox
+          command: ["sh", "-c", "ulimit -n 65536"]
+          securityContext:
+            privileged: true
       containers:
         - name: {{ .Values.appName }}
-          image: {{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:2.4.6
+          image: {{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.elasticsearch.tag }}
+          env:
+            - name: ES_JAVA_OPTS
+              value: "-Xmx1g -Xms1g"
           ports:
             - name: es
               protocol: TCP
               containerPort: 9200
-
+          resources:
+            requests:
+              cpu: 300m
+              memory: 1Gi
+            limits:
+              cpu: 500m
+              memory: 2Gi
+          readinessProbe:
+            httpGet:
+              path: /_cluster/health
+              port: 9200
+            initialDelaySeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /_cluster/health?local=true
+              port: 9200
+            initialDelaySeconds: 90
+       {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: corezoid-secret
+        {{- end }}

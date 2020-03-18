@@ -1,0 +1,69 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  labels:
+    environment: {{ .Release.Namespace }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: {{ .Values.global.web_superadm.minReplicas }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/web-superadm-configmap-nginx.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/web-superadm-configmap-site.yaml") . | sha256sum }}
+      labels:
+        environment: {{ .Release.Namespace }}
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.appName }}
+          image: {{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.web_superadm.tag }}
+          ports:
+          - containerPort: 80
+          volumeMounts:
+            - name: web-superadm-config-nginx
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: web-superadm-config-site
+              mountPath: /etc/nginx/conf.d/superadm.conf
+              subPath: superadm.conf
+          resources:
+            limits:
+              cpu: 200m
+              memory: 600Mi
+            requests:
+              cpu: 50m
+              memory: 100Mi
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+      {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: corezoid-secret
+      {{- end }}
+      volumes:
+        - name: web-superadm-config-nginx
+          configMap:
+            name: {{ .Values.appName }}-main
+        - name: web-superadm-config-site
+          configMap:
+            name: {{ .Values.appName }}-site

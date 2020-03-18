@@ -1,4 +1,0 @@
-appName: license
-image:
-  registry: docker-hub.middleware.biz
-  repository: /license-mambu-awsbox

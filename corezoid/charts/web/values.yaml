@@ -2,4 +2,3 @@ appName: corezoid-web-adm
 image:
   registry: docker-hub.middleware.biz
   repository: /conveyor_adm_web
-

@@ -1,0 +1,8 @@
+appName: merchant
+image:
+  registry: docker-hub.middleware.biz
+  repository: /merchant
+  imagePullPolicy: Always
+port:
+containers:
+  containerPort: 8080

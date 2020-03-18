@@ -1,0 +1,9 @@
+apiVersion: v1
+data:
+  data.sql: |
+    INSERT INTO access(id, api_login, api_secret) VALUES (1, '{{ .Values.global.merchant.merchant_login }}', '{{ .Values.global.merchant.merchant_secret }}') ON CONFLICT DO NOTHING;
+    INSERT INTO category (id, create_date, modify_date, name, modified_by_access_id) VALUES (1, now(), now(), 'default', 1) ON CONFLICT DO NOTHING;
+
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-datasource

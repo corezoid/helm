@@ -1,0 +1,35 @@
+{{- if eq .Values.global.storage "manual" }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.appName }}-{{ .Values.global.storage}}-{{ .Release.Name }}
+  labels:
+    tier: {{ .Values.appName }}
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  hostPath:
+    path: /ebsmnt/{{ .Release.Name }}/{{ .Values.appName }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.appName }}-{{ .Values.global.storage}}-{{ .Release.Name }}-migrator
+  labels:
+    tier: {{ .Values.appName }}-migrator
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  hostPath:
+    path: /ebsmnt/{{ .Release.Name }}/{{ .Values.appName }}-migrator
+{{- end }}

@@ -1,0 +1,13 @@
+apiVersion: v1
+data:
+  callback.properties: |
+    app.synchronisationEnabled=true
+    app.callbackProperties[0].url=https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/api/2/json/plugins/mapi
+    app.callbackProperties[0].retryCount=3
+    app.callbackProperties[0].retryTimeoutMillisec=5000
+    app.callbackProperties[1].url=https://api-adm.sender/merchant_api/sync
+    app.callbackProperties[1].retryCount=3
+    app.callbackProperties[1].retryTimeoutMillisec=5000
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-callback-properties

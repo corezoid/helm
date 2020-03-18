@@ -1,8 +1,8 @@
-{{- if eq .Values.global.ingress "aws-dual" }}
+{{- if and (eq .Values.global.ingress.class "aws-dual") (not .Values.global.ingress.internal) }}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ .Values.appName }}-{{ .Values.global.environment }}-internal
+  name: {{ .Values.appName }}-{{ .Release.Namespace }}-internal
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/certificate-arn: {{ .Values.global.alb.certificatearn }}
@@ -11,11 +11,27 @@ metadata:
     alb.ingress.kubernetes.io/scheme: internal
     external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain }}.{{ .Values.global.domain }}
   labels:
-    environment: {{ .Values.global.environment }}
+    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
-  backend:
-    serviceName: "corezoid-web-adm"
-    servicePort: 80
+  rules:
+    - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - backend:
+              serviceName: corezoid-web-adm
+              servicePort: 80
+    - host: superadm-{{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - backend:
+              serviceName: corezoid-web-superadm
+              servicePort: 80
+    - host: {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - backend:
+              serviceName: syncapi-web
+              servicePort: 80
 {{- end }}

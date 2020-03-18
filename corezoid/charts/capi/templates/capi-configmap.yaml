@@ -3,18 +3,191 @@ data:
   {{ .Values.appName }}.config: |
     %% -*- mode: erlang;  -*-
     [
+
+        {corezoid_license_client, [
+          {path_to_license, "/ebsmnt/certs/corezoid_license"}
+        ]},
+
+        {corezoid_global_stats, [
+            {disabled, true}
+        ]},
+
+        %% for clustering components
+        {corezoid_cluster, [
+            {backend, redis}, %% maybe if future list will increase
+            {redis, [
+            {{- if eq .Values.global.redis.internal false }}
+                {host, "${REDIS_HOST}"},
+                {port, ${REDIS_PORT}},
+                {password,"${REDIS_PASSWORD}"},
+            {{- else }}
+                {host, "redis-master"},
+                {port, 6379},
+                {password,""},
+            {{- end }}
+                {database, 10}
+            ]}
+        ]},
+
+        {is_ready, [
+          {port, 8383},
+          {disabled, false}
+        ]},
+
+        %% needed for conf_agent
+        {corezoid_sdk, [
+          {host, "{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},
+          {scheme, "https://"}
+        ]},
+
+        {conf_agent, [
+         {pgsql, [
+          {{- if .Values.global.db.bouncer }}
+            {host, "pgbouncer-service"},
+          {{- else }}
+            {host, "${POSTGRES_DBHOST}"},
+          {{- end }}
+           {user, "${POSTGRES_DBUSER}"},
+           {dbname, "settings"},
+           {password, "${POSTGRES_DBPWD}"},
+           {min_size, 10},
+           {max_size, 10},
+           {start_size, 1}
+         ]},
+
+         {port, 8585},
+         {is_admin, true},
+
+        {publish_request, [
+                    {servers, [
+      {{- if eq .Values.global.mq.internal false }}
+                  [
+                    {host, "${MQ_HOST}"},
+                    {port, ${MQ_PORT}},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
+      {{- else }}
+                  [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
+      {{- end }}
+            ]},
+        {queues_count, 1},
+        {min_size, 1},
+        {max_size, 1},
+        {start_size, 1}
+        ]},
+
+        {consumer_response, [
+            {servers, [
+      {{- if eq .Values.global.mq.internal false }}
+                  [
+                    {host, "${MQ_HOST}"},
+                    {port, ${MQ_PORT}},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
+      {{- else }}
+                  [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
+      {{- end }}
+            ]},
+        {connections_per_queue, 1},
+        {channels_per_connection, 1},
+        {messages_prefetch_size_per_channel, 50}
+        ]}
+        ]},
+
+        {mq_cache, [
+            {publish_request, [
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+           {queues_count, 1},
+           {min_size, 1},
+           {max_size, 1},
+           {start_size, 1}
+          ]},
+
+          {consumer_response, [
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          {connections_per_queue, 1},
+          {channels_per_connection, 1},
+          {messages_prefetch_size_per_channel, 50}
+          ]}
+
+        ]},
+
+        {corezoid_queues_gc, [
+          {disabled, false},
+          {{- if eq .Values.global.mq.internal false }}
+          {host, "${MQ_HOST}"},
+          {port, 15672 },
+          {login, "${MQ_USERNAME}"},
+          {password, "${MQ_PASSWORD}"},
+          {{- else }}
+          {host, "rabbit-service"},
+          {port, 15672},
+          {login, "${MQ_USERNAME}"},
+          {password, "${MQ_PASSWORD}"},
+          {{- end }}
+          {vhost, "${MQ_VHOST}"},
+          {gc_queues_regexp, ["api.ctrl", "settings"]}
+        ]},
+
         {conv_params, [
             {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid.
                              %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
         ]},
 
-        {kernel, [
-            {inet_dist_listen_min, 52617}, %% for api cluster the minimum port that can use
-            {inet_dist_listen_max, 52617}  %% for api cluster the maximum port that can use
-        ]},
-
         %% DEPS for unloading logs to elastic/kibana systems
-        %% there are 2 handlers.
+        %% there are 2 handlegjhrs.
         %% One of them uses for all error messages and crash logs during runtime system works
         %% Rest uses for put callback from direct url and mandrill to kibana/elastic
         %% with masked values (it takes from process autoclear params)
@@ -40,27 +213,48 @@ data:
         %% It replaces liqpay platform
         {merchant_api, [
             %% it uses api for connection and signs all queries using login and secret keys
-            {base_url, ""},         %% url merchant api
-            {login, ""},            %% login
-            {secret, ""}            %% password
+            {base_url, "http://merchant-service:8080"},         %% url merchant api
+            {login,  "${MERCHANT_LOGIN}"},            %% login
+            {secret, "${MERCHANT_SECRET}"},
+            {skip_otp, true},
+            {health_url, "http://merchant-service:7980/actuator/health"}
         ]},
+
+        {enigma, [
+          {is_enabled, {{ .Values.global.enigma.enabled }}},
+          {private_key_id, "{{ .Values.global.capi.enigma_pk_id }}"},
+          {key_manager_host, "http://enigma-key-manager-service:8080"},
+          {rotors_pool, [
+            {min_size, 3},
+            {max_size, 50},
+            {start_size, 3}
+          ]}
+        ]},
+
 
         %% MAIN capi application
         {capi,
             [
                 %% It must be changed to unique name for every api node. It's personal
                 %% queue where will come messages from others api nodes.
-                {api_id, <<"capi-{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},
+                {api_id, <<"">>},
                 {server_port, 9080},  %% listener port
+
+                {{- if .Values.global.enigma.encryption }}
+                %% for ENCRYPT/DECRYPT data
+                {encrypt_decrypt, [
+                  queue, %% now it's encode-decode RabbitMQ
+                  cache, %% Redis
+                  db     %% PostgreSQL
+                ]},
+                {{- end }}
 
                 {max_task_size_for_process_conv, 264000}, %% max task size for process conv
                 {max_task_size_for_st_diagramm_conv, 264000}, %% max task size for state diagramm conv
 
-                %% it is a solt for sign user cookies
-                {api_secret, <<"{{ .Values.global.capi.capi_api_secret | default "LLuQnMnVFOnsFerDn0" }}">>},
 
                 %% cookie name where cookie string will put
-                {cookie_name, <<"corezoid-{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},
+                {cookie_name, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},
                 {shards_count, {{ .Values.global.db.shards_count | default 10 }} },
 
                 %% merchant api module that provides synchronization of the company through the middleware systems (Deepmemo, Corezoid and others)
@@ -71,23 +265,22 @@ data:
                 %% Ops limit is reached. UserId: 1, Obj: conv, Action: create, Limit: 10
                 %% End-user will get the error ->
                 %% Too many requests: limit is reached
-                {max_reqs_limit, 10},
+                {max_reqs_limit, {{ .Values.global.capi.max_reqs_limit | default 5 }} },
 
-                %%Main page for output link on dashboard, process, folders and others
+                %% Main page for output link on dashboard, process, folders and others
                 {main_page, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},
 
                 %% it is a domain where cookie is binded
-                {main_domain, "{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},
+                {main_domain, "{{ .Values.global.domain }}"},
 
                 %% It is used for create direct url in viber, telegram link
                 %% And for confirm registration
                 {api_host, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/api"},
 
                 %% it is solt for password when we use corezoid auth method(login+password)
-                {corezoid_auth_hash, <<"{{ .Values.global.capi.capi_auth_hash | default "YNGUqzY0PqNKlo0QH30dcj2QnQuSDGsd" }}">>},
 
-                {admin_url1, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/admin_new"},       %% First version admin
-                {admin_url2, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/admin_new"},       %% Second version admin
+                {admin_url1, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},       %% First version admin
+                {admin_url2, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},       %% Second version admin
 
                 %% When new user registers in corezoid system under
                 %% login and password it checks this flag
@@ -99,21 +292,31 @@ data:
 
             %% FRONT SETTINGS
             {front_settings, [
+                {is_single_account, {{- .Values.global.sa.enabled }}},	%% enable SingleAccount auth
                 {env, <<"prod">>}, %% Available test|pre|prod
                 {host, [
-                    {site, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},  %% main page (navigate by clicking on the corezoid logo)
-                    {doc, <<"doc.corezoid.com">>}, %% documentation (navigate by clicking on DOCS link)
+                    {site, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},   %% main page (navigate by clicking on the corezoid logo)
+                    {doc, <<"{{ .Values.global.capi.front_setting.host.doc }}">>}, %% documentation (navigate by clicking on DOCS link)
                     %%{market, <<"...">>}, %% market (market api call)
-                    {ws, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},  %% websocket
-                    {webhook, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>} %% corezoid domain
+                    {ws, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},                    %% websocket
+                    {webhook, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},               %% corezoid domain
+                    {auth, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},                  %% account auth
+                    {single_account, <<"{{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }}">>}          %% for single account
                 ]},
                 {path, [
                     {api, <<"/api/2/json">>},   %% all apis POST queries
                     {upload, <<"/api/2/upload">>},  %% upload scheme, json, csv
                     {download, <<"/api/2/download">>},  %% download scheme, csv
                     {ws, <<"/api/1/sock_json">>},   %% events in real time
-                    {doc, <<"/en">>},   %% documentation domain
-                    {webhook, <<"/api/1/">>}    %% this one plus host.webhook = (http:https)://host.webhook/path.webhook/(xml|json|nvp)/...
+            	    {doc, [
+                	    {index, <<"/docs">>},
+                	    {introduction, <<"/introduction">>},
+                	    {bot_platform, <<"/bot-platform-20">>},
+                	    {task_export, <<"/tasks-export">>},
+                	    {mask_values, <<"/task-parameters#masking-values">>}
+            	    ]},
+                    {webhook, <<"/api/1/">>},    %% this one plus host.webhook = (http:https)://host.webhook/path.webhook/(xml|json|nvp)/...
+                    {auth, <<"/auth2/single_account">>}       %% account auth
                 ]},
                 {sender, [
                     %% Interaction with the sender to create Sender forms, Sender action...
@@ -126,18 +329,21 @@ data:
                 %{captcha_key, <<"">>},
                 {captcha, [
                     {key, <<"{{ .Values.global.capi.capi_front_captcha_key | default "" }}">>}, %% key for works with captcha (page /login if corezoid registration)
-                    {disabled, {{ .Values.global.capi.capi_front_captcha_key_disabled | default true }} }
+                    {disabled, {{ .Values.global.capi.capi_front_captcha_key_disabled }} }
                 ]},
+                {whitelist, [<<"{{ .Values.global.domain }}">>]},
                 {ui, [
-                    {market, {{ .Values.global.capi.front_setting.ui.market }} },                   %% to Market button
-                    {company, {{ .Values.global.capi.front_setting.ui.company }}},                  %% button Create -> Company
-                    {bot_platform, {{ .Values.global.capi.front_setting.ui.bot_platform }} },       %% button Create -> Bot platform
-                    {old_editor, false },           %% button Old editor
-                    {search, {{ .Values.global.capi.front_setting.ui.search }} },                   %% process search
-                    {health, false },                   %% Show health_check menu
-                    {send_invite, false },         %% send an invite or not
-                    {billing, false },                 %% billing button display
-                    {git_call, false },                %% display of the git_call button
+                    {market, {{ .Values.global.capi.front_setting.ui.market }} },                  %% to Market button
+                    {bot_platform, {{ .Values.global.capi.front_setting.ui.bot_platform }} },            %% button Create -> Bot platform
+                    {old_editor, false },              %% button Old editor
+                    {company, {{ .Values.global.capi.front_setting.ui.company }} },                  %% Button Create -> Company
+                    {search, true },                   %% process search
+                    {send_invite, true },              %% send an invite or not
+                    {health, false },                  %% Show health_check menu
+                    {billing, {{ .Values.global.capi.front_setting.ui.billing }} },                                 %% billing button display
+                    {git_call, {{ .Values.global.capi.front_setting.ui.git_call }}},                                %% display of the git_call button
+                    {tab_name, <<"Corezoid - cloud operating system">>},
+                    {disabled_auth_logo, {{ .Values.global.capi.front_setting.ui.disabled_auth_logo }}},            %% disable or enable logo on main page
                     {default_company, << {{ quote .Values.global.capi.front_setting.ui.default_company }} >> }      %% Set default company name
                 ]}
             ]},
@@ -148,93 +354,121 @@ data:
                 %% 3. Folders
                 %% Elastic helps us to find these objects for name, It's as like in DB
             {elastic_search, [
+              {{- if eq .Values.global.elasticsearch.internal false }}
+                {host, <<"${ELASTICSEARCH_HOST}">>},
+                {port, ${ELASTICSEARCH_PORT} },
+              {{- else }}
                 {host, <<"http://elasticsearch-service">>},
                 {port, 9200},
-                {timeout, 5000}
+              {{- end }}
+                {timeout, 50000}
             ]},
 
             % PgSQL settings
             %% main database pool settings ( the main base is company folders, processes, i.e. whole front )
             {pgsql, [
-          {{- if eq .Values.global.db.internal false }}
-                {host, "{{ .Values.global.db.dbhost }}"},
-                    %% hosts - tasks, settings of nodes
-                    {hosts, [
-                    { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-          {{- range $i, $e := .Values.global.db.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "{{ .Values.global.db.dbhost }}" }
-
-          {{- else }}
+          {{- if .Values.global.db.bouncer }}
                 {host, "pgbouncer-service"},
                     {hosts, [
                     { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
+          {{- else }}
+                {host, "${POSTGRES_DBHOST}"},
+                    %% hosts - tasks, settings of nodes
+                    {hosts, [
+                    { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
+          {{- range $i, $e := .Values.global.db.shards }}
+          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
           {{- end }}
                     ]},
-                {user, "{{ .Values.global.db.dbuser }}"},
+                {user, "${POSTGRES_DBUSER}"},
                 {dbname, "conveyor"},
-                {password, "{{ .Values.global.db.dbpwd }}"},
-                {min_size, 5},          %% The minimum number of connections after the start and 30 seconds of work.
-                {max_size, 100},            %% The maximum number of connections is the border to which we can raise, within 30 seconds.
-                {start_size, 5},            %% The number of connections that rises to the pool, at the start of this pool. Every 30 seconds check connect and then go to min_size
-                {max_overflow_pool_size, 50},   %% Legacy: will be removed
-                {dismiss_overflow, false}       %% Legacy: will be removed
+                {password, "${POSTGRES_DBPWD}"},
+                {min_size, 2},          %% The minimum number of connections after the start and 30 seconds of work.
+                {max_size, 5},            %% The maximum number of connections is the border to which we can raise, within 30 seconds.
+                {start_size, 2}           %% The number of connections that rises to the pool, at the start of this pool. Every 30 seconds check connect and then go to min_size
+                %%{max_overflow_pool_size, 50},   %% Legacy: will be removed
+                %%{dismiss_overflow, false}       %% Legacy: will be removed
             ]},
 
             %% database pool for for usercode sandboxes only
             {pgsql_cce_temp, [
-          {{- if eq .Values.global.db.internal false }}
-                {host, "{{ .Values.global.db.dbhost }}"},
-          {{- else }}
+          {{- if .Values.global.db.bouncer }}
                 {host, "pgbouncer-service"},
+          {{- else }}
+                {host, "${POSTGRES_DBHOST}"},
           {{- end }}
-                {user, "{{ .Values.global.db.dbuser }}"},
+                {user, "${POSTGRES_DBUSER}"},
                 {db_name, "cce"},
-                {password, "{{ .Values.global.db.dbpwd }}"},
+                {password, "${POSTGRES_DBPWD}"},
                 {min_size, 2},
-                {max_size, 50},
+                {max_size, 25},
                 {start_size, 2}
             ]},
 
             %% database for git call
             {pgsql_git_call, [
-          {{- if eq .Values.global.db.internal false }}
-                {host, "{{ .Values.global.db.dbhost }}"},
-          {{- else }}
+          {{- if .Values.global.db.bouncer }}
                 {host, "pgbouncer-service"},
+          {{- else }}
+                {host, "${POSTGRES_DBHOST}"},
           {{- end }}
-                {user, "{{ .Values.global.db.dbuser }}"},
+                {user, "${POSTGRES_DBUSER}"},
                 {db_name, "git_call"},
-                {password, "{{ .Values.global.db.dbpwd }}"},
+                {password, "${POSTGRES_DBPWD}"},
                 {min_size, 0},
                 {max_size, 0},
                 {start_size, 0}
             ]},
+
+          %%  postgresql archive db
+          { pgsql_archive, [
+            {{- if .Values.global.db.bouncer }}
+              { hosts, [
+                { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
+            {{- range $i, $e := .Values.global.db.shards }}
+            {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
+              ]},
+            {{- else }}
+              { hosts, [
+                { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
+            {{- range $i, $e := .Values.global.db.shards }}
+            {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
+              ]},
+            {{- end }}
+              { user, "${POSTGRES_DBUSER}" },
+              { password, "${POSTGRES_DBPWD}" },
+              { start_size, 2 },
+              { min_size, 2 },
+              { max_size, 50 }
+            ]},
+
+
 
             %% database pool for highloads clients (removal of highly loaded processes in a separate database)
             %% Extended solution
             {pgsql_extra, []},
 
             {kernel, [
-                {inet_dist_listen_min, 52617},          %% for api cluster the minimum port that can use
-                {inet_dist_listen_max, 52617}           %% for api cluster the maximum port that can use
+                %%{inet_dist_listen_min, 52617},          %% for api cluster the minimum port that can use
+                %%{inet_dist_listen_max, 52617}           %% for api cluster the maximum port that can use
             ]},
 
             % redis pool for counters and api-sum-s
             {redis1, [
                 [   {{- if eq .Values.global.redis.internal false }}
-                    {host, "{{ .Values.global.redis.host }}"},
-                    {port, {{ .Values.global.redis.port }}},
-                    {password,"{{ .Values.global.redis.password }}"},
+                    {host, "${REDIS_HOST}"},
+                    {port, ${REDIS_PORT}},
+                    {password,"${REDIS_PASSWORD}"},
                     {{- else }}
                     {host, "redis-master"},
                     {port, 6379},
                     {password,""},
                     {{- end }}
                     {database,1},
-                    {start_size, 10},
-                    {min_size, 10},
+                    {start_size, 5},
+                    {min_size, 5},
                     {max_size, 100}
                 ]
             ]},
@@ -242,62 +476,36 @@ data:
             %% memory redis for cache task
             {redis2, [
                 [   {{- if eq .Values.global.redis.internal false }}
-                    {host, "{{ .Values.global.redis.host }}"},
-                    {port, {{ .Values.global.redis.port }}},
-                    {password,"{{ .Values.global.redis.password }}"},
+                    {host, "${REDIS_HOST}"},
+                    {port, ${REDIS_PORT}},
+                    {password,"${REDIS_PASSWORD}"},
                     {{- else }}
                     {host, "redis-master"},
                     {port, 6379},
                     {password,""},
                     {{- end }}
                     {database,3},
-                    {start_size, 50},
-                    {min_size, 50},
-                    {max_size, 500}
+                    {start_size, 10},
+                    {min_size, 10},
+                    {max_size, 200}
                 ]
             ]},
 
             %% redis pool for api_sum logic
             {redis_api_sum, [
                 [   {{- if eq .Values.global.redis.internal false }}
-                    {host, "{{ .Values.global.redis.host }}"},
-                    {port, {{ .Values.global.redis.port }}},
-                    {password,"{{ .Values.global.redis.password }}"},
+                    {host, "${REDIS_HOST}"},
+                    {port, ${REDIS_PORT}},
+                    {password,"${REDIS_PASSWORD}"},
                     {{- else }}
                     {host, "redis-master"},
                     {port, 6379},
                     {password,""},
                     {{- end }}
                     {database,2},
-                    {start_size, 10},
-                    {min_size, 10},
-                    {max_size, 100}
-                ]
-            ]},
-
-            %% dns cache. Support multiply dnses cache
-            %% name - unical name will be able to use in publish/consumer rabbitmq instead of server name
-            %% dns - DNS name
-            %% ns - NS name
-            %% ttl - auto reload info from DNS server (in seconds)
-            {dns_cache, [
-                [
-                    {name, name1},
-                    {{- if eq .Values.global.mq.internal false }}
-                      {dns, "{{ .Values.global.mq.host }}"},
-                    {{- else }}
-                      {dns, "rabbit-service"},
-                    {{- end }}
-                    {ttl, 60}
-                ],
-                [
-                    {name, name5},
-                    {{- if eq .Values.global.mq.internal false }}
-                      {dns, "{{ .Values.global.mq.host }}"},
-                    {{- else }}
-                      {dns, "rabbit-service"},
-                    {{- end }}
-                    {ttl, 60}
+                    {start_size, 2},
+                    {min_size, 2},
+                    {max_size, 50}
                 ]
             ]},
 
@@ -309,24 +517,24 @@ data:
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], [
           {{- if eq .Values.global.mq.internal false }}
-                    {host, '{{ .Values.global.mq.host }}'}
+                    {host, "${MQ_HOST}"}
                     ]}
                 ]},
-                {port, {{ .Values.global.mq.port }} },
-                {username, <<"{{ .Values.global.mq.username }}">>},
-                {password, <<"{{ .Values.global.mq.password }}">>},
+                {port, ${MQ_PORT} },
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
           {{- else }}
-                        {host, 'rabbit-service'}
+                        {host, "rabbit-service"}
                     ]}
                 ]},
                 {port, 5672},
-                {username, <<"app-user">>},
-                {password, <<"password">>},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
           {{- end }}
-                {vhost, <<"/conveyor">>},
-                {min_size, 20},
-                {max_size, 50},
-                {start_size, 20}
+                {vhost, <<"${MQ_VHOST}">>},
+                {min_size, 5},
+                {max_size, 5},
+                {start_size, 5}
             ]},
 
             % api copy queue (support multiply consumers)
@@ -334,75 +542,22 @@ data:
                 {servers, [
           {{- if eq .Values.global.mq.internal false }}
                       [
-                        {host, '{{ .Values.global.mq.host }}'},
-                        {port, {{ .Values.global.mq.port }}},
-                        {username, <<"{{ .Values.global.mq.username }}">>},
-                        {password, <<"{{ .Values.global.mq.password }}">>},
-                        {vhost, <<"/conveyor">>}
-                    ],
-                    [
-                        {host, '{{ .Values.global.mq.host }}'},
-                        {port, {{ .Values.global.mq.port }}},
-                        {username, <<"{{ .Values.global.mq.username }}">>},
-                        {password, <<"{{ .Values.global.mq.password }}">>},
-                        {vhost, <<"/conveyor">>}
-                    ],
-                    [
-                        {host, '{{ .Values.global.mq.host }}'},
-                        {port, {{ .Values.global.mq.port }}},
-                        {username, <<"{{ .Values.global.mq.username }}">>},
-                        {password, <<"{{ .Values.global.mq.password }}">>},
-                        {vhost, <<"/conveyor">>}
-                    ],
-                    [
-                        {host, '{{ .Values.global.mq.host }}'},
-                        {port, {{ .Values.global.mq.port }}},
-                        {username, <<"{{ .Values.global.mq.username }}">>},
-                        {password, <<"{{ .Values.global.mq.password }}">>},
-                        {vhost, <<"/conveyor">>}
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
                       [
-                        {host, 'rabbit-service'},
+                        {host, "rabbit-service"},
                         {port, 5672},
-                        {username, <<"app-user">>},
-                        {password, <<"password">>},
-                        {vhost, <<"/conveyor">>}
-                    ],
-                    [
-                        {host, 'rabbit-service'},
-                        {port, 5672},
-                        {username, <<"app-user">>},
-                        {password, <<"password">>},
-                        {vhost, <<"/conveyor">>}
-                    ],
-                    [
-                        {host, 'rabbit-service'},
-                        {port, 5672},
-                        {username, <<"app-user">>},
-                        {password, <<"password">>},
-                        {vhost, <<"/conveyor">>}
-                    ],
-                    [
-                        {host, 'rabbit-service'},
-                        {port, 5672},
-                        {username, <<"app-user">>},
-                        {password, <<"password">>},
-                        {vhost, <<"/conveyor">>}
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- end }}
                 ]},
-          {{- if eq .Values.global.mq.internal false }}
-                {port, {{ .Values.global.mq.port }} },
-                {username, <<"{{ .Values.global.mq.username }}">>},
-                {password, <<"{{ .Values.global.mq.password }}">>},
-          {{- else }}
-                {port, 5672},
-                {username, <<"app-user">>},
-                {password, <<"password">>},
-          {{- end }}
-                {vhost, <<"/conveyor">>},
-
                 {queues_count, 1},
                 {connections_per_queue, 1},
                 {channels_per_connection, 1},
@@ -415,49 +570,22 @@ data:
                 {servers, [
           {{- if eq .Values.global.mq.internal false }}
                       [
-                        {host, '{{ .Values.global.mq.host }}'},
-                        {port, {{ .Values.global.mq.port }}},
-                        {username, <<"{{ .Values.global.mq.username }}">>},
-                        {password, <<"{{ .Values.global.mq.password }}">>},
-                        {vhost, <<"/conveyor">>}
-                    ],
-
-
-                    %% when scaling, you can use several
-                    [
-                        {host, '{{ .Values.global.mq.host }}'},
-                        {port, {{ .Values.global.mq.port }}},
-                        {username, <<"{{ .Values.global.mq.username }}">>},
-                        {password, <<"{{ .Values.global.mq.password }}">>},
-                        {vhost, <<"/conveyor">>}
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
                       [
-                        {host, 'rabbit-service'},
+                        {host, "rabbit-service"},
                         {port, 5672},
-                        {username, <<"app-user">>},
-                        {password, <<"password">>},
-                        {vhost, <<"/conveyor">>}
-                    ],
-                    [
-                        {host, 'rabbit-service'},
-                        {port, 5672},
-                        {username, <<"app-user">>},
-                        {password, <<"password">>},
-                        {vhost, <<"/conveyor">>}
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- end }}
                 ]},
-          {{- if eq .Values.global.mq.internal false }}
-                {port, {{ .Values.global.mq.port }} },
-                {username, <<"{{ .Values.global.mq.username }}">>},
-                {password, <<"{{ .Values.global.mq.password }}">>},
-          {{- else }}
-                {port, 5672},
-                {username, <<"app-user">>},
-                {password, <<"password">>},
-          {{- end }}
-                {vhost, <<"/conveyor">>},
                 {order_by, true},
                 {queues_count, 1},
                 {connections_per_queue, 1},
@@ -465,42 +593,54 @@ data:
                 {messages_prefetch_size_per_channel, 50}
             ]},
 
-
-
             %% async events queue between users publisher
             {publish_user_actions_request, [
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-                {host, '{{ .Values.global.mq.host }}'},
-                {port, {{ .Values.global.mq.port }}},
-                {username, <<"{{ .Values.global.mq.username }}">>},
-                {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-                {host, 'rabbit-service'},
-                {port, 5672},
-                {username, <<"app-user">>},
-                {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-                {vhost, <<"/conveyor">>},
+                ]},
                 {queues_count, 1},
                 {min_size, 1},
-                {max_size, 20},
+                {max_size, 1},
                 {start_size, 1}
             ]},
 
             %% async events queue consumer
             {consumer_user_actions_request, [
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-                {host, '{{ .Values.global.mq.host }}'},
-                {port, {{ .Values.global.mq.port }}},
-                {username, <<"{{ .Values.global.mq.username }}">>},
-                {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-                {host, 'rabbit-service'},
-                {port, 5672},
-                {username, <<"app-user">>},
-                {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-                {vhost, <<"/conveyor">>},
+                ]},
                 {queues_count, 1},
                 {connections_per_queue, 1},
                 {channels_per_connection, 1},
@@ -509,18 +649,25 @@ data:
 
             %% deprecated
             {consumer_notify_actions_request, [
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-                {host, '{{ .Values.global.mq.host }}'},
-                {port, {{ .Values.global.mq.port }}},
-                {username, <<"{{ .Values.global.mq.username }}">>},
-                {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-                {host, 'rabbit-service'},
-                {port, 5672},
-                {username, <<"app-user">>},
-                {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-                {vhost, <<"/conveyor">>},
+                ]},
                 {queues_count, 1},
                 {connections_per_queue, 1},
                 {channels_per_connection, 2},
@@ -531,59 +678,52 @@ data:
             %% work in pair with multipart worker
             %% through this queue goes tasks with loading scheme from multipart to api
             {consumer_multipart_connector_request, [
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-                {host, '{{ .Values.global.mq.host }}'},
-                {port, {{ .Values.global.mq.port }}},
-                {username, <<"{{ .Values.global.mq.username }}">>},
-                {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-                {host, 'rabbit-service'},
-                {port, 5672},
-                {username, <<"app-user">>},
-                {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-                {vhost, <<"/conveyor">>},
+                ]},
                 {queues_count, 1},
                 {connections_per_queue, 1},
                 {channels_per_connection, 2},
                 {messages_prefetch_size_per_channel, 50}
             ]},
 
-            %% works with elasticsearch
-            %% all elasticsearch errors goes through this queue
-            {publish_elastic_actions_request, [
-          {{- if eq .Values.global.mq.internal false }}
-                {host, '{{ .Values.global.mq.host }}'},
-                {port, {{ .Values.global.mq.port }}},
-                {username, <<"{{ .Values.global.mq.username }}">>},
-                {password, <<"{{ .Values.global.mq.password }}">>},
-          {{- else }}
-                {host, 'rabbit-service'},
-                {port, 5672},
-                {username, <<"app-user">>},
-                {password, <<"password">>},
-          {{- end }}
-                {vhost, <<"/conveyor">>},
-                {queues_count, 1},
-                {min_size, 2},
-                {max_size, 2},
-                {start_size, 2}
-            ]},
-
             %% elasticsearch consumer
             {consumer_elastic_actions_request, [
+                {servers, [
           {{- if eq .Values.global.mq.internal false }}
-                {host, '{{ .Values.global.mq.host }}'},
-                {port, {{ .Values.global.mq.port }}},
-                {username, <<"{{ .Values.global.mq.username }}">>},
-                {password, <<"{{ .Values.global.mq.password }}">>},
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- else }}
-                {host, 'rabbit-service'},
-                {port, 5672},
-                {username, <<"app-user">>},
-                {password, <<"password">>},
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
           {{- end }}
-                {vhost, <<"/conveyor">>},
+                ]},
                 {queues_count, 1},
                 {connections_per_queue, 1},
                 {channels_per_connection, 2},
@@ -592,62 +732,79 @@ data:
 
             %% settings publisher
             {publish_settings, [
-                {servers, [[
-              {{- if eq .Values.global.mq.internal false }}
-                    {host, '{{ .Values.global.mq.host }}'},
-                    {port, {{ .Values.global.mq.port }}},
-                    {username, <<"{{ .Values.global.mq.username }}">>},
-                    {password, <<"{{ .Values.global.mq.password }}">>},
-              {{- else }}
-                    {host, 'rabbit-service'},
-                    {port, 5672},
-                    {username, <<"app-user">>},
-                    {password, <<"password">>},
-              {{- end }}
-                    {vhost, <<"/conveyor">>}
-                ]]},
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
                 {min_size, 1},
-                {max_size, 5},
+                {max_size, 1},
                 {start_size, 1}
             ]},
 
             %% settings consumer
             {consumer_settings, [
-                {servers, [[
-              {{- if eq .Values.global.mq.internal false }}
-                    {host, '{{ .Values.global.mq.host }}'},
-                    {port, {{ .Values.global.mq.port }}},
-                    {username, <<"{{ .Values.global.mq.username }}">>},
-                    {password, <<"{{ .Values.global.mq.password }}">>},
-              {{- else }}
-                    {host, 'rabbit-service'},
-                    {port, 5672},
-                    {username, <<"app-user">>},
-                    {password, <<"password">>},
-              {{- end }}
-                    {vhost, <<"/conveyor">>}
-                ]]},
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
                 {connections_per_queue, 1},
                 {channels_per_connection, 1},
                 {messages_prefetch_size_per_channel, 50}
             ]},
 
+
+
             %% Statistics consumer
             {consumer_statistics, [
-                {servers, [[
-              {{- if eq .Values.global.mq.internal false }}
-                    {host, '{{ .Values.global.mq.host }}'},
-                    {port, {{ .Values.global.mq.port }}},
-                    {username, <<"{{ .Values.global.mq.username }}">>},
-                    {password, <<"{{ .Values.global.mq.password }}">>},
-              {{- else }}
-                    {host, 'rabbit-service'},
-                    {port, 5672},
-                    {username, <<"app-user">>},
-                    {password, <<"password">>},
-              {{- end }}
-                    {vhost, <<"/conveyor">>}
-                ]]},
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
                 {connections_per_queue, 1},
                 {channels_per_connection, 1},
                 {messages_prefetch_size_per_channel, 1}
@@ -655,42 +812,47 @@ data:
 
             % ldap auth settings
             {ldap, [
-                {server, ""},
-                {port, 389 },
-                {tls, false}, %% true | false
-                {base, "ou=people,o=middleware" },      %% ou=special users,o=middleware
-                {filter, "uid"}, %% uid | cn
-                {first_bind_user, true }, %% then this param is true, bind_user_name, bind_user_pass should be filled. if it's false it is not necessary
-                {bind_user_name, "uid=corezoid,ou=people,o=middleware" }, %% or like this "cn=middleware,ou=DHO,ou=fuib,dc=fuib,dc=com"
-                {bind_user_pass, "password" },
-                {user_nick_entry, "cn" } %% ldap nick name path
+                {server, "{{ .Values.global.capi.ldap_server }}"},
+                {port, {{ .Values.global.capi.ldap_port }} },
+          {{- if and .Values.global.capi.ldap_tls (eq .Values.global.capi.ldap_tls true) }}
+                {tls, {{ .Values.global.capi.ldap_tls }}}, %% true | false
+          {{- end }}
+                {base, "{{ .Values.global.capi.ldap_base }}"},      %% ou=special users,o=middleware
+                {filter, "{{ .Values.global.capi.ldap_filter }}"}, %% uid | cn
+                {first_bind_user, {{ .Values.global.capi.ldap_first_bind_user }} }, %% then this param is true, bind_user_name, bind_user_pass should be filled. if it's false it is not necessary
+                {bind_user_name, "{{ .Values.global.capi.ldap_bind_user_name }}" }, %% or like this "cn=middleware,ou=DHO,ou=fuib,dc=fuib,dc=com"
+                {bind_user_pass, "{{ .Values.global.capi.ldap_bind_user_pass }}" },
+                {user_nick_entry, "{{ .Values.global.capi.ldap_user_nick_entry }}" } %% ldap nick name path
             ]},
 
-            %%deprecated
-            {oauth_pb, [
-                {client_id, ""},
-                {client_secret, ""},
-                {return_url, "{{ .Values.global.main_page }}"},
-                {oauth_url, ""},
-                {token_url, ""},
-                {userinfo_url, ""},
-                {logout_url, ""},
-                {isauthorize_url, ""}
+            %% google auth settings
+            {oauth, [
+              %% google auth for {{ .Values.global.subdomain }}.{{ .Values.global.domain }} (api1)
+              {auth_google, [
+                {client_id, "{{ .Values.global.sa.google_client_id }}"},
+                {client_secret, "{{ .Values.global.sa.google_client_secret }}"},
+                {return_url, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/auth/google/return"},
+                {type, auth_google},
+                {oauth_url, "https://accounts.google.com/o/oauth2/auth"},
+                {token_url, "https://accounts.google.com/o/oauth2/token"},
+                {userinfo_url, "https://www.googleapis.com/oauth2/v1/userinfo?access_token="},
+                {status, on}
+              ]},
+
+              %% google auth for {{ .Values.global.subdomain }}.{{ .Values.global.domain }} (api2)
+              {auth2_google, [
+                {client_id, "{{ .Values.global.sa.google_client_id }}"},
+                {client_secret, "{{ .Values.global.sa.google_client_secret }}"},
+                {return_url, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/auth2/google/return"},
+                {type, auth_google},
+                {oauth_url, "https://accounts.google.com/o/oauth2/auth"},
+                {token_url, "https://accounts.google.com/o/oauth2/token"},
+                {userinfo_url, "https://www.googleapis.com/oauth2/v1/userinfo?access_token="},
+                {status, on}
+              ]}
+
             ]},
 
-            % site settings
-            {site, [
-                %{cache, true},
-                {title, <<"https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},
-                {site, <<"https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},
-                {oauth_pb, false},                                                  %% allows to connect via company ldap account. true | false
-                {auth_ldap, false},                   %% allows to connect via other ldap account. true | false
-                {auth_google, false},               %% allows to connect via google account. true | false
-                {corezoid_auth, true},           %% allows to connect via corezoid account. true | false
-                {box_solution, true},             %% true | false. When box_solution is false -> we can't create companies
-                {files_repository, redis_cache},                                    %% redis | amazon_s3
-                {api_max_threads, {{ .Values.global.capi.api_max_threads }}}        %% max allowed threads for api logic
-            ]},
 
             %% Setting captcha backend
             {backend_settings, [
@@ -700,24 +862,6 @@ data:
                     {disabled, {{ .Values.global.capi.capi_backend_captcha_key_disabled }} }
                 ]}
             ]},
-
-            % group for super_users
-            {super_admin_id, 4 },
-            %{register_event_process, 1 }, %% for register_events
-            %{external_system_register_event_process, 10}, %% for external register events
-            %{payment_logs, 1 }, %% for stripe webhooks events
-            %{user_story_conv, 1 }, %% for first action by user
-            %{conv_logs, 1 }, %% conv_id for logs
-
-
-            %% messengers mode on
-            {telegram_url, "https://api.telegram.org/bot"},
-            {telegram_conv, 1 },
-            %% messengers mode off
-
-            {block_unblock_notify_conv, 1 },
-            {check_api_info_group, 4 }, %% for {"type":"show", "obj":"login"} requests
-            {check_privs_group, 4 },
 
             %% sending metrics to zabbix
             {zabbix, [
@@ -732,8 +876,8 @@ data:
                 {sender_build_form_url, "https://api.sender.mobi"}, %% for build form url
                 {sender_build_action_url, "https://api-adm.sender.mobi"}, %% for action url
                 {sender_call_action_url, "https://api-conv.sender.mobi"}, %% for call action url
-                {sender_secret, <<"zTNHKtHzGBuY1eVgNp0A2IJNNiJhDTkj">>},
-                {sender_plugin_secret, <<"8CxJT30WSzyeCr5GCfSS8RvU1zDtH5ro1NqQcOYRZ6x1OSMyHfdizgt">>},
+                {sender_secret, <<"">>},
+                {sender_plugin_secret, <<"">>},
                 {sender_max_threads, 25 },
                 {sender_env, <<"md">>}
             ]},
@@ -748,14 +892,14 @@ data:
 
             {logic_settings, [
                 {api, [
-                    {max_threads, 200}
+                    {max_threads, {{ .Values.global.capi.logic_settings.api_max_thread | default 200 }}}
                 ]},
                 {sender_api, [
-                    {max_threads, 25 }
+                    {max_threads, {{ .Values.global.capi.logic_settings.api_max_thread | default 25 }}}
                 ]},
                 {timer, [
                     {default, [
-                        {timer_min, 30}
+                        {timer_min, {{ .Values.global.capi.logic_settings.timer_default | default 30 }}}
                     ]}
                 ]}
             ]}
@@ -770,13 +914,13 @@ data:
         ]},
 
         {lager, [
-            %% What handlers to install with what arguments (wrapped by middleman)
+            %% What handlers to install with what arguments
 
             {log_root, "/ebsmnt/erlang/capi/log"},
             {handlers, [
-                {lager_console_backend, [{level, info}]},
-                {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 734003200}, {date, "$D0"}, {count, 1}]},
-                {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 734003200}, {date, "$D0"}, {count, 1}]}
+                {lager_console_backend, info},
+                {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 734003200}, {date, "$D0"}, {count, 1}]} %%,
+                %%{lager_file_backend, [{file, "console.log"}, {level, info}, {size, 734003200}, {date, "$D0"}, {count, 1}]}
             ]},
             %% What colors to use with what log levels
             {colored, true},
@@ -834,10 +978,27 @@ data:
         ]},
 
         {account_sdk, [
+        {{- if not .Values.global.sa.enabled }}
             {disabled, true}
+        {{- else }}
+            {pool, [
+                {host, "{{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }}"},
+                {port, 443},
+                {start_size, 10},
+                {min_size, 10},
+                {max_size, 10}
+            ]},
+            {disabled, false},
+            {client_id, "5dca7de57837d70001000006"},
+            {client_secret, "ZY8bwLJDYouuApi2ENxlup6kqShnhk3U"},
+            {return_url, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/auth2/single_account/return/"},
+            {oauth_url, "https://{{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }}/oauth2/authorize"},
+            {token_url, "https://{{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }}/oauth2/token"},
+            {userinfo_url, "https://{{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }}/oauth2/userinfo?access_token="}
+        {{- end }}
         ]}
 
-    ].
+        ].
 
 kind: ConfigMap
 metadata:

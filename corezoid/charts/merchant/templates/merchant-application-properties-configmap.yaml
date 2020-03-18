@@ -1,0 +1,60 @@
+apiVersion: v1
+data:
+  application.properties: |
+    #app port
+    server.port= {{ .Values.containers.containerPort }}
+    #healh check
+    management.server.port= 7980
+    management.server.address=0.0.0.0
+    management.endpoints.web.exposure.include=*
+    management.endpoints.enabled-by-default=true
+    management.endpoint.info.enabled=true
+    management.endpoint.metrics.enabled=true
+    management.endpoint.health.show-details=always
+    management.endpoint.beans.enabled=true
+    management.info.git.mode=full
+
+    server.connection-timeout=10000
+    #sql - get from ENV
+    #spring.datasource.url= jdbc:postgresql://localhost:5432/postgres
+    #spring.datasource.username=merchant
+    #spring.datasource.password=merchant
+    spring.datasource.initialization-mode=always
+
+    spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+    spring.jpa.show-sql=false
+    spring.jpa.hibernate.ddl-auto=update
+{{/*    spring.jpa.hibernate.ddl-auto=none*/}}
+{{/*    spring.datasource.initialization-mode=always*/}}
+{{/*    spring.datasource.platform=h2*/}}
+
+    spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+
+
+      #time otp cache alive/ NEED PROCESS IN COREZOID
+    application.cache.expireTimeInMinutes=20
+    application.otp.size=8
+    application.otp.corezoidUrl=https://www.corezoid.com/api/1/json/public/437604/ce1ea541ee8a5ede7b411783f4cdde257da09236
+
+          #update
+          #validate: validate the schema, makes no changes to the database.
+          #update: update the schema.
+          #create: creates the schema, destroying previous data.
+          #create-drop: drop the schema at the end of the session
+
+          # HTTP encoding (HttpEncodingProperties)
+    spring.http.encoding.charset=UTF-8
+    spring.http.encoding.enabled=true
+    spring.http.encoding.force=true
+
+
+     #redis cache - get from ENV
+    #spring.redis.host=127.0.0.1
+    #spring.redis.port=6379
+
+    #logging.level.root=DEBUG
+
+
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-config

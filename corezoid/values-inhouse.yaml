@@ -1,0 +1,266 @@
+# Global values for subcharts | production | Corezoid 5.0
+global:
+  #if secretalreadyexist true - all sensitive data will be taken from secrets and skipping from values
+  #if secretalreadyexist false - all sensitive data will be taken from  values below
+  secretalreadyexist: false
+  # repotype, posible values - corezoid / public
+  repotype: public
+  # second level domain only! / core domain (example: corezoid.com)
+  domain: "corezoid.com"
+  # subdomain for sitename - k8s.corezoid.com (example: k8s)
+  subdomain: "k8s"
+
+  # product name
+  product: corezoid
+
+  # internal: false - for ALB / true - install local ingress controller
+  # ingress class: alb or nginx or aws-dual
+  ingress:
+    internal: true
+    class: nginx
+
+  # AWS ELB options: internet-facing / internal
+  alb:
+    scheme: internet-facing
+    certificatearn: arn:aws:acm:eu-west-1:000000000000:certificate/000000-000000-0000-000-0000000000
+    # oidc support
+    oidc:
+      enabled: false
+      issuer: ""
+      endpoints:
+        authorize: ""
+        token: ""
+        userinfo: ""
+      clientId: ""
+      clientSecret: ""
+
+  # Define global storage class: efs / ceph / nfs / manual  (see README.md, efs is preferred)
+  storage: manual
+
+######## Settings AWS EFS filesystem   ########
+
+  efs:
+    awsRegion: "eu-west-1"
+    efsFileSystemId: "fs-00000000"
+
+######## Settings for statful services ########
+
+
+  ####### Postgre SQL ########
+  ## Supported version  from > 9.5 - 9.6.14R1 <
+  ## for RDS minimum instance - db.t2.small / master user set "postgres"
+  db:
+    #if internal true - create and use internal db container
+    #if internal false - enable external db, like rds
+    internal: true
+    #dbhost/dbport/dbuser/dbpwd/dbsuperuser/dbsuperpwd deps from secretalreadyexist
+    dbhost: ".eu-west-1.rds.amazonaws.com"
+
+    ## dbsuperuser - for init db and roles
+    ## dbuser - for work from Corezoid services
+    ## dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
+    dbuser: "internal_user"
+    ## password - for dbuser
+    dbpwd: "g4BOBiM7PClavM07lbAkYpy"
+
+    dbsuperuser: "postgres"
+    ## password - for postgres
+    dbsuperuserpwd: "M7PClavkYpyM07lbg4BOBiA"
+
+    dbport: 5432
+    ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
+    #be careful in defining this variable
+    #count of shards created in psql, if unset, default - 10
+    shards_count: 10
+    #count of shards created in psql, if unset, default - 10 - in array format
+    #TODO - make array from int and remove array env
+    shards: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+    # set false to disable if you don't want to use PGBouncer (default - true)
+    bouncer: true
+    #Config for pg_bouncer
+    #Maximum number of client connections allowed.
+    maxclientconn: 100000
+    #How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
+    default_pool_size: 1500
+    # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
+    # transaction | session
+    default_pool_mode: transaction
+
+    # Postgres corezoid schema version
+    postgres_schema:
+      version: 5.0.0
+
+
+  ####### Redis  ########
+  ## Supported version  from > 3.2.4 - 3.2.12 <
+  ## NO CLUSTER Mode!
+  redis:
+    #if internal true - create and use internal k8s redis container
+    #if internal false - enable external redis, like elasticache (Engine Version Compatibility: 3.2.10)
+    internal: true
+    # host/port/password deps from secretalreadyexist
+    host: ".cache.amazonaws.com"
+    port: 6379
+    password: ""
+
+
+  ####### Elasticsearch  ########
+  ## Supported version  from >= 6.7
+  elasticsearch:
+    tag: 6.7.1
+    #if internal true - create and use internal k8s elastic container
+    #if internal false - enable external elk, like aws elasticsearch service
+    internal: true
+    #host/port deps from secretalreadyexist
+    host: "https://.eu-west-1.es.amazonaws.com"
+    ##be careful with port - in internal install used 9200, in aws uses 443
+    port: "443"
+
+  #######  RabbitMQ ########
+  ## Supported version  from > 3.6.7 <
+  mq:
+    #if internal true - create and use internal k8s rmq container
+    #if internal false - enable external rmq (on ec2 as example )
+    internal: true
+    #host/port/vhost/username/password deps from secretalreadyexist
+    host: ""
+    port: "5672"
+    vhost: "/conveyor"
+    username: "app-user"
+    password: "SL9SXNHjd@fInYkn1RFT6@zvCFPYEr@r"
+    # vm_memory_high_watermark.relative
+    memoryHighWatermark: 0.3
+
+######## Settings for Corezoid services  ########
+  ##Settings for API Corezoid
+  capi:
+    tag: 7.0.0.3
+    minReplicas: 2
+    maxReplicas: 4
+    # capi secret and auth_hash deps from secretalreadyexist
+    ## secret for work with api-multipart ( it is a solt for sign user cookies )
+    ## Auth hash for cookie (it is a solt for password when we use corezoid auth method(login+password))
+    capi_auth_hash: "0PqNKlo0QH30dcYNGUqzYj2QnQuSDGsd"
+    #Key for captcha when login in UI
+    capi_front_captcha_key: ""
+    #We can disable or enable  captcha
+    capi_front_captcha_key_disabled: true
+    capi_backend_captcha_key: ""
+    capi_backend_captcha_key_disabled: true
+    #max req/sec of create|modify|delete for conv|folder|dashboard in 1 sec
+    max_reqs_limit: 5
+    ## Setting for configure frontend
+    front_setting:
+      host:
+        # documentation (navigate by clicking on DOCS link)
+        doc: "doc.corezoid.com"
+      ui:
+        # enabled Market button
+        market: false
+        # button Create -> Bot platform
+        bot_platform: false
+        # billing button display
+        billing: false
+        # display of the git_call button
+        git_call: false
+        # button Create -> Company
+        company: true
+        # set default company name
+        default_company: "My Corezoid"
+        # disable or enable logo on main page
+        disabled_auth_logo: false
+    ldap_server: "ldap.middleware.loc"
+    ldap_port: "389"
+    ldap_base: "ou=people,o=middleware"
+    ldap_filter: "uid"
+    #then this param is true, bind_user_name, bind_user_pass should be filled. if it's false it is not necessary
+    ldap_first_bind_user: true
+    ldap_bind_user_name: "uid=ldap,ou=people,o=middleware"
+    ldap_bind_user_pass: ""
+    ldap_user_nick_entry: "cn"
+    ldap_tls: false
+    # api limit counters by user_id
+    user_limits:
+      #default limit interface requests, ban after for 1 min
+      max_interface_rate: 100
+      #default limit for task create/modify, other will get 429 error
+      max_user_rate: 2000
+    logic_settings:
+      #max allowed threads for api logic
+      api_max_thread: 200
+      sender_max_threads: 25
+      timer_default: 5 # 30
+    # enigma private_key_id
+    enigma_pk_id: ""
+
+######## Settings for services ########
+
+# http-worker
+  http:
+    tag: 3.0.0.1
+    minReplicas: 2
+    maxReplicas: 4
+    max_http_resp_size: "5242880"
+    # enigma private_key_id
+    enigma_pk_id: ""
+
+# usercode
+  usercode:
+    tag: 6.0.3
+    minReplicas: 2
+    maxReplicas: 4
+    # enigma private_key_id
+    enigma_pk_id: ""
+
+# conveyor-worker
+  worker:
+    tag: 4.0.0.2
+    minReplicas: 2
+    maxReplicas: 4
+    # enigma private_key_id
+    enigma_pk_id: ""
+
+# mult
+  mult:
+    tag: 2.0.0.3
+    minReplicas: 1
+    maxReplicas: 1
+    # enigma private_key_id
+    enigma_pk_id: ""
+
+# webadm
+  webadm:
+    tag: 2.43
+    minReplicas: 2
+
+# web-superadm
+  web_superadm:
+    tag: 0.0.1
+    minReplicas: 1
+
+# syncapi
+  syncapi:
+    subdomain: "syncapi-public.in-k8s.dev"
+    tag: 1.1.3-e19 # dev
+    replicas: 1 # statefull set
+
+# merchant
+  merchant:
+    tag: v0.0.27.2
+    #login/secret for corezoid-merchant comunications
+    merchant_login: apiLogin1
+    merchant_secret: I9EmB170XUbe
+    minReplicas: 1
+    maxReplicas: 1
+
+# enigma global settings
+  enigma:
+    enabled: false # under develop
+    encryption: false # under develop
+
+# single-account
+  sa:
+    enabled: false # under develop
+  sa_web:
+    subdomain: ""

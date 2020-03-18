@@ -1,0 +1,18 @@
+{{- if eq .Values.global.storage "manual" }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.appName }}-{{ .Values.global.storage}}-{{ .Release.Name }}
+  labels:
+    tier: {{ .Values.appName }}
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  hostPath:
+    path: /ebsmnt/{{ .Release.Name }}/{{ .Values.appName }}
+{{- end }}

@@ -1,74 +1,31 @@
+{{- if .Values.global.db.bouncer }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.appName }}-service
   labels:
-    environment: {{ .Values.global.environment }}
+    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName}}
     service: {{ .Values.appName }}
 spec:
   selector:
-    environment: {{ .Values.global.environment }}
+    environment: {{ .Release.Namespace }}
     service: {{ .Values.appName }}
     app: {{ .Values.global.product }}
   ports:
-  - protocol: TCP
+  - name: pgbouncer
+    protocol: TCP
     port: 5432
     targetPort: 5432
-
----
-apiVersion: v1
-data:
-  # for correct hash do: postgres=# select passwd from pg_shadow;
-  userlist.txt: |
-    "internal_user" "md5bb973659e13c6fef11f90b9a4c6f78a3"
-kind: ConfigMap
-metadata:
-  name: {{ .Values.appName }}-userlist
-  resourceVersion: "3.4"
-  labels:
-    environment: {{ .Values.global.environment }}
-    app: {{ .Values.global.product }}
-    tier: {{ .Values.appName}}
-    service: {{ .Values.appName }}
-
----
-apiVersion: v1
-data:
-  pgbouncer.ini: |
-    ################## Auto generated ##################
-    [databases]
-    * = host=postgresql port=5432 user=internal_user
-
-    [pgbouncer]
-    listen_addr = 0.0.0.0
-    listen_port = 5432
-    unix_socket_dir =
-    user = postgres
-    auth_file = /etc/pgbouncer/userlist.txt
-    auth_type = md5
-    ignore_startup_parameters = extra_float_digits
-    admin_users = postgres
-    max_client_conn = 10000
-    ################## end file ##################
-kind: ConfigMap
-metadata:
-  name: {{ .Values.appName }}-pgbouncer-ini
-  resourceVersion: "3.4"
-  labels:
-    environment: {{ .Values.global.environment }}
-    app: {{ .Values.global.product }}
-    service: {{ .Values.appName }}
-
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
   name: {{ .Values.appName }}-deployment
   labels:
-    environment: {{ .Values.global.environment }}
+    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName}}
     service: {{ .Values.appName }}
@@ -78,8 +35,12 @@ spec:
   replicas: 1 # tells deployment to run 2 pods matching the template
   template: # create pods using pod definition in this template
     metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9127"
+        prometheus.io/scrape: "true"
       labels:
-        environment: {{ .Values.global.environment }}
+        environment: {{ .Release.Namespace }}
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName}}
         service: {{ .Values.appName }}
@@ -88,38 +49,115 @@ spec:
         - name: {{ .Values.appName }}
           image: {{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.image.tag }}
           env:
+
+          {{- if eq .Values.global.secretalreadyexist true }}
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbuser
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbpwd
+            - name: STATS_USERS
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbuser
+            - name: DB_HOST
+            {{- if .Values.global.db.internal }}
+              value: postgresql
+            {{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbhost
+            {{- end }}
+            {{- else}}
+            - name: DB_HOST
+            {{- if .Values.global.db.internal }}
+              value: postgresql
+             {{- else }}
+              value: {{ .Values.global.db.dbhost }}
+             {{- end }}
             - name: DB_USER
               value: {{ .Values.global.db.dbuser }}
             - name: DB_PASSWORD
               value: {{ .Values.global.db.dbpwd }}
-            - name: DB_HOST
-              value: postgresql
+            - name: STATS_USERS
+              value: {{ .Values.global.db.dbuser }}
+            {{- end }}
             - name: DB_NAME
-              value: conveyor
+              value: "*"
+            - name: MAX_CLIENT_CONN
+              value: {{ .Values.global.db.maxclientconn | quote }}
+            - name: DEFAULT_POOL_SIZE
+              value: {{ .Values.global.db.default_pool_size | quote }}
+            - name: RESERVE_POOL_SIZE
+              value: "200"
+            - name: POOL_MODE
+              value: {{ .Values.global.db.default_pool_mode }}
+            - name: RESERVE_POOL_TIMEOUT
+              value: "2"
+            - name: SERVER_IDLE_TIMEOUT
+              value: "15"
           ports:
           - containerPort: 5432
-          volumeMounts:
-            - name: {{ .Values.appName }}-userlist
-              mountPath: /etc/pgbouncer/userlist.txt
-              subPath: userlist.txt
-            - name: {{ .Values.appName }}-pgbouncer-ini
-              mountPath: /etc/pgbouncer/pgbouncer.ini
-              subPath: pgbouncer.ini
           resources:
             limits:
-              cpu: 200m
-              memory: 200Mi
+              cpu: 1000m
+              memory: 500Mi
             requests:
-              cpu: 10m
-              memory: 100Mi
-            {{- if not  (eq .Values.global.repotype "public") }}
-      imagePullSecrets:
-        - name: {{ .Values.global.imagePullSecrets.name }}
+              cpu: 100m
+              memory: 350Mi
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+        - name: pgbouncer-exporter
+          image: spreaker/prometheus-pgbouncer-exporter
+          env:
+            - name: PGBOUNCER_EXPORTER_HOST
+              value: 0.0.0.0
+            - name: PGBOUNCER_EXPORTER_PORT
+              value: "9127"
+            - name: PGBOUNCER_HOST
+              value: localhost
+            - name: PGBOUNCER_PORT
+              value: "5432"
+            {{- if eq .Values.global.secretalreadyexist true }}
+            - name: PGBOUNCER_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbuser
+            - name: PGBOUNCER_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbpwd
+            {{- else}}
+            - name: PGBOUNCER_USER
+              value: {{ .Values.global.db.dbuser }}
+            - name: PGBOUNCER_PASS
+              value: {{ .Values.global.db.dbpwd }}
             {{- end }}
-      volumes:
-        - name: {{ .Values.appName }}-userlist
-          configMap:
-            name: {{ .Values.appName }}-userlist
-        - name: {{ .Values.appName }}-pgbouncer-ini
-          configMap:
-            name: {{ .Values.appName }}-pgbouncer-ini
+      {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: corezoid-secret
+      {{- end }}
+{{- end }}

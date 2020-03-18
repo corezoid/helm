@@ -1,0 +1,62 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  labels:
+    environment: {{ .Release.Namespace }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/syncapi-web-configmap-nginx.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/syncapi-web-configmap-site.yaml") . | sha256sum }}
+      labels:
+        environment: {{ .Release.Namespace }}
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}
+    spec:
+      terminationGracePeriodSeconds: 40
+      initContainers:
+        - name: init-wait
+          image: alpine
+          command: ["sh", "-c", "until nc -zvw1 syncapi-service 8090; do echo waiting for syncapi set; sleep 2; done;"]
+      containers:
+        - name: {{ .Values.appName }}
+          image: openresty/openresty
+          ports:
+          - containerPort: 80
+          volumeMounts:
+            - name: {{ .Values.appName }}-config-nginx
+              mountPath: /usr/local/openresty/nginx/conf/nginx.conf
+              subPath: nginx.conf
+            - name: {{ .Values.appName }}-config-site
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: corezoid.conf
+            - name: {{ .Values.appName }}-lua-scripts
+              mountPath: /usr/local/openresty/nginx/lua
+          resources:
+            limits:
+              cpu: 150m
+              memory: 300Mi
+            requests:
+              cpu: 10m
+              memory: 200Mi
+      {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: corezoid-secret
+      {{- end }}
+      volumes:
+        - name: {{ .Values.appName }}-config-nginx
+          configMap:
+            name: {{ .Values.appName }}-main
+        - name: {{ .Values.appName }}-config-site
+          configMap:
+            name: {{ .Values.appName }}-site
+        - name: {{ .Values.appName }}-lua-scripts
+          configMap:
+            name: {{ .Values.appName }}-lua

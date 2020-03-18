@@ -1,0 +1,207 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}-deployment
+  labels:
+    environment: {{ .Release.Namespace }}
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: {{ .Values.global.merchant.minReplicas }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/merchant-application-properties-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/merchant-callback-properties-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/merchant-datasource-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/merchant-log4j2-spring-configmap.yaml") . | sha256sum }}
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9100"
+        prometheus.io/scrape: "true"
+      labels:
+        environment: {{ .Release.Namespace }}
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}
+    spec:
+      terminationGracePeriodSeconds: 40
+      initContainers:
+        - name: init-wait
+          image: alpine
+          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} nc -zvw1 postgresql 5432 {{- if not .Values.global.db.internal }} && nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }}; do echo waiting for deps services ; sleep 2; done;"]
+          env:
+            {{- if eq .Values.global.secretalreadyexist true }}
+            - name: POSTGRES_DBHOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbhost
+            - name: POSTGRES_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbport
+            {{- else}}
+            - name: POSTGRES_DBHOST
+              value: {{ .Values.global.db.dbhost }}
+            - name: POSTGRES_DBPORT
+              value: {{ .Values.global.db.dbport | quote }}
+            {{- end }}
+      containers:
+        - name: {{ .Values.appName }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          image: {{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.merchant.tag }}
+          env:
+          {{- if eq .Values.global.secretalreadyexist true }}
+                  {{- if eq .Values.global.redis.internal true }}
+          - name: SPRING_REDIS_HOST
+            value: redis-master
+          - name: SPRING_REDIS_PORT
+            value: "6379"
+                  {{- else}}
+          - name: SPRING_REDIS_HOST
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: redis_host
+          - name: SPRING_REDIS_PORT
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: redis_port
+                  {{- end }}
+          - name: MERCHANT_LOGIN
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: merchant_login
+          - name: MERCHANT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: merchant_secret
+                  {{- if eq .Values.global.db.internal true }}
+            - name: SPRING_DATASOURCE_URL
+              value: pgbouncer-service
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.global.db.dbuser }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: {{ .Values.global.db.dbpwd }}
+                   {{- else}}
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbhost
+                - name: POSTGRES_DBPORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: secrets
+                      key: postgres_dbport
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbuser
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbpwd
+                  {{- end }}
+
+          {{- else}}
+                  {{- if eq .Values.global.redis.internal true }}
+          - name: SPRING_REDIS_HOST
+            value: redis-master
+          - name: SPRING_REDIS_PORT
+            value: "6379"
+                  {{- else}}
+          - name: SPRING_REDIS_HOST
+            value: {{ .Values.global.redis.host }}
+          - name: SPRING_REDIS_PORT
+            value: {{ .Values.global.redis.port | quote  }}
+                   {{- end }}
+          - name: MERCHANT_LOGIN
+            value: {{ .Values.global.merchant.merchant_login }}
+          - name: MERCHANT_SECRET
+            value: {{ .Values.global.merchant.merchant_secret }}
+                  {{- if eq .Values.global.db.internal true }}
+          - name: SPRING_DATASOURCE_URL
+            value: pgbouncer-service
+          - name: SPRING_DATASOURCE_USERNAME
+            value: {{ .Values.global.db.dbuser }}
+          - name: SPRING_DATASOURCE_PASSWORD
+            value: {{ .Values.global.db.dbpwd }}
+                  {{- else}}
+          - name: SPRING_DATASOURCE_URL
+            value: {{ .Values.global.db.dbhost }}
+          - name: SPRING_DATASOURCE_USERNAME
+            value: {{ .Values.global.db.dbuser }}
+          - name: SPRING_DATASOURCE_PASSWORD
+            value: {{ .Values.global.db.dbpwd }}
+                   {{- end }}
+         {{- end }}
+          ports:
+          - containerPort: {{ .Values.containers.containerPort }}
+          - containerPort: 7980
+{{/*          lifecycle:*/}}
+{{/*            preStop:*/}}
+{{/*              exec:*/}}
+{{/*                command: ["/ebsmnt/erlang/merchant/bin/merchant","stop"]*/}}
+          volumeMounts:
+            - name: {{ .Values.appName }}config
+              mountPath: /ebsmnt/conf/application.properties
+              subPath: application.properties
+            - name: {{ .Values.appName }}callback-properties
+              mountPath: /ebsmnt/conf/callback.properties
+              subPath: callback.properties
+            - name: {{ .Values.appName }}datasource
+              mountPath: /ebsmnt/conf/data.sql
+              subPath: data.sql
+            - name: {{ .Values.appName }}log4j2-spring
+              mountPath: /ebsmnt/conf/log4j2-spring.xml
+              subPath: log4j2-spring.xml
+          resources:
+            limits:
+              cpu: 1200m
+              memory: 1000Mi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+{{/*          livenessProbe:*/}}
+{{/*            httpGet:*/}}
+{{/*              path: /is_ready*/}}
+{{/*              port: 8383*/}}
+{{/*            initialDelaySeconds: 30*/}}
+{{/*            periodSeconds: 3*/}}
+{{/*            timeoutSeconds: 5*/}}
+{{/*            successThreshold: 1*/}}
+{{/*            failureThreshold: 3*/}}
+{{/*          readinessProbe:*/}}
+{{/*            httpGet:*/}}
+{{/*              path: /is_ready*/}}
+{{/*              port: 8383*/}}
+{{/*            initialDelaySeconds: 30*/}}
+{{/*            periodSeconds: 3*/}}
+{{/*            timeoutSeconds: 5*/}}
+{{/*            successThreshold: 1*/}}
+{{/*            failureThreshold: 3*/}}
+      {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: corezoid-secret
+      {{- end }}
+      volumes:
+        - name: {{ .Values.appName }}config
+          configMap:
+            name: {{ .Values.appName }}-config
+        - name: {{ .Values.appName }}callback-properties
+          configMap:
+            name: {{ .Values.appName }}-callback-properties
+        - name: {{ .Values.appName }}datasource
+          configMap:
+            name: {{ .Values.appName }}-datasource
+        - name: {{ .Values.appName }}log4j2-spring
+          configMap:
+            name: {{ .Values.appName }}-log4j2-spring

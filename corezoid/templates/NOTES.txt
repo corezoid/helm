@@ -1,10 +1,10 @@
 
-
-
 ** Please be patient while the chart is being deployed **
 
 Corezoid will be accessible with url https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}
+Default login / password - admin@corezoid.loc / admin111
 
+For kill:    helm delete --purge {{ .Release.Name }}
+For upgrade: helm upgrade {{ .Release.Name }} ./corezoid
 
-Uninstalling the Chart:    helm delete --purge {{ .Release.Name }}
-List all releases:         helm list
+**********************************************************

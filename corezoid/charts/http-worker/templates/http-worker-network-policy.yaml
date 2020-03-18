@@ -1,0 +1,30 @@
+## For working NetworkPolicy, need to network plugin be installed
+##kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.5/config/v1.5/calico.yaml
+##
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: deny-metadata
+spec:
+  podSelector:
+      matchLabels:
+        tier: {{ .Values.appName}}
+  egress:
+    - to:
+      - ipBlock:
+          cidr: 0.0.0.0/0
+          except:
+            - 169.254.169.254/32
+  policyTypes:
+    - Egress
+---
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: deny-dashboard
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: kubernetes-dashboard
+  policyTypes:
+    - Ingress

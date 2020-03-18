@@ -1,8 +1,4 @@
 dependencies:
-  - name: pgbouncer
-    version: 0.1.0
-    condition: global.db.internal
-
   - name: redis
     version: 0.1.0
     condition: global.redis.internal
@@ -11,6 +7,10 @@ dependencies:
     version: 0.1.0
     condition: global.elasticsearch.internal
 
-  - name: rabbitmq
+  - name: rabbitmq-ha
     version: 0.1.0
     condition: global.mq.internal
+
+  - name: nginx-ingress
+    version: 0.1.0
+    condition: global.ingress.internal

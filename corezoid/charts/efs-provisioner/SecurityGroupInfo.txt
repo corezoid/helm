@@ -1,0 +1,7 @@
+# For first create and setup EFS on AWS console:
+https://github.com/kubernetes-incubator/external-storage/tree/master/aws/efs
+
+# IMPORTANT: Attach SecurityGroups!
+
+https://docs.aws.amazon.com/efs/latest/ug/accessing-fs-create-security-groups.html
+https://stackoverflow.com/questions/38632222/aws-efs-connection-timeout-at-mount

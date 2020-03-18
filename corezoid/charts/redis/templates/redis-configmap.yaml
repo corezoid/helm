@@ -24,7 +24,10 @@ data:
     slave-priority 100
     #requirepass pass
     maxclients 50000
-    appendonly no
+    appendonly yes
+    save 900 1
+    save 300 10
+    save 60 10000
     appendfilename "appendonly.aof"
     appendfsync always
     no-appendfsync-on-rewrite no
@@ -52,6 +55,6 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.appName }}-config
   labels:
-    environment: {{ .Values.global.environment }}
+    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     service: {{ .Values.appName }}

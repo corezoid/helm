@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: {{ .Values.appName }}-lua
+    labels:
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}
+data:
+    {{- (.Files.Glob "lua/*.lua").AsConfig | nindent 8 }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-site
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+data:
+    corezoid.conf: |
+        upstream api-sync {
+            server syncapi-service:8090;
+        }
+
+        lua_shared_dict callbacks 1024m;
+        lua_shared_dict rr_upstream 10m;
+
+        lua_package_path '/usr/local/openresty/nginx/lua/?.lua;;';
+
+        init_by_lua_file "lua/init.lua";
+
+        server {
+          listen 80;
+
+          server_name {{ .Values.global.syncapi.subdomain }}.{{ .Values.global.domain }};
+          resolver kube-dns.kube-system.svc.cluster.local;
+
+            if ( $http_x_forwarded_proto != "https")  {
+                rewrite ^/(.*)$   https://$host/$1    break;
+            }
+
+          location / {
+            return 200;
+            types         { }
+            default_type  text/plain;
+          }
+          location /api/1/json {
+            set $upstream "";
+            rewrite_by_lua_file "lua/create_task.lua";
+
+            proxy_pass http://$upstream;
+            proxy_set_header   Host           $host;
+            proxy_set_header   X-Request-ID   $request_id;
+            proxy_set_header X-Forwarded-For  $remote_addr;
+            proxy_buffering off;
+            proxy_request_buffering off;
+            proxy_intercept_errors on;
+            proxy_connect_timeout 10080s;
+            proxy_send_timeout 10080s;
+            proxy_read_timeout 10080s;
+            proxy_next_upstream error timeout http_502 http_503 http_504;
+          }
+
+          location ~ ^/api/1/plugins/callback/(.+)$ {
+            set $income_request_id $1;
+            set $upstream "";
+
+            rewrite_by_lua_file "lua/callbacks.lua";
+
+            proxy_pass http://$upstream;
+            proxy_set_header   Host           $host;
+            proxy_set_header X-Forwarded-For  $remote_addr;
+            proxy_buffering off;
+            proxy_request_buffering off;
+            proxy_intercept_errors on;
+            proxy_connect_timeout 10080s;
+            proxy_send_timeout 10080s;
+            proxy_read_timeout 10080s;
+            proxy_next_upstream error timeout http_502 http_503 http_504;
+          }
+
+            location /system/ping {
+            proxy_pass http://api-sync;
+            proxy_set_header   Host           $host;
+            proxy_set_header X-Forwarded-For  $remote_addr;
+            proxy_buffering off;
+            proxy_request_buffering off;
+            proxy_intercept_errors on;
+            proxy_connect_timeout 10080s;
+            proxy_send_timeout 10080s;
+            proxy_read_timeout 10080s;
+            proxy_next_upstream error timeout http_502 http_503 http_504;
+        }
+
+            location /hello {
+            default_type 'text/plain';
+
+            content_by_lua '
+            ngx.say("Hello world!")
+            ';
+        }
+
+            location = /upstreams {
+            default_type text/plain;
+            content_by_lua_block {
+            local concat = table.concat
+            local upstream = require "ngx.upstream"
+            local get_servers = upstream.get_servers
+            local get_upstreams = upstream.get_upstreams
+
+            local us = get_upstreams()
+            for _, u in ipairs(us) do
+            ngx.say("upstream ", u, ":")
+            local srvs, err = get_servers(u)
+            if not srvs then
+            ngx.say("failed to get servers in upstream ", u)
+            else
+            for _, srv in ipairs(srvs) do
+            local first = true
+            for k, v in pairs(srv) do
+            if first then
+            first = false
+            ngx.print("    ")
+            else
+            ngx.print(", ")
+            end
+            if type(v) == "table" then
+            ngx.print(k, " = {", concat(v, ", "), "}")
+            else
+            ngx.print(k, " = ", v)
+            end
+            end
+            ngx.print("\n")
+            end
+            end
+            end
+            }
+        }
+        }
