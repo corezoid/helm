@@ -4,7 +4,6 @@ kind: Service
 metadata:
   name: {{ .Values.appName }}-master
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
     role: master
@@ -17,12 +16,11 @@ spec:
     role: master
     tier: {{ .Values.appName }}
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.appName }}-master
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName}}
 spec:
@@ -37,14 +35,13 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/redis-configmap.yaml") . | sha256sum }}
       labels:
-        environment: {{ .Release.Namespace }}
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
         role: master
     spec:
       containers:
       - name: master
-        image: {{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.image.tag }}
+        image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         resources:
           limits:
             cpu: 300m
@@ -73,7 +70,6 @@ spec:
         volumeMounts:
           - name: redisconfig
             mountPath: /usr/local/etc/redis
-#            subPath: redis.conf
           - name: {{ .Values.appName }}-claim
             mountPath: /ebsmnt/data
       {{- if not  (eq .Values.global.repotype "public") }}

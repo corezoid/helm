@@ -1,14 +1,19 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.appName }}
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}
   strategy:
     type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   replicas: {{ .Values.global.webadm.minReplicas }}
   template:
     metadata:
@@ -19,13 +24,12 @@ spec:
         prometheus.io/port: "9113"
         prometheus.io/scrape: "true"
       labels:
-        environment: {{ .Release.Namespace }}
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
       containers:
         - name: {{ .Values.appName }}
-          image: {{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
           ports:
           - containerPort: 80
           volumeMounts:
@@ -35,10 +39,16 @@ spec:
             - name: web-config-site
               mountPath: /etc/nginx/conf.d/corezoid.conf
               subPath: corezoid.conf
+            - name: web-config-logo
+              mountPath: /usr/share/nginx/html/logo/logo.svg
+              subPath: logo.svg
+            - name: web-config-logo
+              mountPath: /usr/share/nginx/html/logo/logo_auth.svg
+              subPath: logo_auth.svg
           resources:
             limits:
               cpu: 200m
-              memory: 600Mi
+              memory: 400Mi
             requests:
               cpu: 50m
               memory: 100Mi
@@ -59,6 +69,13 @@ spec:
             successThreshold: 1
             failureThreshold: 3
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command: [
+                  # Gracefully shutdown nginx
+                  "/usr/sbin/nginx", "-s", "quit"
+                ]
         - name: nginx-exporter
           image: nginx/nginx-prometheus-exporter:0.4.2
           resources:
@@ -81,3 +98,6 @@ spec:
         - name: web-config-site
           configMap:
             name: {{ .Values.appName }}-site
+        - name: web-config-logo
+          configMap:
+            name: {{ .Values.appName }}-config-logo

@@ -2,66 +2,69 @@
 
 [![N|Corezoid](https://corezoid.com/static/CorezoidProduct-ce1da2c78726bb5ce1cf53b002dac519.png)](https://corezoid.com/)
 
-### Chart Details
+##Corezoid Docs: 
+https://doc.corezoid.com/
 
-This chart will deploy the Corezoid Infrastructure 5.0 version
+##Corezoid change log
+https://doc.corezoid.com/docs/release-notes
 
-### Installation
+## Installation notes:
 
-```sh
-git clone git@github.com:corezoid/helm.git
-cd helm
-#edit values.yaml
-helm install --name corezoid ./corezoid 
-```
+- If you install chart to the new environment with empty DB — all will be provisioned automatically and should be fine.
 
-Kubernetes 1.14 (AWS EKS is preferred)
-
-Tested on Kubernetes 1.14 (AWS EKS is preferred)
-
-- *default login:* **admin@corezoid.loc**
-- *Initial password (has to be changed):* **admin111**
-
-### Configuration / some useful values
-
-| Parameter                 | Description                                                  | Default                    |
-| ------------------------- | ------------------------------------------------------------ | -------------------------- |
-| `domain`                  | Second level domain only / core domain (example: corezoid.com)|                          |
-| `subdomain`               | Subdomain for sitename.corezoid.com as example - k8s            | |
-| `internal`                | Flag for usage service inside k8s                             | `true`                     |
-| `shards_count`            | Count of shards created in psql                          | `10`                    |
-| `capi_auth_hash`          | Auth hash for cookie                                           | `random`             |
-| `api_front_captcha_key_disabled`          | Disable or enable  captcha on fontend       | `true`             |
-| `capi_front_captcha_key`  | Key for captcha when login in UI                          |             |
-| `capi_backend_captcha_key_disabled`| Disable or enable  captcha on backend                 | `true`       |
-| `capi_backend_captcha_key` | Key for captcha when login in UI                    |                     |
-| `market`       | Enabled Market button                             | `false`                      |
-| `company`            | Button Create -> Company                             | `true`                      |
-| `bot_platform`             | Button Create -> Bot platform | `false`                      |
-| `default_company`          | Set default company name  | `My Corezoid`            |
-| `api_max_thread`          | Max allowed threads for api logic  | `200`            |
-| `max_interface_rate`          | Limit interface requests, ban after for 1 min  | `100`            |
-| `max_user_rate`          | Limit for task create/modify, other will get 429 error  | `2000`            |
+-  If you upgrade previous working installation that doesn't have setuped Sync-API or/and download/upload API (*Check info group id: sync_api_key* and *api_multipart_key* keys) — these keys will not be provisioned automatically either. You have to do some manual fixes (please ask Support Team and see admin-book troubleshooting).
+In case if they were working — nothing to do, all should be fine.
 
 
-### Using different PersistentVolume storage classes:
+### Known issues:
 ---
+while ```helm upgrade chart .```
 
-- In values.yaml you can choose different storage classes:
+```Error: UPGRADE FAILED: cannot patch "postgresql-init-database" with kind Job: Job.batch "postgresql-init-database" is invalid:```
+
+Resolving:
+- ```$ kubectl delete job postgresql-init-database```
+- ```$ helm upgrade chart .```
+
+Ensure what all configmaps are updated and necessary components are restarted.
+
+#### Versioning:
+|Corezoid|Capi|Conf-agent|Enigma|Web-adm|Web-superadm|Http-worker|Merchant|Mult|Sync-API|Single Account|Usercode|Worker|
+| ------ | ------ | ------ |------ |------ | ------ | ------ | ------ |------ |------ |------ |------ | ------ |
+| 5.4.1 | 7.4.0.3 | 1.3.1 | 1.1.0 | 5.4.1 | 1.3.1 | 3.4.0.2 | v0.0.27.2 | 2.4.0.1 | 2.0 | x | 7.2.0 | 4.4.0.2 |
+| 5.3 | 7.3.0.5 | 1.2.1 | 1.1.0 | 5.3.0 | 1.2.1 | 3.3.0.2 | v0.0.27.2 | 2.3.0.3 | 1.4.1 | x | 7.1.0 | 4.3.0.2 |
+| 5.0 | 7.0.0.3 | x | 1.1.0 | 2.43 | 0.0.1 | 3.0.0.1 | v0.0.27.2 | 2.0.0.1 | 1.1.3-e19 | x | 6.0.3 | 4.0.0.2 |
+
+## Using different PersistentVolume storage classes:
+
+In values.yaml you can choose different storage classes:
 ```sh
- # Define global storage class: efs (preferred) / nfs / ceph / manual | see README.md
+ # Define global storage class: efs (preferred) / nfs / manual / ceph | see README.md
  storage: efs
 ```
-- In case of using AWS as a cloud provided — efs is preferred: https://aws.amazon.com/efs/
+- **efs**: In case of using AWS as a cloud provided — efs is preferred: https://aws.amazon.com/efs/
 
-- For  Kubernetes inhouse - you can use NFS. Preferably an external NAS/SAN server with a raid.
+- **nfs**: For  Kubernetes inhouse - you can use NFS. Preferably an external NAS/SAN server with a raid.
   You can also setup the NFS server on the Kubernetes nodes (directly in the cluster on pods, or separately on the nodes).
   But to provide reliability, you need to setup cluster FS, such as Gluster, Ceph, etc., between the nodes.
   Otherwise, reliability depends of one node.
 
-- Not production solutions / just for development:
-  - EBS on AWS or "manual" in aws/inhouse (allocation of space on the node section)  ebs will be located in one AZ
+- **manual**: Not production solutions / just for development.
+  EBS on AWS or "manual" in aws/inhouse (allocation of space on the node section)  ebs will be located in one AZ
   but pod can be restarted on other node in another AZ and loose access to the old data.
 
-- Before choosing "ceph" options you have to prepare cephfs cluster in advance.
+- **ceph**: Before choosing "ceph" options you have to prepare cephfs cluster in advance.
   Please follow the instructions in described in cephf installation readme file
+
+#### Enabling Enigma encryption:
+- See [ENIGMA.md](ENIGMA.md)
+
+#### Dependencies:
+#####Testing on Kubernetes version 1.16 and helm v3
+#####Supported stateful versions:
+- **Postgresql 9.6**
+- **Redis 3.2**
+- **Elasticsearch 6.7**
+- **RabbitMQ 3.8**
+---
+

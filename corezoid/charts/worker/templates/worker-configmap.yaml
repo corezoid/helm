@@ -2,6 +2,25 @@ apiVersion: v1
 data:
   worker.config: |
     [
+        {limits_client, [
+            {redis, [
+                [
+                    {{- if eq .Values.global.redis.internal false }}
+                    {host, "${REDIS_HOST}"},
+                    {port, ${REDIS_PORT}},
+                    {password,"${REDIS_PASSWORD}"},
+                    {{- else }}
+                    {host, "redis-master"},
+                    {port, 6379},
+                    {password,""},
+                    {{- end }}
+                    {database, 9},
+                    {start_size, 1},
+                    {min_size, 1},
+                    {max_size, 50}
+                ]
+            ]}
+        ]},
 
        {corezoid_license_client, [
          {path_to_license, "/ebsmnt/certs/corezoid_license"}
@@ -28,25 +47,11 @@ data:
           ]}
       ]},
 
-        {conf_agent, [
-         {pgsql, [
-          {{- if .Values.global.db.bouncer }}
-            {host, "pgbouncer-service"},
-          {{- else }}
-            {host, "${POSTGRES_DBHOST}"},
-          {{- end }}
-           {user, "${POSTGRES_DBUSER}"},
-           {dbname, "settings"},
-           {password, "${POSTGRES_DBPWD}"},
-           {min_size, 10},
-           {max_size, 10},
-           {start_size, 1}
-         ]},
+        {ermql, [
 
-         {port, 8585},
-         {is_admin, true},
+          {disabled, false},
 
-        {publish_request, [
+          {publish_request, [
                     {servers, [
           {{- if eq .Values.global.mq.internal false }}
                   [
@@ -66,14 +71,14 @@ data:
                 ]
           {{- end }}
             ]},
-        {queues_count, 1},
-        {min_size, 1},
-        {max_size, 1},
-        {start_size, 1}
-        ]},
+            {queues_count, 1},
+            {min_size, 1},
+            {max_size, 1},
+            {start_size, 1}
+          ]},
 
-        {consumer_response, [
-            {servers, [
+          {consumer_response, [
+                    {servers, [
           {{- if eq .Values.global.mq.internal false }}
                   [
                     {host, "${MQ_HOST}"},
@@ -92,10 +97,11 @@ data:
                 ]
           {{- end }}
             ]},
-        {connections_per_queue, 1},
-        {channels_per_connection, 1},
-        {messages_prefetch_size_per_channel, 50}
-        ]}
+            {connections_per_queue, 1},
+            {channels_per_connection, 1},
+            {messages_prefetch_size_per_channel, 50}
+          ]}
+
         ]},
 
         %% dns cache. Support multiply dnses cache
@@ -149,6 +155,22 @@ data:
                            %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
       ]},
 
+      %% Envirement Variable
+      {env_var, [
+          %% - psql pool -
+          {psql, [
+              {host,        "pgbouncer-service"},
+              {dbname, "conveyor"},
+              {user, "${POSTGRES_DBUSER}"},
+              {port,        5432},
+              {password, "${POSTGRES_DBPWD}"},
+              %% pool size
+              {start_size,  3},
+              {min_size,    3},
+              {max_size,    10}
+          ]}
+      ]},
+
       {enigma, [
         {is_enabled, {{ .Values.global.enigma.enabled }}},
         {private_key_id, "{{ .Values.global.worker.enigma_pk_id }}"},
@@ -179,6 +201,83 @@ data:
         {nodes, [
           ''
         ]},
+
+        {git_call_v2, [
+
+          %% Optional. Boolean. Default: false.
+          %% Enable\Disable GitCallV2 feature.
+          %% Config sections
+          %%   publish_git_call_v2_request
+          %%   consumer_git_call_v2_response
+          %%   consumer_git_call_v2_status
+          %%   publish_dunder_git_call_v2_request
+          %%   consumer_dunder_git_call_v2_request
+          %% must be configured if enabled, otherwise it is safe to completely remove them.
+          %% If disabled, worker packet returns {error, git_call_disabled} on all related commands.
+          {enabled, true},
+
+          {use_enigma, false},
+          {debug, true},
+
+          %% TODO gitcall tmp solution. in future it must take creds from a dedicated service. see COR-4199
+          {rabbitmq_pimp, [
+            {server, [
+          {{- if eq .Values.global.mq.internal false }}
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+          {{- else }}
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+          {{- end }}
+            ]}
+          ]},
+          %% Optional. Number. Milliseconds. Default: ?RUN_TASK_TIME_TO_WAIT_CONSUMER 100.
+          %% The maximum time the code is allowed to work.
+          {run_task_time_to_wait_consumer, 10000}
+
+          %% Optional. Number. Milliseconds. Default: ?RUN_TASK_TIME_TO_WAIT_RESPONSE 9900.
+          %% The maximum time worker waits for the task run response.
+          %%{run_task_time_to_wait_response, 9900},
+
+          %% Optional. Number. Default: ?DEPLOY_MIN_REPLICAS 1.
+          %% The minimum number or replicas to run in k8s.
+          %%{deploy_min_replicas, 1},
+
+          %% Optional. Number. Default: ?DEPLOY_MAX_REPLICAS 10.
+          %% The maximum number or replicas to run in k8s.
+          %%{deploy_max_replicas, 5},
+
+          %% Optional. BinaryString. Default: ?DEPLOY_REQUEST_MEMORY <<"10Mi">>.
+          %% The memory each pod needs at start.
+          %% See https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/ for examples
+          %%{deploy_request_memory, <<"100Mi">>},
+
+          %% Optional. BinaryString. Default: ?DEPLOY_REQUEST_CPU <<"20m">>.
+          %% The cpu each pod needs at start.
+          %% See https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/cpu-default-namespace/
+          %%{deploy_request_cpu, <<"200m">>},
+
+          %% Optional. BinaryString. Default: ?DEPLOY_LIMIT_MEMORY <<"100Mi">>.
+          %% The memory each pod can occupy at maximum.
+          %% See https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/ for examples
+          %%{deploy_limit_memory, <<"100Mi">>},
+
+          %% Optional. BinaryString. Default: ?DEPLOY_LIMIT_CPU <<"100m">>.
+          %% The cpu each pod needs at start.
+          %% See https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/cpu-default-namespace/
+          %%{deploy_limit_cpu, <<"200m">>},
+
+          %% Optional. Boolean. Default: ?USE_ENIGMA true.
+          %% Controlls whether the commucation with Gitcall has to be encrypted by Enigma or not.
+          %%{use_enigma, true}
+        ]},
+
 
         %% max allowed task_size in bytes
         %% if you what increase this limit
@@ -289,6 +388,29 @@ data:
         %% for custom db-s
         { pgsql2, [] },
 
+           {pgsql_task_history, [
+        {{- if .Values.global.db.bouncer }}
+                          {host, "pgbouncer-service"},
+                              {hosts, [
+                              { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
+        {{- range $i, $e := .Values.global.db.shards }}
+        {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
+        {{- else }}
+                          {host, "${POSTGRES_DBHOST}"},
+                              %% hosts - tasks, settings of nodes
+                              {hosts, [
+                              { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
+        {{- range $i, $e := .Values.global.db.shards }}
+        {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
+        {{- end }}
+                    ]},
+                { user, "${POSTGRES_DBUSER}" },
+                { password, "${POSTGRES_DBPWD}" },
+                {min_size, 3},
+                {max_size, 50},
+                {start_size, 3}
+            ]},
+
         %% redis sentinel quorum hosts
         {sentinels, []},
 
@@ -308,7 +430,7 @@ data:
             {database,1},
             {start_size, 5},
             {min_size, 5},
-            {max_size, 200}
+            {max_size, 50}
           ]
         ]},
 
@@ -329,7 +451,7 @@ data:
             {database,2},
             {start_size, 5},
             {min_size, 5},
-            {max_size, 200}
+            {max_size, 50}
           ]
         ]},
 
@@ -349,7 +471,7 @@ data:
             {database,3},
             {start_size, 5},
             {min_size, 5},
-            {max_size, 400}
+            {max_size, 50}
           ]
         ]},
 
@@ -370,7 +492,7 @@ data:
             {database,4},
             {start_size, 5},
             {min_size, 5},
-            {max_size, 100}
+            {max_size, 50}
           ]
         ]},
 
@@ -705,6 +827,264 @@ data:
           {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
         ]},
 
+        %% logic git call
+        %% producer
+        {publish_git_call_request, [
+          {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          {build_dep_queues_count, 1},
+          {remove_dep_queues_count, 1},
+          {get_script_queues_count, 1},
+          {remove_script_queues_count, 1},
+          {validate_script_queues_count, 1},
+          {compile_script_queues_count, 1},
+          {run_script_queues_count, 10},
+          {min_size, 25},
+          {max_size, 25},
+          {start_size, 25}
+        ]},
+
+
+        %% consumer
+        {consumer_git_call_response, [
+          {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          %{queues_count, 10},
+          {connections_per_queue, 1},
+          {channels_per_connection, 2},
+          {messages_prefetch_size_per_channel, 50}
+        ]},
+
+        %% logic git call v2
+        %% producer
+        {publish_git_call_v2_request, [
+          {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          %% Optional. BinaryString. Default: ?GITCALL_EXCHANGE <<"gitcall-v2">>.
+          %% The exchange is used to communicate with Gitcall service.
+          %% All calls to Gitcall go through the exchange.
+          %%{exchange, <<"gitcall-v2">>},
+
+          %% Optional. BinaryString. Default: ?BUILD_SERVICE_QUEUE <<"gitcall-v2-buildservice-">>.
+          %% The queue is used to build code an pack it ready-to-run units, most possibly docker images
+          %% The count option controls how many prefixed queues to publish to.
+          %%
+          %%{buildservice_queue, <<"gitcall-v2-buildservice-">>},
+          %%{buildservice_queues_count, 1},
+
+          %% Optional. BinaryString. Default: ?DEPLOY_SERVICE_QUEUE <<"gitcall-v2-deployservice-">>.
+          %% The queue is used to deploy services to production runtime, most possibly k8s
+          %% The count option controls how many prefixed queues to publish to.
+          %%
+          %%{deployservice_queue, <<"gitcall-v2-deployservice-">>},
+          %%{deployservice_queues_count, 1},
+
+          %% Optional. BinaryString. Default: ?GET_SERVICE_QUEUE <<"gitcall-v2-getservice-">>.
+          %% The queue is used to get service details: source, built and deployed versions.
+          %% The count option controls how many prefixed queues to publish to.
+          %%
+          %%{getservice_queue, <<"gitcall-v2-getservice-">>},
+          %%{getservice_queues_count, 1},
+
+          %% Optional. BinaryString. Default: ?REMOVE_SERVICE_QUEUE <<"gitcall-v2-removeservice-">>.
+          %% The queue is used to remove service from production runtime and Gitcall database.
+          %% The count option controls how many prefixed queues to publish to.
+          %%
+          %%{removeservice_queue, <<"gitcall-v2-getservice-">>},
+          %%{removeservice_queues_count, 1},
+
+          %% Optional. BinaryString. Default: ?RUN_SERVICE_QUEUE <<"gitcall-v2-runservice-">>.
+          %% The queue is used to ask Gitcall to start (if not) service in production runtime. Often used together with stopservice
+          %% The count option controls how many prefixed queues to publish to.
+          %%
+          %%{runservice_queue, <<"gitcall-v2-runservice-">>},
+          %%{runservice_queues_count, 1},
+
+          %% Optional. BinaryString. Default: ?SAVE_SERVICE_QUEUE <<"gitcall-v2-saveservice-">>.
+          %% The queue is used to save temporary changes. Used by Corezoid sandbox
+          %% The count option controls how many prefixed queues to publish to.
+          %%
+          %%{saveservice_queue, <<"gitcall-v2-saveservice-">>},
+          %%{saveservice_queues_count, 1},
+
+          %% Optional. BinaryString. Default: ?STOP_SERVICE_QUEUE <<"gitcall-v2-stopservice-">>.
+          %% The queue is used to stop service in production runtime when idle. Could be run later with runservice call
+          %% The count option controls how many prefixed queues to publish to.
+          %%
+          %%{stopservice_queue, <<"gitcall-v2-stopservice-">>},
+          %%{stopservice_queues_count, 1},
+
+          %% Optional. BinaryString. Default: ?VALIDATE_SOURCE_QUEUE <<"gitcall-v2-validatesource-">>.
+          %% The queue is used to validate the source code. The code is not saved anywhere.
+          %% The count option controls how many prefixed queues to publish to.
+          %%
+          %%
+          %%{validatesource_queue, <<"gitcall-v2-validatesource-">>},
+          %%{validatesource_queues_count, 1},
+          {min_size, 25},
+          {max_size, 25},
+          {start_size, 25}
+        ]},
+
+        %% consumer processes replies on worker requests
+        {consumer_git_call_v2_response, [
+          {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          %{queues_count, 10},
+          {connections_per_queue, 1},
+          {channels_per_connection, 1},
+          {messages_prefetch_size_per_channel, 50}
+        ]},
+
+        %% consumer processes status updates from gitcall
+        {consumer_git_call_v2_status, [
+          {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          %{queues_count, 10},
+          {connections_per_queue, 1},
+          {channels_per_connection, 1},
+          {messages_prefetch_size_per_channel, 50}
+        ]},
+
+        %% logic dunder git call v2
+        %% producer
+        {publish_dunder_git_call_v2_request, [
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          {min_size, 25},
+          {max_size, 25},
+          {start_size, 25}
+        ]},
+
+        %% consumer
+        {consumer_dunder_git_call_v2_response, [
+                {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          %{queues_count, 10},
+          {connections_per_queue, 1},
+          {channels_per_connection, 1},
+          {messages_prefetch_size_per_channel, 50}
+        ]},
+
         %% logic db call
         %% producer
         {publish_db_call_request, [
@@ -760,6 +1140,59 @@ data:
           {messages_prefetch_size_per_channel, 50}
         ]},
 
+        %% logic deep_memo es call
+        %% producer
+        {publish_es_call_request, [
+          {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          {min_size, 3},
+          {max_size, 3},
+          {start_size, 3}
+        ]},
+
+        %% consumer
+        {consumer_es_call_response, [
+          {servers, [
+          {{- if eq .Values.global.mq.internal false }}
+                      [
+                        {host, "${MQ_HOST}"},
+                        {port, ${MQ_PORT}},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- else }}
+                      [
+                        {host, "rabbit-service"},
+                        {port, 5672},
+                        {username, <<"${MQ_USERNAME}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_VHOST}">>}
+                    ]
+          {{- end }}
+                ]},
+          %{queues_count, 10},
+          {connections_per_queue, 1},
+          {channels_per_connection, 2},
+          {messages_prefetch_size_per_channel, 50}
+        ]},
 
         %% logic get task
         %% producer of get_task requests, QUEUE logic
@@ -1047,9 +1480,9 @@ data:
 
           {handlers, [
             {lager_console_backend, info},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 734003200}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 734003200}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 734003200}, {date, "$D0"}, {count, 1}]}
+            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 15000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 15000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 15000000}, {date, "$D0"}, {count, 1}]}
 
           ]},
 

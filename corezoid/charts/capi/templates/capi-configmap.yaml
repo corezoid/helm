@@ -3,6 +3,25 @@ data:
   {{ .Values.appName }}.config: |
     %% -*- mode: erlang;  -*-
     [
+            {limits_client, [
+                {redis, [
+                    [
+                        {{- if eq .Values.global.redis.internal false }}
+                        {host, "${REDIS_HOST}"},
+                        {port, ${REDIS_PORT}},
+                        {password,"${REDIS_PASSWORD}"},
+                        {{- else }}
+                        {host, "redis-master"},
+                        {port, 6379},
+                        {password,""},
+                        {{- end }}
+                        {database, 9},
+                        {start_size, 1},
+                        {min_size, 1},
+                        {max_size, 50}
+                    ]
+                ]}
+            ]},
 
         {corezoid_license_client, [
           {path_to_license, "/ebsmnt/certs/corezoid_license"}
@@ -11,6 +30,7 @@ data:
         {corezoid_global_stats, [
             {disabled, true}
         ]},
+
 
         %% for clustering components
         {corezoid_cluster, [
@@ -34,133 +54,80 @@ data:
           {disabled, false}
         ]},
 
+          %% Envirement Variable
+          {env_var, [
+              %% - psql pool -
+              {psql, [
+                  {host,        "pgbouncer-service"},
+                  {dbname, "conveyor"},
+                  {user, "${POSTGRES_DBUSER}"},
+                  {port,        5432},
+                  {password, "${POSTGRES_DBPWD}"},
+                  %% pool size
+                  {start_size,  3},
+                  {min_size,    3},
+                  {max_size,    10}
+              ]}
+          ]},
+
         %% needed for conf_agent
         {corezoid_sdk, [
           {host, "{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},
           {scheme, "https://"}
         ]},
 
-        {conf_agent, [
-         {pgsql, [
-          {{- if .Values.global.db.bouncer }}
-            {host, "pgbouncer-service"},
-          {{- else }}
-            {host, "${POSTGRES_DBHOST}"},
-          {{- end }}
-           {user, "${POSTGRES_DBUSER}"},
-           {dbname, "settings"},
-           {password, "${POSTGRES_DBPWD}"},
-           {min_size, 10},
-           {max_size, 10},
-           {start_size, 1}
-         ]},
+        {ermql, [
 
-         {port, 8585},
-         {is_admin, true},
-
-        {publish_request, [
-                    {servers, [
-      {{- if eq .Values.global.mq.internal false }}
-                  [
-                    {host, "${MQ_HOST}"},
-                    {port, ${MQ_PORT}},
-                    {username, <<"${MQ_USERNAME}">>},
-                    {password, <<"${MQ_PASSWORD}">>},
-                    {vhost, <<"${MQ_VHOST}">>}
-                ]
-      {{- else }}
-                  [
-                    {host, "rabbit-service"},
-                    {port, 5672},
-                    {username, <<"${MQ_USERNAME}">>},
-                    {password, <<"${MQ_PASSWORD}">>},
-                    {vhost, <<"${MQ_VHOST}">>}
-                ]
-      {{- end }}
-            ]},
-        {queues_count, 1},
-        {min_size, 1},
-        {max_size, 1},
-        {start_size, 1}
-        ]},
-
-        {consumer_response, [
-            {servers, [
-      {{- if eq .Values.global.mq.internal false }}
-                  [
-                    {host, "${MQ_HOST}"},
-                    {port, ${MQ_PORT}},
-                    {username, <<"${MQ_USERNAME}">>},
-                    {password, <<"${MQ_PASSWORD}">>},
-                    {vhost, <<"${MQ_VHOST}">>}
-                ]
-      {{- else }}
-                  [
-                    {host, "rabbit-service"},
-                    {port, 5672},
-                    {username, <<"${MQ_USERNAME}">>},
-                    {password, <<"${MQ_PASSWORD}">>},
-                    {vhost, <<"${MQ_VHOST}">>}
-                ]
-      {{- end }}
-            ]},
-        {connections_per_queue, 1},
-        {channels_per_connection, 1},
-        {messages_prefetch_size_per_channel, 50}
-        ]}
-        ]},
-
-        {mq_cache, [
             {publish_request, [
-                {servers, [
+            {servers, [
           {{- if eq .Values.global.mq.internal false }}
-                      [
-                        {host, "${MQ_HOST}"},
-                        {port, ${MQ_PORT}},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
+              [
+              {host, "${MQ_HOST}"},
+              {port, ${MQ_PORT}},
+              {username, <<"${MQ_USERNAME}">>},
+              {password, <<"${MQ_PASSWORD}">>},
+              {vhost, <<"${MQ_VHOST}">>}
+            ]
           {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
+                  [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
           {{- end }}
-                ]},
-           {queues_count, 1},
-           {min_size, 1},
-           {max_size, 1},
-           {start_size, 1}
-          ]},
+            ]},
+              {queues_count, 1},
+              {min_size, 1},
+              {max_size, 1},
+              {start_size, 1}
+            ]},
 
-          {consumer_response, [
-                {servers, [
+            {consumer_response, [
+            {servers, [
           {{- if eq .Values.global.mq.internal false }}
-                      [
-                        {host, "${MQ_HOST}"},
-                        {port, ${MQ_PORT}},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
+                  [
+                    {host, "${MQ_HOST}"},
+                    {port, ${MQ_PORT}},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
           {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
+                  [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
           {{- end }}
-                ]},
-          {connections_per_queue, 1},
-          {channels_per_connection, 1},
-          {messages_prefetch_size_per_channel, 50}
-          ]}
+            ]},
+              {connections_per_queue, 1},
+              {channels_per_connection, 1},
+              {messages_prefetch_size_per_channel, 50}
+            ]}
 
         ]},
 
@@ -216,7 +183,7 @@ data:
             {base_url, "http://merchant-service:8080"},         %% url merchant api
             {login,  "${MERCHANT_LOGIN}"},            %% login
             {secret, "${MERCHANT_SECRET}"},
-            {skip_otp, true},
+            {skip_otp, {{ .Values.global.capi.merchant_api.skip_otp }}},
             {health_url, "http://merchant-service:7980/actuator/health"}
         ]},
 
@@ -251,10 +218,13 @@ data:
 
                 {max_task_size_for_process_conv, 264000}, %% max task size for process conv
                 {max_task_size_for_st_diagramm_conv, 264000}, %% max task size for state diagramm conv
-
+                {origin_whitelist, [
+                    "{{ .Values.global.subdomain}}.{{ .Values.global.domain }}","{{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}","{{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}"
+                ]},
 
                 %% cookie name where cookie string will put
                 {cookie_name, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},
+                {cookie_expr_time, {{ .Values.global.capi.cookie_expr_time}} },
                 {shards_count, {{ .Values.global.db.shards_count | default 10 }} },
 
                 %% merchant api module that provides synchronization of the company through the middleware systems (Deepmemo, Corezoid and others)
@@ -296,7 +266,7 @@ data:
                 {env, <<"prod">>}, %% Available test|pre|prod
                 {host, [
                     {site, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},   %% main page (navigate by clicking on the corezoid logo)
-                    {doc, <<"{{ .Values.global.capi.front_setting.host.doc }}">>}, %% documentation (navigate by clicking on DOCS link)
+                    {doc, <<"{{ .Values.global.capi.front_setting.doc_host }}">>}, %% documentation (navigate by clicking on DOCS link)
                     %%{market, <<"...">>}, %% market (market api call)
                     {ws, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},                    %% websocket
                     {webhook, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},               %% corezoid domain
@@ -309,12 +279,13 @@ data:
                     {download, <<"/api/2/download">>},  %% download scheme, csv
                     {ws, <<"/api/1/sock_json">>},   %% events in real time
             	    {doc, [
-                	    {index, <<"/docs">>},
-                	    {introduction, <<"/introduction">>},
-                	    {bot_platform, <<"/bot-platform-20">>},
-                	    {task_export, <<"/tasks-export">>},
-                	    {mask_values, <<"/task-parameters#masking-values">>}
+                	    {index, <<"{{ .Values.global.capi.front_setting.doc_index }}">>}
+                	    %%{introduction, <<"/introduction">>},
+                	    %%{bot_platform, <<"/bot-platform-20">>},
+                	    %%{task_export, <<"/tasks-export">>},
+                	    %%{mask_values, <<"/task-parameters#masking-values">>}
             	    ]},
+
                     {webhook, <<"/api/1/">>},    %% this one plus host.webhook = (http:https)://host.webhook/path.webhook/(xml|json|nvp)/...
                     {auth, <<"/auth2/single_account">>}       %% account auth
                 ]},
@@ -336,15 +307,20 @@ data:
                     {market, {{ .Values.global.capi.front_setting.ui.market }} },                  %% to Market button
                     {bot_platform, {{ .Values.global.capi.front_setting.ui.bot_platform }} },            %% button Create -> Bot platform
                     {old_editor, false },              %% button Old editor
-                    {company, {{ .Values.global.capi.front_setting.ui.company }} },                  %% Button Create -> Company
+                    {company, true},                   %% button Create -> Company
                     {search, true },                   %% process search
                     {send_invite, true },              %% send an invite or not
                     {health, false },                  %% Show health_check menu
                     {billing, {{ .Values.global.capi.front_setting.ui.billing }} },                                 %% billing button display
                     {git_call, {{ .Values.global.capi.front_setting.ui.git_call }}},                                %% display of the git_call button
-                    {tab_name, <<"Corezoid - cloud operating system">>},
+                    {tab_name, <<{{ .Values.global.capi.front_setting.ui.tab_name | quote }}>>},
                     {disabled_auth_logo, {{ .Values.global.capi.front_setting.ui.disabled_auth_logo }}},            %% disable or enable logo on main page
-                    {default_company, << {{ quote .Values.global.capi.front_setting.ui.default_company }} >> }      %% Set default company name
+                    {default_company, << {{ quote .Values.global.capi.front_setting.ui.default_company }} >> },     %% Set default company name
+                    {color, [
+                              {main, << {{ quote .Values.global.capi.front_setting.ui.color_main }} >>},            %% main color
+                              {logo, << {{ quote .Values.global.capi.front_setting.ui.color_logo }} >>},             %% logo color
+                              {logo_hover, << {{ quote .Values.global.capi.front_setting.ui.color_logo_hover }} >>}  %% logo underline
+                            ]}
                 ]}
             ]},
 
@@ -391,6 +367,31 @@ data:
                 %%{max_overflow_pool_size, 50},   %% Legacy: will be removed
                 %%{dismiss_overflow, false}       %% Legacy: will be removed
             ]},
+
+            {pgsql_task_history, [
+          {{- if .Values.global.db.bouncer }}
+                      {host, "pgbouncer-service"},
+                          {hosts, [
+                          { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
+          {{- range $i, $e := .Values.global.db.shards }}
+          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
+          {{- else }}
+                      {host, "${POSTGRES_DBHOST}"},
+                          %% hosts - tasks, settings of nodes
+                          {hosts, [
+                          { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
+          {{- range $i, $e := .Values.global.db.shards }}
+          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
+          {{- end }}
+                    ]},
+                { user, "${POSTGRES_DBUSER}" },
+                { password, "${POSTGRES_DBPWD}" },
+                {min_size, 3},
+                {max_size, 50},
+                {start_size, 3}
+            ]},
+
+            {write_data_to_history, false}, %% true|false - write or not tasks data into table
 
             %% database pool for for usercode sandboxes only
             {pgsql_cce_temp, [
@@ -469,7 +470,7 @@ data:
                     {database,1},
                     {start_size, 5},
                     {min_size, 5},
-                    {max_size, 100}
+                    {max_size, 50}
                 ]
             ]},
 
@@ -487,7 +488,7 @@ data:
                     {database,3},
                     {start_size, 10},
                     {min_size, 10},
-                    {max_size, 200}
+                    {max_size, 50}
                 ]
             ]},
 
@@ -873,9 +874,9 @@ data:
 
             {sender, [
                 %% sender communication
-                {sender_build_form_url, "https://api.sender.mobi"}, %% for build form url
-                {sender_build_action_url, "https://api-adm.sender.mobi"}, %% for action url
-                {sender_call_action_url, "https://api-conv.sender.mobi"}, %% for call action url
+                {sender_build_form_url, ""}, %% for build form url
+                {sender_build_action_url, ""}, %% for action url
+                {sender_call_action_url, ""}, %% for call action url
                 {sender_secret, <<"">>},
                 {sender_plugin_secret, <<"">>},
                 {sender_max_threads, 25 },
@@ -883,6 +884,11 @@ data:
             ]},
 
             %% {allowed_domains, ["gmail.com", "corezoid.com", "github.com"]},
+
+            %%    % group for super_users
+            %%    %% superusers are users who can get extra privs to simple user
+            %%    %% DD move to table
+            {super_admin_id, 1},
 
             % api limit counters by user_id
             {user_limits, [
@@ -912,6 +918,48 @@ data:
             {nodename, "corezoid"},
             {disabled, true}
         ]},
+
+          {corezoid_fs, [
+
+            {profiles, [
+
+              %% profile name for maret schemas
+              [
+                {name, schemas}, %% Storage for process schemas, stored in marketplace
+
+                %% switch between storages
+                {default_file_storage, file_f3},
+
+                %% f3 file storage settings
+                {file_f3,[
+                  {allowed_namespaces, ["avatars"]},
+                  {path_to_dir, "/tmp"}, %% todo
+                  {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+                  {ttl_file, 60}                 %% file ttl in seconds
+                ]}
+              ],
+
+              %% profile name for avatars
+              [
+                {name, avatars}, %% Storage for users avatars
+                %% switch between storages
+                {default_file_storage, file_f3},
+
+                %% f3 file storage settings
+                {file_f3,[
+                  {allowed_namespaces, ["avatars"]},
+                  {path_to_dir, "/tmp"}, %% todo
+                  {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+                  {ttl_file, 60}                 %% file ttl in seconds
+                ]}
+
+              ]
+
+              %% maybe more profiles ...
+            ]}
+
+          ]},
+
 
         {lager, [
             %% What handlers to install with what arguments

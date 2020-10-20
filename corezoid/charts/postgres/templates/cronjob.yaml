@@ -1,0 +1,72 @@
+{{- if .Values.global.db.rotation.enabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ .Values.appName }}-taskarchive-cron
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  schedule: {{ .Values.global.db.rotation.schedule | quote }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  startingDeadlineSeconds: 120
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    metadata:
+      labels:
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}
+    spec:
+      template:
+        spec:
+          containers:
+            - image: postgres:9.6.2-alpine
+              imagePullPolicy: Always
+              name: {{ .Values.appName }}-taskarchive-cron
+              command:
+                - sh
+                - -c
+                - |
+                  echo  "$POSTGRES_DBHOST:*:*:$POSTGRES_DBSUPERUSER:$POSTGRES_DBSUPERUSERPWD" > ~/.pgpass; chmod 0600 ~/.pgpass;
+                  for i in $(seq 0 $(($SHARD_COUNT-1))); do psql -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "TRUNCATE TABLE tasks_archive;"; done;
+                  for i in $(seq 0 $(($SHARD_COUNT-1))); do psql -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "select count(*) from tasks_archive;"; done;
+              securityContext:
+                runAsUser: 70
+              env:
+                {{- if eq .Values.global.secretalreadyexist true }}
+                - name: POSTGRES_DBHOST
+                  {{- if .Values.global.db.bouncer }}
+                  value: "pgbouncer-service"
+                  {{- else }}
+                  valueFrom:
+                    secretKeyRef:
+                      name: secrets
+                      key: postgres_dbhost
+                  {{- end }}
+                - name: POSTGRES_DBSUPERUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: secrets
+                      key: postgres_dbsuperuser
+                - name: POSTGRES_DBSUPERUSERPWD
+                  valueFrom:
+                    secretKeyRef:
+                      name: secrets
+                      key: postgres_dbsuperuserpwd
+                {{- else}}
+                - name: POSTGRES_DBHOST
+                  {{- if .Values.global.db.internal }}
+                  value: localhost
+                  {{- else }}
+                  value: {{ .Values.global.db.dbhost }}
+                  {{- end }}
+                - name: POSTGRES_DBSUPERUSER
+                  value: {{ .Values.global.db.dbsuperuser }}
+                - name: POSTGRES_DBSUPERUSERPWD
+                  value: {{ .Values.global.db.dbsuperuserpwd }}
+                {{- end }}
+                - name: SHARD_COUNT
+                  value: '{{ .Values.global.db.shards_count }}'
+          restartPolicy: OnFailure
+{{- end }}

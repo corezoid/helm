@@ -9,10 +9,63 @@ data:
       {path_to_license, "/ebsmnt/certs/corezoid_license"}
     ]},
 
+    {ermql, [
+        {publish_request, [
+          {servers, [
+            {{- if eq .Values.global.mq.internal false }}
+              [
+                {host, "${MQ_HOST}"},
+                {port, ${MQ_PORT}},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>}
+              ]
+    {{- else }}
+              [
+                {host, "rabbit-service"},
+                {port, 5672},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>}
+              ]
+    {{- end }}
+            ]},
+        {queues_count, 1},
+        {min_size, 1},
+        {max_size, 1},
+        {start_size, 1}
+        ]},
+
+        {consumer_response, [
+            {servers, [
+    {{- if eq .Values.global.mq.internal false }}
+                  [
+                    {host, "${MQ_HOST}"},
+                    {port, ${MQ_PORT}},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
+    {{- else }}
+                  [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>}
+                ]
+    {{- end }}
+            ]},
+        {connections_per_queue, 1},
+        {channels_per_connection, 1},
+        {messages_prefetch_size_per_channel, 50}
+        ]}
+        ]},
+
     {corezoid_global_stats, [
         {disabled, true}
     ]},
-    
+
     %% pool_size to resolve ip through dns services.
     {kernel, [
       {gethost_poolsize, 10}
@@ -74,6 +127,11 @@ data:
         %server name
         {worker_id, <<"">>},
 
+        {blocked_domains, [
+          "169.254.169.254",
+          "newtestj.com"
+        ]},
+
         {{- if .Values.global.enigma.encryption }}
         %% for ENCRYPT/DECRYPT data
         {encrypt_decrypt, [
@@ -129,7 +187,7 @@ data:
             {database,3},
             {start_size, 2},
             {min_size, 2},
-            {max_size,50}
+            {max_size, 50}
           ]
         ]},
 
@@ -255,9 +313,9 @@ data:
           {log_root, "/ebsmnt/erlang/http_worker/log"},
           {handlers, [
             {lager_console_backend, info},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 734003200}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 734003200}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 734003200}, {date, "$D0"}, {count, 1}]}
+            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
           ]},
 
           %% What colors to use with what log levels
@@ -318,6 +376,5 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.appName }}-config
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     service: {{ .Values.appName}}

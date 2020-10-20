@@ -3,12 +3,10 @@ kind: Service
 metadata:
   name: {{ .Values.appName }}-service
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
   selector:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
   ports:

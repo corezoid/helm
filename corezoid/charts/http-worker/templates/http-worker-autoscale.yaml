@@ -3,7 +3,6 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: {{ .Values.appName }}-autoscale
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
@@ -13,4 +12,4 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ .Values.appName }}-deployment
-  targetCPUUtilizationPercentage: 80
+  targetCPUUtilizationPercentage: 60

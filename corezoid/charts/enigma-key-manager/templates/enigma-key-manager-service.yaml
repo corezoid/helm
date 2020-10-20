@@ -1,0 +1,17 @@
+{{- if eq .Values.global.enigma.enabled true }}
+apiVersion: v1
+kind: Service
+metadata:
+    name: {{ .Values.appName }}-service
+    labels:
+      app: {{ .Values.global.product }}
+      tier: {{ .Values.appName }}
+spec:
+    selector:
+      app: {{ .Values.global.product }}
+      tier: {{ .Values.appName }}
+    ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  {{- end }}

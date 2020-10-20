@@ -1,0 +1,8 @@
+appName: conf-agent-server
+image:
+  registry: docker-hub.middleware.biz
+  repository: /conf_agent_server
+  imagePullPolicy: Always
+
+containers:
+  containerPort: 8585

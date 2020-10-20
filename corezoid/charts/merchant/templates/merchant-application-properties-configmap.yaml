@@ -34,7 +34,8 @@ data:
       #time otp cache alive/ NEED PROCESS IN COREZOID
     application.cache.expireTimeInMinutes=20
     application.otp.size=8
-    application.otp.corezoidUrl=https://www.corezoid.com/api/1/json/public/437604/ce1ea541ee8a5ede7b411783f4cdde257da09236
+    application.otp.corezoidUrl=https://localhost/
+{{/*    https://www.corezoid.com/api/1/json/public/437604/ce1ea541ee8a5ede7b411783f4cdde251da09236*/}}
 
           #update
           #validate: validate the schema, makes no changes to the database.

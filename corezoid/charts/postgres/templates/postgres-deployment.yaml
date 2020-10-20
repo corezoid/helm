@@ -1,38 +1,25 @@
-apiVersion: extensions/v1beta1
+{{- if eq .Values.global.db.internal true }}
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.appName }}
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        environment: {{ .Release.Namespace }}
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
       initContainers:
-        - name: pgsql-schema-loader
-          imagePullPolicy: Always
-          image: {{ .Values.image.registry }}/{{ .Values.global.repotype }}/pg_schema:{{ .Values.global.db.postgres_schema.version }}
-          command:
-            - sh
-            - -c
-            - |
-              cp -rf /postgres-schema-versioner /migrator
-              chmod -R 700 /migrator
-              chown -R 70:70 /migrator
-          securityContext:
-            runAsUser: 0
-          volumeMounts:
-            - name: {{ .Values.appName }}-migrator
-              mountPath: /migrator
-
+        #### https://github.com/docker-library/postgres/issues/563
         - name: pgsql-data-permission-fix
           image: busybox
           command:
@@ -51,70 +38,38 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
       containers:
-        - image: postgres:9.6.2-alpine
+        - image: "postgres:9.6.2-alpine"
           imagePullPolicy: Always
           name: {{ .Values.appName }}
           securityContext:
             runAsUser: 70
-          lifecycle:
-            postStart:
-              exec:
-                command: ['/migrator/postgres-schema-versioner/run.sh']
           env:
-            - name: SCHEMA_VERSION
-              value: {{ .Values.global.db.postgres_schema.version }}
+            - name: PGDATA
+              value: {{ .Values.postgresqlDataDir }}
           {{- if eq .Values.global.secretalreadyexist true }}
-            - name: POSTGRES_DBHOST
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbhost
-            - name: POSTGRES_DBSUPERUSER
+            - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   name: secrets
                   key: postgres_dbsuperuser
-            - name: POSTGRES_DBSUPERUSERPWD
+            - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: secrets
                   key: postgres_dbsuperuserpwd
-            - name: POSTGRES_DBUSER
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbuser
-            - name: POSTGRES_DBPWD
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbpwd
           {{- else}}
-            - name: POSTGRES_DBHOST
-              value: {{ .Values.global.db.dbhost }}
-            - name: POSTGRES_DBSUPERUSER
+            - name: POSTGRES_USER
               value: {{ .Values.global.db.dbsuperuser }}
-            - name: POSTGRES_DBSUPERUSERPWD
+            - name: POSTGRES_PASSWORD
               value: {{ .Values.global.db.dbsuperuserpwd }}
-            - name: POSTGRES_DBUSER
-              value: {{ .Values.global.db.dbuser }}
-            - name: POSTGRES_DBPWD
-              value: {{ .Values.global.db.dbpwd }}
+
           {{- end }}
-            - name: DB_FLAG
-              value: '{{ .Values.global.db.internal }}'
-            - name: PGDATA
-              value: {{ .Values.postgresqlDataDir }}
-            - name: SHARD_COUNT
-              value: '{{ .Values.global.db.shards_count }}'
           ports:
             - containerPort: 5432
               name: {{ .Values.appName }}
           volumeMounts:
             - name: {{ .Values.appName }}-claim
               mountPath: {{ .Values.postgresqlDataDir }}
-            - name: {{ .Values.appName }}-migrator
-              mountPath: /migrator
                 {{- if not  (eq .Values.global.db.internal false) }}
           livenessProbe:
             exec:
@@ -141,21 +96,18 @@ spec:
                 {{- end }}
           resources:
             limits:
-              cpu: 800m
-              memory: 1000Mi
+              cpu: 1500m
+              memory: 1500Mi
             requests:
-              cpu: 30m
+              cpu: 300m
               memory: 400Mi
       volumes:
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
             claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
             readOnly: false
-        - name: {{ .Values.appName }}-migrator
-          persistentVolumeClaim:
-            claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-{{ .Release.Name }}-migrator
-            readOnly: false
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret
       {{- end }}
+{{- end }}

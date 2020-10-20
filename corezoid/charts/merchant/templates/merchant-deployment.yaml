@@ -1,12 +1,14 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.appName }}-deployment
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}
   strategy:
     type: RollingUpdate
   replicas: {{ .Values.global.merchant.minReplicas }}
@@ -21,7 +23,6 @@ spec:
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"
       labels:
-        environment: {{ .Release.Namespace }}
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
@@ -29,7 +30,7 @@ spec:
       initContainers:
         - name: init-wait
           image: alpine
-          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} nc -zvw1 postgresql 5432 {{- if not .Values.global.db.internal }} && nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }}; do echo waiting for deps services ; sleep 2; done;"]
+          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT}  {{- else }} nc -zvw1 postgresql 5432 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
             {{- if eq .Values.global.secretalreadyexist true }}
             - name: POSTGRES_DBHOST
@@ -51,7 +52,7 @@ spec:
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          image: {{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.merchant.tag }}
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.merchant.tag }}"
           env:
           {{- if eq .Values.global.secretalreadyexist true }}
                   {{- if eq .Values.global.redis.internal true }}
@@ -146,10 +147,6 @@ spec:
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           - containerPort: 7980
-{{/*          lifecycle:*/}}
-{{/*            preStop:*/}}
-{{/*              exec:*/}}
-{{/*                command: ["/ebsmnt/erlang/merchant/bin/merchant","stop"]*/}}
           volumeMounts:
             - name: {{ .Values.appName }}config
               mountPath: /ebsmnt/conf/application.properties
@@ -164,30 +161,7 @@ spec:
               mountPath: /ebsmnt/conf/log4j2-spring.xml
               subPath: log4j2-spring.xml
           resources:
-            limits:
-              cpu: 1200m
-              memory: 1000Mi
-            requests:
-              cpu: 100m
-              memory: 500Mi
-{{/*          livenessProbe:*/}}
-{{/*            httpGet:*/}}
-{{/*              path: /is_ready*/}}
-{{/*              port: 8383*/}}
-{{/*            initialDelaySeconds: 30*/}}
-{{/*            periodSeconds: 3*/}}
-{{/*            timeoutSeconds: 5*/}}
-{{/*            successThreshold: 1*/}}
-{{/*            failureThreshold: 3*/}}
-{{/*          readinessProbe:*/}}
-{{/*            httpGet:*/}}
-{{/*              path: /is_ready*/}}
-{{/*              port: 8383*/}}
-{{/*            initialDelaySeconds: 30*/}}
-{{/*            periodSeconds: 3*/}}
-{{/*            timeoutSeconds: 5*/}}
-{{/*            successThreshold: 1*/}}
-{{/*            failureThreshold: 3*/}}
+            {{ .Values.global.merchant.resources | toYaml | indent 12 | trim }}
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret

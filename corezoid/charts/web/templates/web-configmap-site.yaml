@@ -8,7 +8,7 @@ data:
     server {
         listen 80;
         server_name localhost;
-    	    root /usr/share/nginx/html;
+    	root /usr/share/nginx/html;
 
         location = /ping { return 200; break; }
         location = /nginx_status { stub_status; }
@@ -27,6 +27,12 @@ data:
         add_header X-Content-Type-Options "nosniff";
         proxy_cookie_path / "/; HTTPOnly; Secure";
 
+        add_header Feature-Policy "geolocation 'none'; camera 'none';";
+        add_header 'Referrer-Policy' 'origin-when-cross-origin';
+
+        add_header Content-Security-Policy "default-src 'self' https://*.gravatar.com https://*.gstatic.com https://www.google.com https://www.google-analytics.com https://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}  'unsafe-inline'; frame-src 'self' https://*.gravatar.com https://*.google.com https://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}; script-src 'self' https://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }} https://*.gravatar.com https://*.gstatic.com https://www.google.com https://www.googletagmanager.com https://ajax.googleapis.com https://www.google-analytics.com 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://www.google-analytics.com https://stats.g.doubleclick.net wss://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}; img-src 'self' https://*.gravatar.com https://www.google.com https://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }} https://www.google-analytics.com  https://*.gstatic.com data:; object-src 'self'; font-src 'self' https://*.gravatar.com https://*.gstatic.com https://www.google.com https://fonts.gstatic.com https://fonts.googleapis.com data:; style-src * blob: 'self' https://*.gravatar.com https://*.gstatic.com https://www.google.com https://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }} https://fonts.gstatic.com https://fonts.googleapis.com 'unsafe-inline';";
+
+
         large_client_header_buffers     4 16k;
         client_body_buffer_size 16k;
         client_max_body_size 16m;
@@ -37,11 +43,9 @@ data:
 
 
         if ($host !~* ^({{ .Values.global.subdomain}}.{{ .Values.global.domain }})$ ) { return 444; }
+        if ($http_x_forwarded_proto = 'http'){ return 301 https://$host$request_uri; }
 
 
-        if ( $http_x_forwarded_proto != "https")  {
-            rewrite ^/(.*)$   https://$host/$1    break;
-        }
 
 
         location ~ ^/avatars {
@@ -53,13 +57,14 @@ data:
 
         location /favicon/ {
            root /usr/share/nginx/html;
+           add_header X-Content-Type-Options "nosniff";
         }
 
         location /logo/ {
            root /usr/share/nginx/html;
         }
 
-        location = /favicon.ico { return 200; }
+        location = /favicon.ico { return 200; 	add_header X-Content-Type-Options "nosniff"; }
 
         location / {
             root $admin_root;
@@ -88,56 +93,55 @@ data:
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_intercept_errors on;
-            #proxy_next_upstream error timeout http_502 http_503 http_504;
         }
 
-        # api
+        # api/json
         location ~ ^/api/[0-9]/json {
             add_header X-Content-Type-Options "nosniff";
-            limit_req zone=hundred burst=50;
+            add_header X-Frame-Options "SAMEORIGIN";
+            limit_req zone=hundred burst={{ .Values.global.webadm.limit_req }};
             proxy_pass http://capi-service:9080;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_intercept_errors on;
-            #proxy_next_upstream error timeout http_502 http_503 http_504;
             proxy_read_timeout        300;
             proxy_send_timeout        300;
         }
 
         location ~ ^/api/[0-9]/xml {
-            limit_req zone=hundred burst=50;
+            add_header X-Content-Type-Options "nosniff";
+            limit_req zone=hundred burst={{ .Values.global.webadm.limit_req }};
             proxy_pass http://capi-service:9080;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_intercept_errors on;
-            #proxy_next_upstream error timeout http_502 http_503 http_504;
             proxy_read_timeout        300;
             proxy_send_timeout        300;
         }
 
         location ~ ^/api/[0-9]/nvp {
-            limit_req zone=hundred burst=50;
+            add_header X-Content-Type-Options "nosniff";
+            limit_req zone=hundred burst={{ .Values.global.webadm.limit_req }};
             proxy_pass http://capi-service:9080;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_intercept_errors on;
-            #proxy_next_upstream error timeout http_502 http_503 http_504;
             proxy_read_timeout        300;
             proxy_send_timeout        300;
         }
 
         # api plugins route
         location ~ ^/api/[0-9]/plugins {
-            limit_req zone=hundred burst=50;
+            add_header X-Content-Type-Options "nosniff";
+            limit_req zone=hundred burst={{ .Values.global.webadm.limit_req }};
             proxy_pass http://capi-service:9080;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_intercept_errors on;
-            #proxy_next_upstream error timeout http_502 http_503 http_504;
             proxy_read_timeout        300;
             proxy_send_timeout        300;
         }
@@ -150,22 +154,22 @@ data:
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_buffering off;
             proxy_intercept_errors on;
-            #proxy_next_upstream error timeout http_502 http_503 http_504;
         }
 
         location /user_downloads {
-            limit_req zone=hundred burst=500;
+            add_header X-Content-Type-Options "nosniff";
+            limit_req zone=hundred burst={{ .Values.global.webadm.limit_req }};
             proxy_pass http://mult-service:9082;
             proxy_set_header   Host           $host;
             proxy_set_header X-Forwarded-For  $remote_addr;
             proxy_buffering off;
             proxy_intercept_errors on;
-            #proxy_next_upstream error timeout http_502 http_503 http_504;
             proxy_read_timeout        300;
             proxy_send_timeout        300;
         }
 
         location /auth {
+            add_header X-Content-Type-Options "nosniff";
             proxy_set_header   Host           $host;
             proxy_set_header X-Forwarded-For  $remote_addr;
             proxy_buffering off;
@@ -174,7 +178,8 @@ data:
 
         location /system {
             add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
-            add_header X-Content-Type-Options "text/html";
+            #add_header X-Content-Type-Options "text/html";
+            add_header X-Content-Type-Options "nosniff";
             proxy_set_header   Host           $host;
             proxy_set_header X-Forwarded-For  $remote_addr;
             proxy_buffering off;

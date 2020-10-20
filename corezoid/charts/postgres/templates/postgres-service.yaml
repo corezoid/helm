@@ -1,14 +1,18 @@
+{{- if eq .Values.global.db.internal true }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.appName }}
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName}}
 spec:
-  ports:
-    - port: 5432
   selector:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
+  ports:
+    - name: {{ .Values.appName }}
+      protocol: TCP
+      port: 5432
+      targetPort: 5432
+  {{- end }}

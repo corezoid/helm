@@ -1,0 +1,158 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}-deployment
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  replicas: {{ .Values.global.limits.minReplicas | default 2 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/limits-configmap.yaml") . | sha256sum }}
+      labels:
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}
+    spec:
+      terminationGracePeriodSeconds: 40
+      initContainers:
+        - name: init-wait
+          image: alpine
+          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} &&  {{- else }} nc -zvw1 postgresql 5432 && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672  {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}  {{- end }}; do echo waiting for dependences; sleep 2; done;"]
+          env:
+            {{- if eq .Values.global.secretalreadyexist true }}
+            - name: MQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_host
+            - name: MQ_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_port
+            - name: POSTGRES_DBHOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbhost
+            - name: POSTGRES_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbport
+            {{- else}}
+            - name: MQ_HOST
+              value: {{ .Values.global.mq.host }}
+            - name: MQ_PORT
+              value: {{ .Values.global.mq.port | quote }}
+            - name: POSTGRES_DBHOST
+              value: {{ .Values.global.db.dbhost }}
+            - name: POSTGRES_DBPORT
+              value: {{ .Values.global.db.dbport | quote }}
+            {{- end }}
+      containers:
+        - name: {{ .Values.appName }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.limits.tag }}"
+          env:
+            - name: RELX_REPLACE_OS_VARS
+              value: "true"
+            {{- if eq .Values.global.secretalreadyexist true }}
+            - name: MQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_host
+            - name: MQ_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_port
+            - name: MQ_VHOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_vhost
+            - name: MQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_username
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_password
+            - name: POSTGRES_DBHOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbhost
+            - name: POSTGRES_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbuser
+            - name: POSTGRES_DBPWD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbpwd
+            - name: POSTGRES_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: postgres_dbport
+            {{- else}}
+            - name: MQ_HOST
+              value: {{ .Values.global.mq.host }}
+            - name: MQ_PORT
+              value: {{ .Values.global.mq.port | quote }}
+            - name: MQ_VHOST
+              value: {{ .Values.global.mq.vhost }}
+            - name: MQ_USERNAME
+              value: {{ .Values.global.mq.username }}
+            - name: MQ_PASSWORD
+              value: {{ .Values.global.mq.password }}
+            - name: POSTGRES_DBHOST
+              value: {{ .Values.global.db.dbhost }}
+            - name: POSTGRES_DBUSER
+              value: {{ .Values.global.db.dbuser }}
+            - name: POSTGRES_DBPWD
+              value: {{ .Values.global.db.dbpwd }}
+            - name: POSTGRES_DBPORT
+              value: {{ .Values.global.db.dbport | quote }}
+            {{- end }}
+          ports:
+          - containerPort: {{ .Values.containers.containerPort }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/ebsmnt/erlang/corezoid_limits/bin/corezoid_limits","stop"]
+          volumeMounts:
+            - name: {{ .Values.appName }}config
+              mountPath: /ebsmnt/conf/corezoid_limits.config
+              subPath: corezoid_limits.config
+            - name: corezoid-license
+              mountPath: /ebsmnt/certs
+      {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: corezoid-secret
+      {{- end }}
+      volumes:
+        - name: {{ .Values.appName }}config
+          configMap:
+            name: {{ .Values.appName }}-config
+        - name: corezoid-license
+          secret:
+            secretName: license-share-new

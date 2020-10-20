@@ -1,10 +1,21 @@
+*****************************************************************************************************
+*************** Please be patient while the chart is being deployed ***************
 
-** Please be patient while the chart is being deployed **
+Corezoid url    https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}
+Superadmin url  https://{{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
+Syncapi url     https://{{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
+ {{- if .Values.global.sa.enabled }}
+SingleAccount: {{ .Values.global.sa_web.subdomain}}.{{ .Values.global.domain }}
+ {{- end }}
 
-Corezoid will be accessible with url https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}
-Default login / password - admin@corezoid.loc / admin111
+Default login : admin@corezoid.loc
+     password : admin111
 
-For kill:    helm delete --purge {{ .Release.Name }}
-For upgrade: helm upgrade {{ .Release.Name }} ./corezoid
 
-**********************************************************
+Uninstall:  helm delete  {{ .Release.Name }}
+Upgrade:    helm upgrade {{ .Release.Name }} .
+
+
+*****************************************************************************************************
+
+

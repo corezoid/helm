@@ -8,23 +8,7 @@ data:
         {disabled, false}
       ]},
 
-      {conf_agent, [
-         {pgsql, [
-          {{- if .Values.global.db.bouncer }}
-            {host, "pgbouncer-service"},
-          {{- else }}
-            {host, "${POSTGRES_DBHOST}"},
-          {{- end }}
-           {user, "${POSTGRES_DBUSER}"},
-           {dbname, "settings"},
-           {password, "${POSTGRES_DBPWD}"},
-           {min_size, 10},
-           {max_size, 10},
-           {start_size, 1}
-         ]},
-
-         {port, 8585},
-         {is_admin, false}, %% only in capi true
+      {ermql, [
 
         {publish_request, [
                     {servers, [
@@ -94,6 +78,7 @@ data:
               {database, 10}
           ]}
       ]},
+
         {corezoid_queues_gc, [
           {disabled, false},
           {{- if eq .Values.global.mq.internal false }}
@@ -312,6 +297,46 @@ data:
         ]
       },
 
+      {corezoid_fs, [
+
+        {profiles, [
+
+            %% profile name for maret schemas
+          [
+            {name, schemas}, %% Storage for process schemas, stored in marketplace
+
+                                                               %% switch between storages
+            {default_file_storage, file_f3},
+
+              %% f3 file storage settings
+            {file_f3,[
+              {allowed_namespaces, ["avatars"]},
+              {path_to_dir, "/ebsmnt_share"}, %% todo
+              {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+              {ttl_file, 600}                 %% file ttl in seconds
+            ]}
+          ],
+
+            %% profile name for avatars
+          [
+            {name, avatars}, %% Storage for users avatars
+                               %% switch between storages
+            {default_file_storage, file_f3},
+
+              %% f3 file storage settings
+            {file_f3,[
+              {allowed_namespaces, ["avatars"]},
+              {path_to_dir, "/tmp"}, %% todo
+              {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+              {ttl_file, 60}                 %% file ttl in seconds
+            ]}
+
+          ]
+        ]}
+
+      ]},
+
+
       {lager,
         [
           %% What handlers to install with what arguments (wrapped by middleman)
@@ -320,8 +345,8 @@ data:
 
           {handlers, [
             {lager_console_backend, info},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 734003200}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 734003200}, {date, "$D0"}, {count, 1}]}
+            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
           ]},
 
           %% What colors to use with what log levels

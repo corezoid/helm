@@ -1,60 +1,51 @@
-## Global values for subcharts | production | Corezoid 5.0
+# Global values for subcharts | production
 global:
   #if secretalreadyexist true - all sensitive data will be taken from secrets and skipping from values
   #if secretalreadyexist false - all sensitive data will be taken from  values below
   secretalreadyexist: false
-  # repotype, posible values - corezoid / public
+  #repotype, posible values - corezoid / public
   repotype: public
   # second level domain only! / core domain (example: corezoid.com)
-  domain: "corezoid.com"
-  # subdomain for sitename - k8s.corezoid.com (example: k8s)
-  subdomain: "k8s"
+  domain: "devopsdev.corezoid.com"
+  # subdomain / sitename - dev.mpo.corezoid.com (example: dev.mpo)
+  subdomain: "corezoid-k8s-public"
 
   # product name
   product: corezoid
 
-  # Ingress class: alb or nginx or aws-dual.
-  # internal: false - for ALB
+  # Ingress annotations
   ingress:
-    internal: false
-    class: alb
-
-  # AWS ELB options: internet-facing / internal
-  alb:
-    scheme: internet-facing
-    certificatearn: arn:aws:acm:eu-west-1:000000000000:certificate/00000000-0000-0000-0000-000000000000
-    # oidc support
-    oidc:
-      enabled: false
-      issuer: ""
-      endpoints:
-        authorize: ""
-        token: ""
-        userinfo: ""
-      clientId: ""
-      clientSecret: ""
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
+      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+      # access restriction
+      alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
+      # for creating route53 record-set
+      #external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
 
   # Define global storage class: efs / ceph / nfs / manual  (see README.md, efs is preferred)
-  storage: manual
+  storage: efs
 
 ######## Settings AWS EFS filesystem   ########
 
   efs:
     awsRegion: "eu-west-1"
-    efsFileSystemId: "fs-00000000"
+    efsFileSystemId: "fs-1388e9d9"
 
-######## Settings for statful services ########
+########  Settings for stateful services  ########
 
-
-  ####### Postgre SQL ########
+  #######  PostgreSQL  ########
   ## Supported version  from > 9.5 - 9.6.14R1 <
-  ## for RDS minimum instance - db.t2.small / master user set "postgres"
+  ## for RDS minimum instance - db.t2.medium / master user set "postgres"
   db:
-    #if internal true - create and use internal db container
-    #if internal false - enable external db, like rds
+    #if internal true - create and use internal k8s postgres container
+    #if internal false - enable external db, like aws rds
     internal: true
     #dbhost/dbport/dbuser/dbpwd/dbsuperuser/dbsuperpwd deps from secretalreadyexist
-    dbhost: ".eu-west-1.rds.amazonaws.com"
+    dbhost: ""
 
     ## dbsuperuser - for init db and roles
     ## dbuser - for work from Corezoid services
@@ -65,7 +56,7 @@ global:
 
     dbsuperuser: "postgres"
     ## password - for postgres
-    dbsuperuserpwd: "M7PClavkYpyM07lbg4BOBiA"
+    dbsuperuserpwd: "p2vbYNMaXsxANWj8XEyVerf8"
 
     dbport: 5432
     ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
@@ -73,7 +64,6 @@ global:
     #count of shards created in psql, if unset, default - 10
     shards_count: 10
     #count of shards created in psql, if unset, default - 10 - in array format
-    #TODO - make array from int and remove array env
     shards: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
     # set false to disable if you don't want to use PGBouncer (default - true)
@@ -89,39 +79,45 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: 5.0.0
+      version: 5.4.0
 
+    rotation:
+      ## enabled: true or false
+      enabled: true
+      # tasks_archive table cleanup period in crontab format
+      # minute hour day month dayofweek
+      schedule: "0 0 1 * *"
 
-  ####### Redis  ########
+  #######  Redis  ########
   ## Supported version  from > 3.2.4 - 3.2.12 <
   ## NO CLUSTER Mode!
   redis:
     #if internal true - create and use internal k8s redis container
-    #if internal false - enable external redis, like elasticache (Engine Version Compatibility: 3.2.10)
+    #if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
     internal: true
     # host/port/password deps from secretalreadyexist
-    host: ".cache.amazonaws.com"
+    host: ""
     port: 6379
     password: ""
 
 
-  ####### Elasticsearch  ########
+  #######  Elasticsearch  ########
   ## Supported version  from >= 6.7
   elasticsearch:
-    tag: 6.7.1
-    #if internal true - create and use internal k8s elastic container
-    #if internal false - enable external elk, like aws elasticsearch service
+    tag: "6.7.1"
+    #if internal true - create and use internal k8s elasticsearch container
+    #if internal false - enable external elasticsearch, like aws elasticsearch service
     internal: true
     #host/port deps from secretalreadyexist
-    host: "https://.eu-west-1.es.amazonaws.com"
+    host: ""
     ##be careful with port - in internal install used 9200, in aws uses 443
     port: "443"
 
-  #######  RabbitMQ ########
-  ## Supported version  from > 3.6.7 <
+  #######  RabbitMQ  ########
+  ## Supported version  3.8.5
   mq:
     #if internal true - create and use internal k8s rmq container
-    #if internal false - enable external rmq (on ec2 as example )
+    #if internal false - enable external rmq (on aws ec2 instances as example)
     internal: true
     #host/port/vhost/username/password deps from secretalreadyexist
     host: ""
@@ -132,15 +128,23 @@ global:
     # vm_memory_high_watermark.relative
     memoryHighWatermark: 0.3
 
-######## Settings for Corezoid services  ########
+########  Settings for Corezoid services  ########
   ##Settings for API Corezoid
   capi:
-    tag: 7.0.0.3
+    tag: "7.4.0.3"
     minReplicas: 2
-    maxReplicas: 4
+    maxReplicas: 10
+    # application resources limits and requests
+    resources:
+      limits:
+        cpu: 1200m
+        memory: 1500Mi
+      requests:
+        cpu: 600m
+        memory: 500Mi
     # capi secret and auth_hash deps from secretalreadyexist
     ## secret for work with api-multipart ( it is a solt for sign user cookies )
-    ## Auth hash for cookie (it is a solt for password when we use corezoid auth method(login+password))
+    ## Auth hash for cookie (it is solt for password when we use corezoid auth method(login+password))
     capi_auth_hash: "0PqNKlo0QH30dcYNGUqzYj2QnQuSDGsd"
     #Key for captcha when login in UI
     capi_front_captcha_key: ""
@@ -149,12 +153,17 @@ global:
     capi_backend_captcha_key: ""
     capi_backend_captcha_key_disabled: true
     #max req/sec of create|modify|delete for conv|folder|dashboard in 1 sec
-    max_reqs_limit: 5
+    max_reqs_limit: 300
+    # merchant_api settings
+    merchant_api:
+      skip_otp: true
+    # cookie expire time in sec (default 900)
+    cookie_expr_time: 7200
     ## Setting for configure frontend
     front_setting:
-      host:
-        # documentation (navigate by clicking on DOCS link)
-        doc: "doc.corezoid.com"
+      # documentation (navigate by clicking on DOCS link)
+      doc_host: "doc.corezoid.com"
+      doc_index: "/"
       ui:
         # enabled Market button
         market: false
@@ -164,103 +173,199 @@ global:
         billing: false
         # display of the git_call button
         git_call: false
-        # button Create -> Company
-        company: true
         # set default company name
         default_company: "My Corezoid"
+        # Tab name
+        tab_name: "Corezoid"
         # disable or enable logo on main page
         disabled_auth_logo: false
-    ldap_server: "ldap.company.loc"
+        # colors
+        color_main: "#0791e5"
+        color_logo: "#0791e5"
+        color_logo_hover: "#056cab"
+    ldap_server: "ldap.middleware.loc"
     ldap_port: "389"
-    ldap_base: "ou=people,o=company"
+    ldap_base: "ou=people,o=middleware"
     ldap_filter: "uid"
     #then this param is true, bind_user_name, bind_user_pass should be filled. if it's false it is not necessary
     ldap_first_bind_user: true
-    ldap_bind_user_name: "uid=ldap,ou=people,o=company"
+    ldap_bind_user_name: "uid=ldap,ou=people,o=middleware"
     ldap_bind_user_pass: ""
     ldap_user_nick_entry: "cn"
     ldap_tls: false
     # api limit counters by user_id
     user_limits:
       #default limit interface requests, ban after for 1 min
-      max_interface_rate: 100
+      max_interface_rate: 300
       #default limit for task create/modify, other will get 429 error
-      max_user_rate: 2000
+      max_user_rate: 300
     logic_settings:
       #max allowed threads for api logic
-      api_max_thread: 200
+      api_max_thread: 300
       sender_max_threads: 25
       timer_default: 5 # 30
     # enigma private_key_id
     enigma_pk_id: ""
 
-######## Settings for services ########
+########  Settings for services  ########
 
 # http-worker
   http:
-    tag: 3.0.0.1
+    tag: "3.4.0.2"
     minReplicas: 2
-    maxReplicas: 4
+    maxReplicas: 10
+    # application resources limits and requests
+    resources:
+      limits:
+        cpu: 400m
+        memory: 800Mi
+      requests:
+        cpu: 300m
+        memory: 350Mi
     max_http_resp_size: "5242880"
     # enigma private_key_id
     enigma_pk_id: ""
 
 # usercode
   usercode:
-    tag: 6.0.3
+    tag: "7.2.0"
     minReplicas: 2
-    maxReplicas: 4
+    maxReplicas: 8
+    # application resources limits and requests
+    resources:
+      limits:
+        cpu: 800m
+        memory: 900Mi
+      requests:
+        cpu: 250m
+        memory: 800Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
 # conveyor-worker
   worker:
-    tag: 4.0.0.2
+    tag: "4.4.0.1"
     minReplicas: 2
-    maxReplicas: 4
+    maxReplicas: 8
+    # application resources limits and requests
+    resources:
+      limits:
+        cpu: 1200m
+        memory: 1500Mi
+      requests:
+        cpu: 1000m
+        memory: 500Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
 # mult
   mult:
-    tag: 2.0.0.3
+    tag: "2.4.0.1"
     minReplicas: 2
-    maxReplicas: 4
+    maxReplicas: 6
+    # application resources limits and requests
+    resources:
+      limits:
+        cpu: 600m
+        memory: 800Mi
+      requests:
+        cpu: 500m
+        memory: 800Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
 # webadm
   webadm:
-    tag: 2.43
+    tag: "5.4.2"
     minReplicas: 2
+    limit_req: 70
 
 # web-superadm
   web_superadm:
-    tag: 0.0.1
+    tag: "1.3.1"
+    subdomain: "superadm-k8s-public"
     minReplicas: 1
 
 # syncapi
   syncapi:
-    subdomain: "syncapi-public"
-    tag: 1.1.3-e19 #
-    replicas: 1 # statefull set
+    subdomain: "syncapi-k8s-public"
+    tag: "2.0"
+    minReplicas: 2
+    maxReplicas: 10
+    resources:
+      limits:
+        cpu: 400m
+        memory: 400Mi
+      requests:
+        cpu: 400m
+        memory: 250Mi
 
 # merchant
   merchant:
-    tag: v0.0.27.2
+    tag: "v0.0.27.2"
     #login/secret for corezoid-merchant comunications
     merchant_login: apiLogin1
     merchant_secret: I9EmB170XUbe
-    minReplicas: 1
-    maxReplicas: 1
+    # application resources limits and requests
+    resources:
+      limits:
+        cpu: 500m
+        memory: 800Mi
+      requests:
+        cpu: 100m
+        memory: 500Mi
 
 # enigma global settings
   enigma:
-    enabled: false # under develop
-    encryption: false # under develop
+    enabled: false
+    encryption: false
+    key_manager:
+      tag: "1.1.0"
+      aws_kms_role: ""
+      minReplicas: 1
+      maxReplicas: 1
+      # application resources limits and requests
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1300Mi
+        requests:
+          cpu: 350m
+          memory: 500Mi
 
 # single-account
   sa:
     enabled: false # under develop
   sa_web:
     subdomain: ""
+
+# gitcall | worker and rabbit settings
+  gitcall:
+    enabled: false # under develop
+    mq_vhost: "/gitcall"
+    dunder_mq_vhost: "/dundergitcall"
+    mq_username: "gitcall"
+    mq_password: "QIsV6w4HaVwNkIvJvHvrS9i9JhNDEGzi"
+
+# conf-agent-server
+  conf_agent_server:
+    tag: "1.3.1"
+    minReplicas: 1
+    maxReplicas: 4
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1300Mi
+      requests:
+        cpu: 350m
+        memory: 500Mi
+
+  limits:
+    tag: "1.0.1"
+    minReplicas: 1
+
+
+# debug options
+# allows write crushdumps to the stderr output for capturing by logging system
+  debug: false
+

@@ -1,15 +1,20 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.appName }}-deployment
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}
   strategy:
     type: RollingUpdate
-  replicas: 1 # tells deployment to run 2 pods matching the template
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  replicas: {{ .Values.global.usercode.minReplicas | default 2 }} # tells deployment to run 2 pods matching the template
   template: # create pods using pod definition in this template
     metadata:
       annotations:
@@ -18,7 +23,6 @@ spec:
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"
       labels:
-        environment: {{ .Release.Namespace }}
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
@@ -26,7 +30,7 @@ spec:
       initContainers:
         - name: init-wait
           image: alpine
-          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} nc -zvw1 postgresql 5432 {{- if not .Values.global.db.internal }} && nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }} {{- if .Values.global.mq.internal }} && nc -zvw1 rabbit-service 5672 {{- else }} && nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }} {{- if .Values.global.elasticsearch.internal }} && nc -zvw1 elasticsearch-service 9200 {{- else }} && nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` 443 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
+          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 postgresql 5432 && {{- end }} {{- if not .Values.global.db.internal }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 && {{- else }} nc -zvw1  ${MQ_HOST} ${MQ_PORT} && {{- end }} {{- if .Values.global.elasticsearch.internal }} nc -zvw1 elasticsearch-service 9200  {{- else }}  nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` 443 {{- end }} {{- if .Values.global.sa.enabled }} && nc -zvw1 {{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }} 443 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
             {{- if eq .Values.global.secretalreadyexist true }}
             - name: MQ_HOST
@@ -45,10 +49,14 @@ spec:
                   name: secrets
                   key: elasticsearch_host
             - name: POSTGRES_DBHOST
+              {{- if .Values.global.db.bouncer }}
+              value: "pgbouncer-service"
+              {{- else }}
               valueFrom:
                 secretKeyRef:
                   name: secrets
                   key: postgres_dbhost
+            {{- end }}
             - name: POSTGRES_DBPORT
               valueFrom:
                 secretKeyRef:
@@ -62,15 +70,60 @@ spec:
             - name: ELASTICSEARCH_HOST
               value: {{ .Values.global.elasticsearch.host }}
             - name: POSTGRES_DBHOST
+              {{- if .Values.global.db.bouncer }}
+              value: "pgbouncer-service"
+              {{- else }}
               value: {{ .Values.global.db.dbhost }}
+              {{- end }}
+
             - name: POSTGRES_DBPORT
               value: {{ .Values.global.db.dbport | quote }}
             {{- end }}
+        - name: init-wait-rmq
+          image: alpine
+          command: ['sh']
+          args:
+            - "-c"
+            - |
+              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+          env:
+            {{- if eq .Values.global.secretalreadyexist true }}
+            - name: MQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_host
+            - name: MQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_username
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_password
+            {{- else}}
+            - name: MQ_HOST
+              value: {{ .Values.global.mq.host }}
+            - name: MQ_USERNAME
+              value: {{ .Values.global.mq.username }}
+            - name: MQ_PASSWORD
+              value: {{ .Values.global.mq.password }}
+            {{- end }}
       containers:
         - name: {{ .Values.appName }}
-          image: {{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.usercode.tag }}
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.usercode.tag }}"
           imagePullPolicy: Always
           env:
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            {{- if .Values.global.debug }}
+            - name: ERL_CRASH_DUMP
+              value: "/dev/stderr"
+            {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
             {{- if eq .Values.global.secretalreadyexist true }}
@@ -173,12 +226,7 @@ spec:
             - name: corezoid-license
               mountPath: /ebsmnt/certs
           resources:
-            limits:
-              cpu: 800m
-              memory: 900Mi
-            requests:
-              cpu: 250m
-              memory: 800Mi
+            {{ .Values.global.usercode.resources | toYaml | indent 12 | trim }}
           livenessProbe:
               httpGet:
                 path: /is_ready

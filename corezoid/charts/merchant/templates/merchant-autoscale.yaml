@@ -3,12 +3,11 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: {{ .Values.appName }}-autoscale
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
-  minReplicas: {{ .Values.global.merchant.minReplicas }}
-  maxReplicas: {{ .Values.global.merchant.maxReplicas }}
+  minReplicas: 1
+  maxReplicas: 1
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment

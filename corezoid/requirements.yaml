@@ -10,7 +10,3 @@ dependencies:
   - name: rabbitmq-ha
     version: 0.1.0
     condition: global.mq.internal
-
-  - name: nginx-ingress
-    version: 0.1.0
-    condition: global.ingress.internal

@@ -1,0 +1,4 @@
+appName: enigma-key-manager
+image:
+  registry: docker-hub.middleware.biz
+  repository: /enigma-key-manager

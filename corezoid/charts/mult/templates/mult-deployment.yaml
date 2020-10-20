@@ -1,14 +1,19 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.appName }}-deployment
   labels:
-    environment: {{ .Release.Namespace }}
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}
   strategy:
     type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   replicas: {{ .Values.global.mult.minReplicas }}
   template:
     metadata:
@@ -18,15 +23,14 @@ spec:
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"
       labels:
-        environment: {{ .Release.Namespace }}
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
-      terminationGracePeriodSeconds: 40
+      terminationGracePeriodSeconds: 300
       initContainers:
         - name: init-wait
           image: alpine
-          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} nc -zvw1 postgresql 5432 {{- if not .Values.global.db.internal }} && nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }} {{- if .Values.global.mq.internal }} && nc -zvw1 rabbit-service 5672 {{- else }} && nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }} {{- if .Values.global.elasticsearch.internal }} && nc -zvw1 elasticsearch-service 9200 {{- else }} && nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` 443 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
+          command: ["sh", "-c", "until  {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }} {{- if .Values.global.elasticsearch.internal }} && nc -zvw1 elasticsearch-service 9200 {{- else }} && nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` 443 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
             {{- if eq .Values.global.secretalreadyexist true }}
             - name: MQ_HOST
@@ -44,16 +48,6 @@ spec:
                 secretKeyRef:
                   name: secrets
                   key: elasticsearch_host
-            - name: POSTGRES_DBHOST
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbhost
-            - name: POSTGRES_DBPORT
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbport
             {{- else}}
             - name: MQ_HOST
               value: {{ .Values.global.mq.host }}
@@ -61,18 +55,56 @@ spec:
               value: {{ .Values.global.mq.port | quote }}
             - name: ELASTICSEARCH_HOST
               value: {{ .Values.global.elasticsearch.host }}
-            - name: POSTGRES_DBHOST
-              value: {{ .Values.global.db.dbhost }}
-            - name: POSTGRES_DBPORT
-              value: {{ .Values.global.db.dbport | quote }}
+            {{- end }}
+        - name: init-wait-rmq
+          image: alpine
+          command: ['sh']
+          args:
+            - "-c"
+            - |
+              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+          env:
+            {{- if eq .Values.global.secretalreadyexist true }}
+            - name: MQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_host
+            - name: MQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_username
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mq_password
+            {{- else}}
+            - name: MQ_HOST
+              value: {{ .Values.global.mq.host }}
+            - name: MQ_USERNAME
+              value: {{ .Values.global.mq.username }}
+            - name: MQ_PASSWORD
+              value: {{ .Values.global.mq.password }}
             {{- end }}
       containers:
         - name: {{ .Values.appName }}
-          image: {{ .Values.image.registry }}/{{.Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.mult.tag }}
+          image: "{{ .Values.image.registry }}/{{.Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.mult.tag }}"
           imagePullPolicy: Always
           env:
+            - name: NODE_COOKIE
+              value: {{ .Values.appName }}-{{ .Release.Namespace }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            {{- if .Values.global.debug }}
+            - name: ERL_CRASH_DUMP
+              value: "/dev/stderr"
+            {{- end }}
           {{- if eq .Values.global.secretalreadyexist true }}
             - name: REDIS_HOST
               valueFrom:
@@ -189,30 +221,38 @@ spec:
             - name: {{ .Values.appName }}-claim
               mountPath: /ebsmnt_share
           resources:
-            limits:
-              cpu: 1100m
-              memory: 1000Mi
-            requests:
-              cpu: 250m
-              memory: 500Mi
+            {{ .Values.global.mult.resources | toYaml | indent 12 | trim }}
           livenessProbe:
-            httpGet:
-              path: /is_ready
-              port: 8383
-            initialDelaySeconds: 30
-            periodSeconds: 3
+            exec:
+              command:
+              - bash
+              - -ec
+              - |
+                ulimit -n 1024
+                exec /usr/bin/conveyor_api_multipart liveness
+            initialDelaySeconds: 20
+            periodSeconds: 20
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
           readinessProbe:
-            httpGet:
-              path: /is_ready
-              port: 8383
-            initialDelaySeconds: 45
-            periodSeconds: 3
+            exec:
+              command:
+              - bash
+              - -ec
+              - |
+                ulimit -n 1024
+                exec /usr/bin/conveyor_api_multipart readiness
+            initialDelaySeconds: 15
+            periodSeconds: 5
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              add: ["IPC_LOCK"]
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret

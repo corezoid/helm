@@ -292,11 +292,11 @@ rabbitmqAmqpsSupport:
     # ssl_options.fail_if_no_peer_cert  = false
 
 ## Number of replicas
-replicaCount: 3
+replicaCount: 1
 
 image:
   repository: rabbitmq
-  tag: 3.8.0-alpine
+  tag: 3.8.6-alpine
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.
   ## Secrets must be manually created in the namespace.
