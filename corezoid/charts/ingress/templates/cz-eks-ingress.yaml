@@ -37,3 +37,12 @@ spec:
               serviceName: single-account-web
               servicePort: 80
     {{- end }}
+    {{- if .Values.global.mq.external }}
+    - host: {{ .Values.global.mq.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - path: /{{ .Values.global.mq.basePath }}/*
+            backend:
+              serviceName: rabbit-external
+              servicePort: 15672
+    {{- end }}

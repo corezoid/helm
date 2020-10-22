@@ -116,6 +116,10 @@ global:
   #######  RabbitMQ  ########
   ## Supported version  3.8.5
   mq:
+    external: true
+    subdomain: "services-cz-bkp"
+    basePath: "rabbit"
+
     #if internal true - create and use internal k8s rmq container
     #if internal false - enable external rmq (on aws ec2 instances as example)
     internal: true

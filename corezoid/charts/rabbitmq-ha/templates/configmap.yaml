@@ -77,6 +77,9 @@ data:
     ## via a loopback interface (e.g. localhost)
     loopback_users.guest = false
 
+    {{- if .Values.global.mq.basePath }}
+    management.path_prefix =  /{{ .Values.global.mq.basePath }}/
+    {{- end }}
     management.load_definitions = /etc/definitions/definitions.json
 
     ## Memory-based Flow Control threshold

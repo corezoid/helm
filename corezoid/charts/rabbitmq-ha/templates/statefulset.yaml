@@ -144,9 +144,9 @@ spec:
               containerPort: {{ .Values.rabbitmqPrometheusPlugin.port }}
             {{- end }}
           livenessProbe:
-            {{- toYaml .Values.livenessProbe | trim | nindent 12 }}
+            {{- tpl ( toYaml .Values.livenessProbe  | trim | nindent 12 ) . }}
           readinessProbe:
-            {{- toYaml .Values.readinessProbe | trim | nindent 12 }}
+            {{- tpl ( toYaml .Values.readinessProbe | trim | nindent 12 ) . }}
           env:
             - name: MY_POD_NAME
               valueFrom:
@@ -166,6 +166,12 @@ spec:
                 secretKeyRef:
                   name: {{ template "rabbitmq-ha.secretName" . }}
                   key: rabbitmq-erlang-cookie
+            - name: RABBIT_MANAGEMENT_PATH
+              {{- if .Values.global.mq.basePath }}
+              value: "http://localhost:15672/{{ .Values.global.mq.basePath }}/api/healthchecks/node"
+              {{ else }}
+              value: "http://localhost:15672/api/healthchecks/node"
+              {{- end }}
             - name: RABBIT_MANAGEMENT_USER
               valueFrom:
                 secretKeyRef:
