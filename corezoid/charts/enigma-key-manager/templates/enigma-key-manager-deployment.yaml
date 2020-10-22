@@ -31,7 +31,7 @@ spec:
       initContainers:
         - name: init-wait
           image: alpine
-          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} nc -zvw1 postgresql 5432 {{- if not .Values.global.db.internal }} && nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }} ; do echo waiting for dependences; sleep 2; done;"]
+          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- else }} nc -zvw1 postgresql 5432 {{- end }} ; do echo waiting for dependences; sleep 2; done;"]
           env:
             {{- if eq .Values.global.secretalreadyexist true }}
             - name: POSTGRES_DBHOST
