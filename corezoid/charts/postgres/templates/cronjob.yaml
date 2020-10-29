@@ -1,4 +1,4 @@
-{{- if .Values.global.db.rotation.enabled }}
+{{- if and (.Values.global.db.rotation.enabled) ( .Values.global.db.internal ) }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
@@ -34,25 +34,25 @@ spec:
               securityContext:
                 runAsUser: 70
               env:
-                {{- if eq .Values.global.secretalreadyexist true }}
+                {{- if and (.Values.global.db.secretName) (eq .Values.global.db.internal false)  }}
                 - name: POSTGRES_DBHOST
                   {{- if .Values.global.db.bouncer }}
                   value: "pgbouncer-service"
                   {{- else }}
                   valueFrom:
                     secretKeyRef:
-                      name: secrets
+                      name: {{ .Values.global.db.secretName }}
                       key: postgres_dbhost
                   {{- end }}
                 - name: POSTGRES_DBSUPERUSER
                   valueFrom:
                     secretKeyRef:
-                      name: secrets
+                      name: {{ .Values.global.db.secretName }}
                       key: postgres_dbsuperuser
                 - name: POSTGRES_DBSUPERUSERPWD
                   valueFrom:
                     secretKeyRef:
-                      name: secrets
+                      name: {{ .Values.global.db.secretName }}
                       key: postgres_dbsuperuserpwd
                 {{- else}}
                 - name: POSTGRES_DBHOST

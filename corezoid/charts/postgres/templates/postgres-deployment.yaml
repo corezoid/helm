@@ -46,24 +46,16 @@ spec:
           env:
             - name: PGDATA
               value: {{ .Values.postgresqlDataDir }}
-          {{- if eq .Values.global.secretalreadyexist true }}
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbsuperuser
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbsuperuserpwd
-          {{- else}}
-            - name: POSTGRES_USER
-              value: {{ .Values.global.db.dbsuperuser }}
-            - name: POSTGRES_PASSWORD
-              value: {{ .Values.global.db.dbsuperuserpwd }}
-
-          {{- end }}
           ports:
             - containerPort: 5432
               name: {{ .Values.appName }}

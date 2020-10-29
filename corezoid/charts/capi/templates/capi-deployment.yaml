@@ -32,51 +32,54 @@ spec:
           image: alpine
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} &&  {{- else }} nc -zvw1 postgresql 5432 && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 && {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} && {{- end }} {{- if .Values.global.elasticsearch.internal }} nc -zvw1 elasticsearch-service 9200 {{- else }} nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` 443 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
-            {{- if eq .Values.global.secretalreadyexist true }}
+            {{- if and ( .Values.global.mq.secretName) (eq .Values.global.mq.internal false) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.mq.secretName }}
                   key: mq_host
             - name: MQ_PORT
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.mq.secretName }}
                   key: mq_port
-            - name: ELASTICSEARCH_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: elasticsearch_host
-            - name: POSTGRES_DBHOST
-              {{- if .Values.global.db.bouncer }}
-              value: "pgbouncer-service"
-              {{- else }}
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbhost
-                {{- end }}
-            - name: POSTGRES_DBPORT
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbport
             {{- else}}
             - name: MQ_HOST
               value: {{ .Values.global.mq.host }}
             - name: MQ_PORT
               value: {{ .Values.global.mq.port | quote }}
-            - name: ELASTICSEARCH_HOST
-              value: {{ .Values.global.elasticsearch.host }}
+            {{- end}}
             - name: POSTGRES_DBHOST
               {{- if .Values.global.db.bouncer }}
               value: "pgbouncer-service"
               {{- else }}
-              value: {{ .Values.global.db.dbhost }}
-                {{- end }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secretName }}
+                  key: postgres_dbhost
+            {{- end }}
             - name: POSTGRES_DBPORT
-              value: {{ .Values.global.db.dbport | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secretName }}
+                  key: postgres_dbport
+
+            {{- if and (.Values.global.elasticsearch.secretName) (eq .Values.global.elasticsearch.internal false)}}
+            - name: ELASTICSEARCH_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.elasticsearch.secretName }}
+                  key: elasticsearch_host
+            - name: ELASTICSEARCH_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.elasticsearch.secretName }}
+                  key: elasticsearch_port
+            {{- else }}
+            - name: ELASTICSEARCH_HOST
+              value: {{ .Release.Name}}-elasticsearch
+            - name: ELASTICSEARCH_PORT
+              value: {{ .Values.global.elasticsearch.port }}
             {{- end }}
         - name: init-wait-rmq
           image: alpine
@@ -86,21 +89,21 @@ spec:
             - |
               until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
           env:
-            {{- if eq .Values.global.secretalreadyexist true }}
+            {{- if and (.Values.global.mq.secretNamese) (not .Values.global.mq.internal) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.mq.secretNamese }}
                   key: mq_host
             - name: MQ_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.mq.secretNamese }}
                   key: mq_username
             - name: MQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.mq.secretNamese }}
                   key: mq_password
             {{- else}}
             - name: MQ_HOST
@@ -127,108 +130,57 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
-          {{- if eq .Values.global.secretalreadyexist true }}
+          {{- if and ( .Values.global.redis.secretName) ( not .Values.global.redis.internal) }}
           - name: REDIS_HOST
             valueFrom:
               secretKeyRef:
-                name: secrets
+                name: {{ .Values.global.redis.secretName }}
                 key: redis_host
           - name: REDIS_PORT
             valueFrom:
               secretKeyRef:
-                name: secrets
+                name: {{ .Values.global.redis.secretName }}
                 key: redis_port
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: secrets
+                name: {{ .Values.global.redis.secretName }}
                 key: redis_password
-          - name: MQ_HOST
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: mq_host
-          - name: MQ_PORT
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: mq_port
-          - name: MQ_VHOST
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: mq_vhost
-          - name: MQ_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: mq_username
-          - name: MQ_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: mq_password
-          - name: CAPI_API_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: capi_api_secret
-          - name: CAPI_AUTH_HASH
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: capi_auth_hash
-          - name: MERCHANT_LOGIN
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: merchant_login
-          - name: MERCHANT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: merchant_secret
-          - name: ELASTICSEARCH_HOST
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: elasticsearch_host
-          - name: ELASTICSEARCH_PORT
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: elasticsearch_port
-          - name: POSTGRES_DBHOST
-            {{- if .Values.global.db.bouncer }}
-            value: "pgbouncer-service"
-            {{- else }}
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: postgres_dbhost
-            {{- end }}
-          - name: POSTGRES_DBUSER
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: postgres_dbuser
-          - name: POSTGRES_DBPWD
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: postgres_dbpwd
-          - name: POSTGRES_DBPORT
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: postgres_dbport
-          {{- else}}
+          {{- else }}
           - name: REDIS_HOST
             value: {{ .Values.global.redis.host }}
           - name: REDIS_PORT
             value: {{ .Values.global.redis.port | quote  }}
           - name: REDIS_PASSWORD
             value: {{ .Values.global.redis.password }}
+          {{- end }}
+          {{- if and ( .Values.global.mq.secretName) (not .Values.global.mq.internal )}}
+          - name: MQ_HOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.mq.secretName }}
+                key: mq_host
+          - name: MQ_PORT
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.mq.secretName }}
+                key: mq_port
+          - name: MQ_VHOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.mq.secretName }}
+                key: mq_vhost
+          - name: MQ_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.mq.secretName }}
+                key: mq_username
+          - name: MQ_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.mq.secretName }}
+                key: mq_password
+          {{- else }}
           - name: MQ_HOST
             value: {{ .Values.global.mq.host }}
           - name: MQ_PORT
@@ -239,31 +191,68 @@ spec:
             value: {{ .Values.global.mq.username }}
           - name: MQ_PASSWORD
             value: {{ .Values.global.mq.password }}
+          {{- end }}
           - name: CAPI_API_SECRET
-            value: {{ .Values.global.capi.capi_api_secret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.appName }}
+                key: capi_api_secret
           - name: CAPI_AUTH_HASH
-            value: {{ .Values.global.capi.capi_auth_hash }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.appName }}
+                key: capi_auth_hash
           - name: MERCHANT_LOGIN
-            value: {{ .Values.global.merchant.merchant_login }}
+            valueFrom:
+              secretKeyRef:
+                name: merchant
+                key: merchant_login
           - name: MERCHANT_SECRET
-            value: {{ .Values.global.merchant.merchant_secret }}
+            valueFrom:
+              secretKeyRef:
+                name: merchant
+                key: merchant_secret
+          {{- if and ( .Values.global.elasticsearch.secretName ) ( not .Values.global.elasticsearch.internal )}}
+          - name: ELASTICSEARCH_HOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.elasticsearch.secretName }}
+                key: elasticsearch_host
+          - name: ELASTICSEARCH_PORT
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.elasticsearch.secretName }}
+                key: elasticsearch_port
+          {{- else}}
           - name: ELASTICSEARCH_HOST
             value: {{ .Values.global.elasticsearch.host }}
           - name: ELASTICSEARCH_PORT
             value: {{ .Values.global.elasticsearch.port | quote }}
+          {{- end }}
           - name: POSTGRES_DBHOST
             {{- if .Values.global.db.bouncer }}
             value: "pgbouncer-service"
             {{- else }}
-            value: {{ .Values.global.db.dbhost }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secretName }}
+                key: postgres_dbhost
             {{- end }}
           - name: POSTGRES_DBUSER
-            value: {{ .Values.global.db.dbuser }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secretName }}
+                key: postgres_dbuser
           - name: POSTGRES_DBPWD
-            value: {{ .Values.global.db.dbpwd }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secretName }}
+                key: postgres_dbpwd
           - name: POSTGRES_DBPORT
-            value: {{ .Values.global.db.dbport | quote }}
-          {{- end }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secretName }}
+                key: postgres_dbport
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           - containerPort: 8585

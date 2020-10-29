@@ -33,67 +33,45 @@ spec:
           image: alpine
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} nc -zvw1 postgresql 5432 {{- if not .Values.global.db.internal }} && nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }} ; do echo waiting for dependences; sleep 2; done;"]
           env:
-            {{- if eq .Values.global.secretalreadyexist true }}
             - name: POSTGRES_DBHOST
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbhost
             - name: POSTGRES_DBPORT
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbport
-            {{- else}}
-            - name: POSTGRES_DBHOST
-              value: {{ .Values.global.db.dbhost }}
-            - name: POSTGRES_DBPORT
-              value: {{ .Values.global.db.dbport | quote }}
-            {{- end }}
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.enigma.key_manager.tag }}"
           imagePullPolicy: Always
           env:
-          {{- if eq .Values.global.secretalreadyexist true }}
           - name: POSTGRES_DBHOST
           {{- if .Values.global.db.bouncer }}
             value: "pgbouncer-service"
           {{- else }}
             valueFrom:
               secretKeyRef:
-                name: secrets
+                name: {{ .Values.global.db.secretName }}
                 key: postgres_dbhost
           {{- end }}
           - name: POSTGRES_DBPORT
             valueFrom:
               secretKeyRef:
-                name: secrets
+                name: {{ .Values.global.db.secretName }}
                 key: postgres_dbport
           - name: POSTGRES_DBUSER
             valueFrom:
               secretKeyRef:
-                name: secrets
+                name: {{ .Values.global.db.secretName }}
                 key: postgres_dbuser
           - name: POSTGRES_DBPWD
             valueFrom:
               secretKeyRef:
-                name: secrets
+                name: {{ .Values.global.db.secretName }}
                 key: postgres_dbpwd
-          {{- else}}
-          - name: POSTGRES_DBHOST
-          {{- if .Values.global.db.bouncer }}
-            value: "pgbouncer-service"
-          {{- else }}
-            value: {{ .Values.global.db.dbhost }}
-          {{- end }}
-          - name: POSTGRES_DBPORT
-            value: {{ .Values.global.db.dbport | quote }}
-          - name: POSTGRES_DBUSER
-            value: {{ .Values.global.db.dbuser }}
-          - name: POSTGRES_DBPWD
-            value: {{ .Values.global.db.dbpwd }}
-          {{- end }}
           ports:
           - containerPort: 8080
           resources:

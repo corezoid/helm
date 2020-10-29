@@ -26,7 +26,7 @@ global:
       # for creating route53 record-set
       #external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
 
-  # Define global storage class: efs / ceph / nfs / manual  (see README.md, efs is preferred)
+  # Define global storage class: efs / ceph / nfs / manual  (see TASK.md, efs is preferred)
   storage: efs
 
 ######## Settings AWS EFS filesystem   ########
@@ -43,7 +43,11 @@ global:
   db:
     #if internal true - create and use internal k8s postgres container
     #if internal false - enable external db, like aws rds
-    internal: true
+    internal: false
+    ## if we have global secrets for PostgreSQl with credentials we should provide this secret name
+    ## secretName: "pg-secret"
+    secretName: "pg-secret"
+
     #dbhost/dbport/dbuser/dbpwd/dbsuperuser/dbsuperpwd deps from secretalreadyexist
     dbhost: ""
 
@@ -96,6 +100,10 @@ global:
     #if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
     internal: true
     # host/port/password deps from secretalreadyexist
+    ## if we have global secret with credentials we should provide this secret name
+    ## secretName: "redis-secret"
+    secretName: "redis-secret"
+
     host: ""
     port: 6379
     password: ""
@@ -109,6 +117,10 @@ global:
     #if internal false - enable external elasticsearch, like aws elasticsearch service
     internal: true
     #host/port deps from secretalreadyexist
+    ## if we have global secret with credentials we should provide this secret name
+    ## secretName: "elasticsearch-secret"
+    secretName: "elasticsearch-secret"
+
     host: ""
     ##be careful with port - in internal install used 9200, in aws uses 443
     port: "443"
@@ -120,6 +132,10 @@ global:
     #if internal false - enable external rmq (on aws ec2 instances as example)
     internal: true
     #host/port/vhost/username/password deps from secretalreadyexist
+    ## if we have global secret with credentials we should provide this secret name
+    ## secretName: "mq-secret"
+    secretName: "mq-secret"
+
     host: ""
     port: "5672"
     vhost: "/conveyor"
@@ -144,6 +160,7 @@ global:
         memory: 500Mi
     # capi secret and auth_hash deps from secretalreadyexist
     ## secret for work with api-multipart ( it is a solt for sign user cookies )
+    capi_api_secret: "g98g987f8f6d8yfjf8ttctc"
     ## Auth hash for cookie (it is solt for password when we use corezoid auth method(login+password))
     capi_auth_hash: "0PqNKlo0QH30dcYNGUqzYj2QnQuSDGsd"
     #Key for captcha when login in UI
