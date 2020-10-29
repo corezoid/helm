@@ -68,21 +68,20 @@ spec:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           env:
-          {{- if eq .Values.global.secretalreadyexist true }}
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbuser
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbpwd
             - name: STATS_USERS
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbuser
             - name: DB_HOST
             {{- if .Values.global.db.internal }}
@@ -90,30 +89,14 @@ spec:
             {{- else }}
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbhost
             {{- end }}
             - name: DB_PORT
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbport
-            {{- else}}
-            - name: DB_HOST
-            {{- if .Values.global.db.internal }}
-              value: postgresql
-             {{- else }}
-              value: {{ .Values.global.db.dbhost }}
-             {{- end }}
-            - name: DB_PORT
-              value: {{ .Values.global.db.dbport | quote }}
-            - name: DB_USER
-              value: {{ .Values.global.db.dbuser }}
-            - name: DB_PASSWORD
-              value: {{ .Values.global.db.dbpwd }}
-            - name: STATS_USERS
-              value: {{ .Values.global.db.dbuser }}
-            {{- end }}
             - name: IGNORE_STARTUP_PARAMETERS
               value: "extra_float_digits"
             - name: DB_NAME
@@ -166,23 +149,16 @@ spec:
               value: localhost
             - name: PGBOUNCER_PORT
               value: "5432"
-            {{- if eq .Values.global.secretalreadyexist true }}
             - name: PGBOUNCER_USER
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbuser
             - name: PGBOUNCER_PASS
               valueFrom:
                 secretKeyRef:
-                  name: secrets
+                  name: {{ .Values.global.db.secretName }}
                   key: postgres_dbpwd
-            {{- else}}
-            - name: PGBOUNCER_USER
-              value: {{ .Values.global.db.dbuser }}
-            - name: PGBOUNCER_PASS
-              value: {{ .Values.global.db.dbpwd }}
-            {{- end }}
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret
