@@ -30,7 +30,7 @@ spec:
       initContainers:
         - name: init-wait
           image: alpine
-          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} &&  {{- else }} nc -zvw1 postgresql 5432 && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 && {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} && {{- end }} {{- if .Values.global.elasticsearch.internal }} nc -zvw1 elasticsearch-service 9200 {{- else }} nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` 443 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
+          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} &&  {{- else }} nc -zvw1 postgresql 5432 && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 && {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} && {{- end }} {{- if .Values.global.elasticsearch.internal }} nc -zvw1 ${ELASTICSEARCH_HOST} 9200 {{- else }} nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` 443 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
             {{- if and ( .Values.global.mq.secretName) (eq .Values.global.mq.internal false) }}
             - name: MQ_HOST
@@ -64,7 +64,6 @@ spec:
                   name: {{ .Values.global.db.secretName }}
                   key: postgres_dbport
 
-            {{- if and (.Values.global.elasticsearch.secretName) (eq .Values.global.elasticsearch.internal false)}}
             - name: ELASTICSEARCH_HOST
               valueFrom:
                 secretKeyRef:
@@ -75,12 +74,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.elasticsearch.secretName }}
                   key: elasticsearch_port
-            {{- else }}
-            - name: ELASTICSEARCH_HOST
-              value: {{ .Release.Name}}-elasticsearch
-            - name: ELASTICSEARCH_PORT
-              value: {{ .Values.global.elasticsearch.port }}
-            {{- end }}
         - name: init-wait-rmq
           image: alpine
           command: ['sh']
@@ -89,21 +82,21 @@ spec:
             - |
               until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
           env:
-            {{- if and (.Values.global.mq.secretNamese) (not .Values.global.mq.internal) }}
+            {{- if and (.Values.global.mq.secretName) (not .Values.global.mq.internal) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretNamese }}
+                  name: {{ .Values.global.mq.secretName }}
                   key: mq_host
             - name: MQ_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretNamese }}
+                  name: {{ .Values.global.mq.secretName }}
                   key: mq_username
             - name: MQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretNamese }}
+                  name: {{ .Values.global.mq.secretName }}
                   key: mq_password
             {{- else}}
             - name: MQ_HOST
@@ -212,7 +205,6 @@ spec:
               secretKeyRef:
                 name: merchant
                 key: merchant_secret
-          {{- if and ( .Values.global.elasticsearch.secretName ) ( not .Values.global.elasticsearch.internal )}}
           - name: ELASTICSEARCH_HOST
             valueFrom:
               secretKeyRef:
@@ -223,12 +215,6 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.elasticsearch.secretName }}
                 key: elasticsearch_port
-          {{- else}}
-          - name: ELASTICSEARCH_HOST
-            value: {{ .Values.global.elasticsearch.host }}
-          - name: ELASTICSEARCH_PORT
-            value: {{ .Values.global.elasticsearch.port | quote }}
-          {{- end }}
           - name: POSTGRES_DBHOST
             {{- if .Values.global.db.bouncer }}
             value: "pgbouncer-service"

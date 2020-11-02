@@ -1,4 +1,4 @@
-{{- if and (.Values.global.db.rotation.enabled) ( .Values.global.db.internal ) }}
+{{- if  (.Values.global.db.rotation.enabled) }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:

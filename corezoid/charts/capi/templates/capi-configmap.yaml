@@ -330,13 +330,8 @@ data:
                 %% 3. Folders
                 %% Elastic helps us to find these objects for name, It's as like in DB
             {elastic_search, [
-              {{- if eq .Values.global.elasticsearch.internal false }}
                 {host, <<"${ELASTICSEARCH_HOST}">>},
                 {port, ${ELASTICSEARCH_PORT} },
-              {{- else }}
-                {host, <<"http://elasticsearch-service">>},
-                {port, 9200},
-              {{- end }}
                 {timeout, 50000}
             ]},
 

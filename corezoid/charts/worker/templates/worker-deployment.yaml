@@ -157,21 +157,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secretName }}
                   key: mq_port
-            - name: MQ_VHOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_vhost
-            - name: MQ_GITCALL_VHOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_gitcall_vhost
-            - name: MQ_DUNDER_GITCALL_VHOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_dunder_gitcall_vhost
             - name: MQ_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -187,17 +172,18 @@ spec:
               value: {{ .Values.global.mq.host }}
             - name: MQ_PORT
               value: {{ .Values.global.mq.port | quote }}
+
+            - name: MQ_USERNAME
+              value: {{ .Values.global.mq.username }}
+            - name: MQ_PASSWORD
+              value: {{ .Values.global.mq.password }}
+            {{- end }}
             - name: MQ_VHOST
               value: {{ .Values.global.mq.vhost }}
             - name: MQ_GITCALL_VHOST
               value: {{ .Values.global.gitcall.mq_vhost }}
             - name: MQ_DUNDER_GITCALL_VHOST
               value: {{ .Values.global.gitcall.dunder_mq_vhost }}
-            - name: MQ_USERNAME
-              value: {{ .Values.global.mq.username }}
-            - name: MQ_PASSWORD
-              value: {{ .Values.global.mq.password }}
-            {{- end }}
             - name: POSTGRES_DBHOST
               {{- if .Values.global.db.bouncer }}
               value: "pgbouncer-service"
