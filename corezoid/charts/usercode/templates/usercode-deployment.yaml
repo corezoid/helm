@@ -49,7 +49,7 @@ spec:
             - name: MQ_PORT
               value: {{ .Values.global.mq.port | quote }}
             {{- end }}
-            {{- if and ( .Values.global.elasticsearch.secretName ) ( .Values.global.elasticsearch.internal )}}
+            {{- if and ( .Values.global.elasticsearch.secretName ) ( not .Values.global.elasticsearch.internal )}}
             - name: ELASTICSEARCH_HOST
               valueFrom:
                 secretKeyRef:
