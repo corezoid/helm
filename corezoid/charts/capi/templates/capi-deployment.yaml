@@ -32,7 +32,6 @@ spec:
           image: alpine
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} &&  nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` ${ELASTICSEARCH_PORT} ; do echo waiting for dependences; sleep 2; done;"]
           env:
-            {{- if  .Values.global.mq.secret.name }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -43,7 +42,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: port
-            {{- end}}
             - name: POSTGRES_DBHOST
               {{- if .Values.global.db.bouncer }}
               value: "pgbouncer-service"
