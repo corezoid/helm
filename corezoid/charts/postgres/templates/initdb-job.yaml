@@ -38,33 +38,33 @@ spec:
             - name: POSTGRES_DBHOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbhost
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbhost
             - name: POSTGRES_DBPORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbport
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbport
             - name: POSTGRES_DBSUPERUSER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbsuperuser
+                  name: {{ .Values.global.db.secret.name}}
+                  key: dbsuperuser
             - name: POSTGRES_DBSUPERUSERPWD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbsuperuserpwd
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbsuperuserpwd
             - name: POSTGRES_DBUSER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbuser
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
             - name: POSTGRES_DBPWD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbpwd
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbpwd
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret

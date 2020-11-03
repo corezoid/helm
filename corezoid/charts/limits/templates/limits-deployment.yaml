@@ -29,17 +29,17 @@ spec:
           image: alpine
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} &&  {{- else }} nc -zvw1 postgresql 5432 && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672  {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}  {{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
-            {{- if and ( .Values.global.mq.secretName ) ( not .Values.global.mq.internal ) }}
+            {{- if and ( .Values.global.mq.secret.name ) ( not .Values.global.mq.internal ) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_host
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: host
             - name: MQ_PORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_port
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: port
             {{- else }}
             - name: MQ_HOST
               value: {{ .Values.global.mq.host }}
@@ -49,13 +49,13 @@ spec:
             - name: POSTGRES_DBHOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbhost
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbhost
             - name: POSTGRES_DBPORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbport
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbport
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
@@ -63,32 +63,32 @@ spec:
           env:
             - name: RELX_REPLACE_OS_VARS
               value: "true"
-            {{- if and ( .Values.global.mq.secretName ) ( not .Values.global.mq.internal ) }}
+            {{- if and ( .Values.global.mq.secret.name ) ( not .Values.global.mq.internal ) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_host
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: host
             - name: MQ_PORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_port
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: port
             - name: MQ_VHOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_vhost
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: vhost
             - name: MQ_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_username
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: username
             - name: MQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_password
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: password
             {{- else }}
             - name: MQ_HOST
               value: {{ .Values.global.mq.host }}
@@ -104,23 +104,23 @@ spec:
             - name: POSTGRES_DBHOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbhost
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbhost
             - name: POSTGRES_DBUSER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbuser
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
             - name: POSTGRES_DBPWD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbpwd
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbpwd
             - name: POSTGRES_DBPORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbport
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbport
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           lifecycle:

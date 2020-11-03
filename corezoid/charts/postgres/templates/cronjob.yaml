@@ -34,38 +34,25 @@ spec:
               securityContext:
                 runAsUser: 70
               env:
-                {{- if and (.Values.global.db.secretName) (eq .Values.global.db.internal false)  }}
                 - name: POSTGRES_DBHOST
                   {{- if .Values.global.db.bouncer }}
                   value: "pgbouncer-service"
                   {{- else }}
                   valueFrom:
                     secretKeyRef:
-                      name: {{ .Values.global.db.secretName }}
+                      name: {{ .Values.global.db.secret.name }}
                       key: postgres_dbhost
                   {{- end }}
                 - name: POSTGRES_DBSUPERUSER
                   valueFrom:
                     secretKeyRef:
-                      name: {{ .Values.global.db.secretName }}
+                      name: {{ .Values.global.db.secret.name }}
                       key: postgres_dbsuperuser
                 - name: POSTGRES_DBSUPERUSERPWD
                   valueFrom:
                     secretKeyRef:
-                      name: {{ .Values.global.db.secretName }}
+                      name: {{ .Values.global.db.secret.name }}
                       key: postgres_dbsuperuserpwd
-                {{- else}}
-                - name: POSTGRES_DBHOST
-                  {{- if .Values.global.db.internal }}
-                  value: localhost
-                  {{- else }}
-                  value: {{ .Values.global.db.dbhost }}
-                  {{- end }}
-                - name: POSTGRES_DBSUPERUSER
-                  value: {{ .Values.global.db.dbsuperuser }}
-                - name: POSTGRES_DBSUPERUSERPWD
-                  value: {{ .Values.global.db.dbsuperuserpwd }}
-                {{- end }}
                 - name: SHARD_COUNT
                   value: '{{ .Values.global.db.shards_count }}'
           restartPolicy: OnFailure

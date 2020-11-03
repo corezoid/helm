@@ -36,22 +36,22 @@ spec:
             - |
               until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
           env:
-            {{- if and ( .Values.global.mq.secretName ) ( not .Values.global.mq.internal) }}
+            {{- if and ( .Values.global.mq.secret.name ) ( not .Values.global.mq.internal) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_host
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: host
             - name: MQ_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_username
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: username
             - name: MQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_password
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: password
             {{- else}}
             - name: MQ_HOST
               value: {{ .Values.global.mq.host }}
@@ -75,32 +75,32 @@ spec:
             {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
-            {{- if and ( .Values.global.mq.secretName ) ( not .Values.global.mq.internal) }}
+            {{- if and ( .Values.global.mq.secret.name ) ( not .Values.global.mq.internal) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_host
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: host
             - name: MQ_PORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_port
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: port
             - name: MQ_VHOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_vhost
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: vhost
             - name: MQ_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_username
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: username
             - name: MQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mq.secretName }}
-                  key: mq_password
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: password
             {{- else }}
             - name: MQ_HOST
               value: {{ .Values.global.mq.host }}
@@ -119,24 +119,24 @@ spec:
               {{- else }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbhost
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbhost
             {{- end }}
             - name: POSTGRES_DBUSER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbuser
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
             - name: POSTGRES_DBPWD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbpwd
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbpwd
             - name: POSTGRES_DBPORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbport
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbport
 
           ports:
             - containerPort: 8090

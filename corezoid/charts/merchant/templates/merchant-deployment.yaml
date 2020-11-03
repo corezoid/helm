@@ -35,13 +35,13 @@ spec:
             - name: POSTGRES_DBHOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbhost
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbhost
             - name: POSTGRES_DBPORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbport
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbport
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
@@ -57,17 +57,17 @@ spec:
               secretKeyRef:
                 name: merchant
                 key: merchant_secret
-          {{- if and ( .Values.global.redis.secretName ) ( not .Values.global.redis.internal )}}
+          {{- if and ( .Values.global.redis.secret.name ) ( not .Values.global.redis.internal )}}
           - name: SPRING_REDIS_HOST
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.global.redis.secretName }}
-                key: redis_host
+                name: {{ .Values.global.redis.secret.name }}
+                key: host
           - name: SPRING_REDIS_PORT
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.global.redis.secretName }}
-                key: redis_port
+                name: {{ .Values.global.redis.secret.name }}
+                key: port
           {{- else }}
           - name: SPRING_REDIS_HOST
             value: redis-master
@@ -80,24 +80,24 @@ spec:
             {{- else }}
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.global.db.secretName }}
-                key: postgres_dbhost
+                name: {{ .Values.global.db.secret.name }}
+                key: dbhost
             {{- end }}
           - name: POSTGRES_DBPORT
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.global.db.secretName }}
-                key: postgres_dbport
+                name: {{ .Values.global.db.secret.name }}
+                key: dbport
           - name: SPRING_DATASOURCE_USERNAME
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.global.db.secretName }}
-                key: postgres_dbuser
+                name: {{ .Values.global.db.secret.name }}
+                key: dbuser
           - name: SPRING_DATASOURCE_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.global.db.secretName }}
-                key: postgres_dbpwd
+                name: {{ .Values.global.db.secret.name }}
+                key: dbpwd
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           - containerPort: 7980

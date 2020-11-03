@@ -82,14 +82,14 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Values.global.elasticsearch.secretName }}
+  name: {{ .Values.global.elasticsearch.secret.name }}
   labels:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 type: Opaque
 data:
 
-  elasticsearch_host: {{ "elasticsearch-service" | b64enc | quote }}
-  elasticsearch_port: {{ .Values.global.elasticsearch.port | b64enc | quote }}
+  host: {{ "elasticsearch-service" | b64enc | quote }}
+  port: {{ .Values.global.elasticsearch.secret.data.port | b64enc | quote }}
 
 {{- end }}
