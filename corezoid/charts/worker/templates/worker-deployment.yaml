@@ -32,7 +32,6 @@ spec:
           image: alpine
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} &&  {{- else }} nc -zvw1 postgresql 5432 && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 && {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} && {{- end }} {{- if .Values.global.elasticsearch.internal }} nc -zvw1 elasticsearch-service 9200 {{- else }} nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` 443 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
-            {{- if and ( .Values.global.mq.secret.name ) ( not .Values.global.mq.internal ) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -43,22 +42,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: port
-            {{- else }}
-            - name: MQ_HOST
-              value: {{ .Values.global.mq.host }}
-            - name: MQ_PORT
-              value: {{ .Values.global.mq.port | quote }}
-            {{- end }}
-            {{- if and ( .Values.global.elasticsearch.secret.name ) ( not .Values.global.elasticsearch.internal )}}
             - name: ELASTICSEARCH_HOST
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.global.elasticsearch.secret.name }}
                   key: host
-            {{- else }}
-            - name: ELASTICSEARCH_HOST
-              value: {{ .Values.global.elasticsearch.host }}
-            {{- end }}
             - name: POSTGRES_DBHOST
               {{- if .Values.global.db.bouncer }}
               value: "pgbouncer-service"
@@ -67,7 +55,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbhost
-            {{- end }}
+              {{- end }}
             - name: POSTGRES_DBPORT
               valueFrom:
                 secretKeyRef:
@@ -81,7 +69,6 @@ spec:
             - |
               until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
           env:
-            {{- if and ( .Values.global.mq.secret.name ) ( not .Values.global.mq.internal ) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -97,14 +84,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
-            {{- else}}
-            - name: MQ_HOST
-              value: {{ .Values.global.mq.host }}
-            - name: MQ_USERNAME
-              value: {{ .Values.global.mq.username }}
-            - name: MQ_PASSWORD
-              value: {{ .Values.global.mq.password }}
-            {{- end }}
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.worker.tag }}"
@@ -122,7 +101,6 @@ spec:
             {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
-            {{- if and ( .Values.global.redis.secret.name ) ( not .Values.global.redis.internal ) }}
             - name: REDIS_HOST
               valueFrom:
                 secretKeyRef:
@@ -138,15 +116,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.redis.secret.name }}
                   key: password
-            {{- else }}
-            - name: REDIS_HOST
-              value: {{ .Values.global.redis.host }}
-            - name: REDIS_PORT
-              value: {{ .Values.global.redis.port | quote }}
-            - name: REDIS_PASSWORD
-              value: {{ .Values.global.redis.password }}
-            {{- end }}
-            {{- if and ( .Values.global.mq.secret.name ) ( not .Values.global.mq.internal ) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -167,19 +136,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
-            {{- else }}
-            - name: MQ_HOST
-              value: {{ .Values.global.mq.host }}
-            - name: MQ_PORT
-              value: {{ .Values.global.mq.port | quote }}
-
-            - name: MQ_USERNAME
-              value: {{ .Values.global.mq.username }}
-            - name: MQ_PASSWORD
-              value: {{ .Values.global.mq.password }}
-            {{- end }}
             - name: MQ_VHOST
-              value: {{ .Values.global.mq.vhost }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: vhost
             - name: MQ_GITCALL_VHOST
               value: {{ .Values.global.gitcall.mq_vhost }}
             - name: MQ_DUNDER_GITCALL_VHOST

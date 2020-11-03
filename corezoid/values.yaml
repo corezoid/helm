@@ -46,7 +46,7 @@ global:
   db:
     #if internal true - create and use internal k8s postgres container
     #if internal false - enable external db, like aws rds
-    internal: false
+    internal: true
     ## secret configuration for postgresql
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -55,15 +55,15 @@ global:
       ## secret name
       name: "postgresql-secret"
       data:
-        dbhost: "pg-postgresql"
+        dbhost: "postgresql"
         ## dbuser - for work from Corezoid services
         dbuser: "internal_user"
         ## password - for dbuser
-        dbpwd: "uydvuevuvu"
+        dbpwd: "8hhgasdgiuf"
         ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
         dbsuperuser: "postgres"
         ## password - for dbsuperuser
-        dbsuperuserpwd: "7OyGaAlm9q"
+        dbsuperuserpwd: "ygyegyg8"
         ## postgresql port
         dbport: "5432"
     ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
@@ -101,7 +101,7 @@ global:
   redis:
     #if internal true - create and use internal k8s redis container
     #if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
-    internal: false
+    internal: true
     ## secret configuration for redis
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -120,7 +120,7 @@ global:
     tag: "6.7.1"
     #if internal true - create and use internal k8s elasticsearch container
     #if internal false - enable external elasticsearch, like aws elasticsearch service
-    internal: false
+    internal: true
     ## secret configuration for elasticsearch
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -128,7 +128,7 @@ global:
       create: true
       name: "elasticsearch-master"
       data:
-        host: "el-elasticsearch-master"
+        host: "elasticsearch-service"
         ##be careful with port - in internal install used 9200, in aws uses 443
         port: "9200"
 
@@ -138,7 +138,7 @@ global:
     #if internal true - create and use internal k8s rmq container
     #if internal false - enable external rmq (on aws ec2 instances as example)
     #host/port/vhost/username/password deps from secretalreadyexist
-    internal: false
+    internal: true
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -146,11 +146,12 @@ global:
       create: true
       name: "rabbitmq-secret"
       data:
-        host: "mq-rabbitmq"
+        host: "rabbit-service"
         port: "5672"
         vhost: "/conveyor"
         username: "app-user"
-        password: "SL9SXNHjd@fInYkn1RFT6@zvCFPYEr@r"
+        password: "passwertws"
+        rabbitmqErlangCookie: ""
     # vm_memory_high_watermark.relative
     memoryHighWatermark: 0.3
 
