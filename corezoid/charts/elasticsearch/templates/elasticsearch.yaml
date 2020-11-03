@@ -78,18 +78,5 @@ spec:
     port: 9200
     targetPort: 9200
 
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{ .Values.global.elasticsearch.secret.name }}
-  labels:
-    app: {{ .Values.global.product }}
-    tier: {{ .Values.appName }}
-type: Opaque
-data:
-
-  host: {{ "elasticsearch-service" | b64enc | quote }}
-  port: {{ .Values.global.elasticsearch.secret.data.port | b64enc | quote }}
 
 {{- end }}

@@ -30,9 +30,9 @@ spec:
       initContainers:
         - name: init-wait
           image: alpine
-          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} &&  {{- else }} nc -zvw1 postgresql 5432 && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 && {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} && {{- end }} {{- if .Values.global.elasticsearch.internal }} nc -zvw1 ${ELASTICSEARCH_HOST} 9200 {{- else }} nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` ${ELASTICSEARCH_PORT} {{- end }}; do echo waiting for dependences; sleep 2; done;"]
+          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} &&  nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` ${ELASTICSEARCH_PORT} ; do echo waiting for dependences; sleep 2; done;"]
           env:
-            {{- if and ( .Values.global.mq.secret.name) (eq .Values.global.mq.internal false) }}
+            {{- if  .Values.global.mq.secret.name }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -43,11 +43,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: port
-            {{- else}}
-            - name: MQ_HOST
-              value: {{ .Values.global.mq.host }}
-            - name: MQ_PORT
-              value: {{ .Values.global.mq.port | quote }}
             {{- end}}
             - name: POSTGRES_DBHOST
               {{- if .Values.global.db.bouncer }}
@@ -80,9 +75,8 @@ spec:
           args:
             - "-c"
             - |
-              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://${MQ_HOST}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
           env:
-            {{- if and (.Values.global.mq.secret.name) (not .Values.global.mq.internal) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -98,14 +92,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
-            {{- else}}
-            - name: MQ_HOST
-              value: {{ .Values.global.mq.host }}
-            - name: MQ_USERNAME
-              value: {{ .Values.global.mq.username }}
-            - name: MQ_PASSWORD
-              value: {{ .Values.global.mq.password }}
-            {{- end }}
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
@@ -138,7 +124,6 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.redis.secret.name }}
                 key: password
-          {{- if and ( .Values.global.mq.secret.name) (not .Values.global.mq.internal )}}
           - name: MQ_HOST
             valueFrom:
               secretKeyRef:
@@ -164,18 +149,6 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.mq.secret.name }}
                 key: password
-          {{- else }}
-          - name: MQ_HOST
-            value: {{ .Values.global.mq.host }}
-          - name: MQ_PORT
-            value: {{ .Values.global.mq.port | quote }}
-          - name: MQ_VHOST
-            value: {{ .Values.global.mq.vhost }}
-          - name: MQ_USERNAME
-            value: {{ .Values.global.mq.username }}
-          - name: MQ_PASSWORD
-            value: {{ .Values.global.mq.password }}
-          {{- end }}
           - name: CAPI_API_SECRET
             valueFrom:
               secretKeyRef:
