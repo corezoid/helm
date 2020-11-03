@@ -57,7 +57,6 @@ spec:
               secretKeyRef:
                 name: merchant
                 key: merchant_secret
-          {{- if and ( .Values.global.redis.secret.name ) ( not .Values.global.redis.internal )}}
           - name: SPRING_REDIS_HOST
             valueFrom:
               secretKeyRef:
@@ -68,12 +67,6 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.redis.secret.name }}
                 key: port
-          {{- else }}
-          - name: SPRING_REDIS_HOST
-            value: redis-master
-          - name: SPRING_REDIS_PORT
-            value: "6379"
-          {{- end }}
           - name: SPRING_DATASOURCE_URL
             {{- if .Values.global.db.bouncer }}
             value: "pgbouncer-service"

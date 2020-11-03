@@ -29,7 +29,6 @@ spec:
           image: alpine
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} &&  {{- else }} nc -zvw1 postgresql 5432 && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672  {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}  {{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
-            {{- if and ( .Values.global.mq.secret.name ) ( not .Values.global.mq.internal ) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -40,12 +39,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: port
-            {{- else }}
-            - name: MQ_HOST
-              value: {{ .Values.global.mq.host }}
-            - name: MQ_PORT
-              value: {{ .Values.global.mq.port | quote }}
-            {{- end }}
             - name: POSTGRES_DBHOST
               valueFrom:
                 secretKeyRef:
@@ -63,7 +56,6 @@ spec:
           env:
             - name: RELX_REPLACE_OS_VARS
               value: "true"
-            {{- if and ( .Values.global.mq.secret.name ) ( not .Values.global.mq.internal ) }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -89,18 +81,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
-            {{- else }}
-            - name: MQ_HOST
-              value: {{ .Values.global.mq.host }}
-            - name: MQ_PORT
-              value: {{ .Values.global.mq.port | quote }}
-            - name: MQ_VHOST
-              value: {{ .Values.global.mq.vhost }}
-            - name: MQ_USERNAME
-              value: {{ .Values.global.mq.username }}
-            - name: MQ_PASSWORD
-              value: {{ .Values.global.mq.password }}
-            {{- end }}
             - name: POSTGRES_DBHOST
               valueFrom:
                 secretKeyRef:

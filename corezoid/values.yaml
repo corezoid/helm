@@ -389,7 +389,7 @@ global:
         memory: 500Mi
 
   limits:
-    tag: "1.0.1"
+    tag: "1.1.1"
     minReplicas: 1
 
 
