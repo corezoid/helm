@@ -71,32 +71,32 @@ spec:
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbuser
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbpwd
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbpwd
             - name: STATS_USERS
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbuser
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
             - name: DB_HOST
             {{- if .Values.global.db.internal }}
               value: postgresql
             {{- else }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbhost
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbhost
             {{- end }}
             - name: DB_PORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbport
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbport
             - name: IGNORE_STARTUP_PARAMETERS
               value: "extra_float_digits"
             - name: DB_NAME
@@ -152,13 +152,13 @@ spec:
             - name: PGBOUNCER_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbuser
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
             - name: PGBOUNCER_PASS
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
-                  key: postgres_dbpwd
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbpwd
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret

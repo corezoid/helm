@@ -2,7 +2,7 @@
 global:
   #if secretalreadyexist true - all sensitive data will be taken from secrets and skipping from values
   #if secretalreadyexist false - all sensitive data will be taken from  values below
-  secretalreadyexist: false
+  #secretalreadyexist: false
   #repotype, posible values - corezoid / public
   repotype: public
   # second level domain only! / core domain (example: corezoid.com)
@@ -47,25 +47,25 @@ global:
     #if internal true - create and use internal k8s postgres container
     #if internal false - enable external db, like aws rds
     internal: false
-    ## if we have global secrets for PostgreSQl with credentials we should provide this secret name
-    ## secretName: "pg-secret"
-    secretName: "pg-postgresql"
-
-    #dbhost/dbport/dbuser/dbpwd/dbsuperuser/dbsuperpwd deps from secretalreadyexist
-    dbhost: ""
-
-    ## dbsuperuser - for init db and roles
-    ## dbuser - for work from Corezoid services
-    ## dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
-    dbuser: "internal_user"
-    ## password - for dbuser
-    dbpwd: "g4BOBiM7PClavM07lbAkYpy"
-
-    dbsuperuser: "postgres"
-    ## password - for postgres
-    dbsuperuserpwd: "p2vbYNMaXsxANWj8XEyVerf8"
-
-    dbport: "5432"
+    ## secret configuration for postgresql
+    secret:
+      ## true - secret will be created automaticaly with provided values
+      ## false - secret should be created manualy
+      create: true
+      ## secret name
+      name: "postgresql-secret"
+      data:
+        dbhost: "pg-postgresql"
+        ## dbuser - for work from Corezoid services
+        dbuser: "internal_user"
+        ## password - for dbuser
+        dbpwd: "uydvuevuvu"
+        ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
+        dbsuperuser: "postgres"
+        ## password - for dbsuperuser
+        dbsuperuserpwd: "7OyGaAlm9q"
+        ## postgresql port
+        dbport: "5432"
     ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
     #be careful in defining this variable
     #count of shards created in psql, if unset, default - 10
@@ -102,14 +102,16 @@ global:
     #if internal true - create and use internal k8s redis container
     #if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
     internal: false
-    # host/port/password deps from secretalreadyexist
-    ## if we have global secret with credentials we should provide this secret name
-    ## secretName: "redis-secret"
-    secretName: "redis"
-
-    host: ""
-    port: 6379
-    password: ""
+    ## secret configuration for redis
+    secret:
+      ## true - secret will be created automaticaly with provided values
+      ## false - secret should be created manualy
+      create: true
+      name: "redis-secret"
+      data:
+        host: "redis-master"
+        port: "6379"
+        password: "fWZj6NVRlx"
 
 
   #######  Elasticsearch  ########
@@ -118,32 +120,37 @@ global:
     tag: "6.7.1"
     #if internal true - create and use internal k8s elasticsearch container
     #if internal false - enable external elasticsearch, like aws elasticsearch service
-    internal: true
-    #host/port deps from secretalreadyexist
-    ## if we have global secret with credentials we should provide this secret name
-    ## secretName: "elasticsearch-secret"
-    secretName: "elasticsearch-secret"
-
-    host: ""
-    ##be careful with port - in internal install used 9200, in aws uses 443
-    port: "9200"
+    internal: false
+    ## secret configuration for elasticsearch
+    secret:
+      ## true - secret will be created automaticaly with provided values
+      ## false - secret should be created manualy
+      create: true
+      name: "elasticsearch-master"
+      data:
+        host: "el-elasticsearch-master"
+        ##be careful with port - in internal install used 9200, in aws uses 443
+        port: "9200"
 
   #######  RabbitMQ  ########
   ## Supported version  3.8.5
   mq:
     #if internal true - create and use internal k8s rmq container
     #if internal false - enable external rmq (on aws ec2 instances as example)
-    internal: false
     #host/port/vhost/username/password deps from secretalreadyexist
-    ## if we have global secret with credentials we should provide this secret name
-    ## secretName: "mq-secret"
-    secretName: "mq-rabbitmq"
-
-    host: "rabbit-service"
-    port: "5672"
-    vhost: "/conveyor"
-    username: "app-user"
-    password: "SL9SXNHjd@fInYkn1RFT6@zvCFPYEr@r"
+    internal: false
+    ## secret configuration for rabbitmq
+    secret:
+      ## true - secret will be created automaticaly with provided values
+      ## false - secret should be created manualy
+      create: true
+      name: "rabbitmq-secret"
+      data:
+        host: "mq-rabbitmq"
+        port: "5672"
+        vhost: "/conveyor"
+        username: "app-user"
+        password: "SL9SXNHjd@fInYkn1RFT6@zvCFPYEr@r"
     # vm_memory_high_watermark.relative
     memoryHighWatermark: 0.3
 
@@ -302,7 +309,7 @@ global:
 
 # web-superadm
   web_superadm:
-    tag: "1.3.1"
+    tag: "1.4.1"
     subdomain: "superadm-k8s-public"
     minReplicas: 1
 
@@ -369,7 +376,7 @@ global:
 
 # conf-agent-server
   conf_agent_server:
-    tag: "1.3.1"
+    tag: "1.4.2"
     minReplicas: 1
     maxReplicas: 1
     resources:

@@ -1,4 +1,4 @@
-{{- if eq .Values.global.storage "manual" }}
+{{- if  eq .Values.global.storage "manual" }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:

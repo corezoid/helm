@@ -49,12 +49,12 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
+                  name: {{ .Values.global.db.secret.name }}
                   key: postgres_dbsuperuser
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secretName }}
+                  name: {{ .Values.global.db.secret.name }}
                   key: postgres_dbsuperuserpwd
           ports:
             - containerPort: 5432
