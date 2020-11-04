@@ -1,12 +1,12 @@
 dependencies:
   - name: redis
-    version: 0.1.0
+    version: "0.1.0"
     condition: global.redis.internal
 
   - name: elasticsearch
-    version: 0.1.0
+    version: "0.1.0"
     condition: global.elasticsearch.internal
 
   - name: rabbitmq-ha
-    version: 0.1.0
+    version: "0.1.0"
     condition: global.mq.internal

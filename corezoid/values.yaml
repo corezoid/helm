@@ -1,9 +1,6 @@
 # Global values for subcharts | production
 global:
-  #if secretalreadyexist true - all sensitive data will be taken from secrets and skipping from values
-  #if secretalreadyexist false - all sensitive data will be taken from  values below
-  #secretalreadyexist: false
-  #repotype, posible values - corezoid / public
+  # repotype, posible values - corezoid / public
   repotype: public
   # second level domain only! / core domain (example: corezoid.com)
   domain: "devopsdev.corezoid.com"
@@ -24,9 +21,9 @@ global:
       # access restriction
       alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
       # for creating route53 record-set
-      #external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+      # external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
 
-  # Define global storage class: efs / ceph / nfs / manual  (see README.md, efs is preferred)
+  # Define global storage class: efs / ceph / nfs / manual
   storage: efs
 
   ######## Settings AWS EFS filesystem   ########
@@ -38,11 +35,11 @@ global:
   ########  Settings for stateful services  ########
 
   #######  PostgreSQL  ########
-  ## Supported version  from > 9.5 - 9.6.14R1 <
+  ## Supported version  from 9.6.* <
   ## for RDS minimum instance - db.t2.medium / master user set "postgres"
   db:
-    #if internal true - create and use internal k8s postgres container
-    #if internal false - enable external db, like aws rds
+    # if internal true - create and use internal postgres container
+    # if internal false - enable external db, like aws rds
     internal: true
     ## secret configuration for postgresql
     secret:
@@ -64,19 +61,19 @@ global:
         ## postgresql port
         dbport: "5432"
     ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
-    #be careful in defining this variable
-    #count of shards created in psql, if unset, default - 10
+    # be careful in defining this variable
+    # count of shards created in psql, if unset, default - 10
     shards_count: 10
-    #count of shards created in psql, if unset, default - 10 - in array format
+    # count of shards created in psql, if unset, default - 10 - in array format
     shards: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
-    # set false to disable if you don't want to use PGBouncer (default - true)
+    # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
-    #Config for pg_bouncer
-    #Maximum number of client connections allowed.
-    maxclientconn: 100000
-    #How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
-    default_pool_size: 1500
+    # Config for pg_bouncer
+    # Maximum number of client connections allowed.
+    maxclientconn: "100000"
+    # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
+    default_pool_size: "1500"
     # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
     # transaction | session
     default_pool_mode: transaction
@@ -96,13 +93,13 @@ global:
   ## Supported version  from > 3.2.4 - 3.2.12 <
   ## NO CLUSTER Mode!
   redis:
-    #if internal true - create and use internal k8s redis container
-    #if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
+    # if internal true - create and use internal k8s redis container
+    # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
     internal: true
     ## secret configuration for redis
     secret:
-      ## true - secret will be created automaticaly with provided values
-      ## false - secret should be created manualy
+      ## true - secret will be created automatically with provided values
+      ## false - secret should be created manually
       create: true
       name: "redis-secret"
       data:
@@ -112,11 +109,11 @@ global:
 
 
   #######  Elasticsearch  ########
-  ## Supported version  from >= 6.7
+  ## Supported version 6.7.*
   elasticsearch:
     tag: "6.7.1"
-    #if internal true - create and use internal k8s elasticsearch container
-    #if internal false - enable external elasticsearch, like aws elasticsearch service
+    # if internal true - create and use internal elasticsearch container
+    # if internal false - enable external elasticsearch, like aws elasticsearch service
     internal: true
     ## secret configuration for elasticsearch
     secret:
@@ -126,20 +123,19 @@ global:
       name: "elasticsearch-master"
       data:
         host: "elasticsearch-service"
-        ##be careful with port - in internal install used 9200, in aws uses 443
+        ## be careful with port - in internal install used 9200, in aws uses 443
         port: "9200"
 
   #######  RabbitMQ  ########
-  ## Supported version  3.8.5
+  ## Supported version  3.8.*
   mq:
-    #if internal true - create and use internal k8s rmq container
-    #if internal false - enable external rmq (on aws ec2 instances as example)
-    #host/port/vhost/username/password deps from secretalreadyexist
+    # if internal true - create and use internal rmq container
+    # if internal false - enable external rmq (on aws ec2 instances as example)
     internal: true
     ## secret configuration for rabbitmq
     secret:
-      ## true - secret will be created automaticaly with provided values
-      ## false - secret should be created manualy
+      ## true - secret will be created automatically with provided values
+      ## false - secret should be created manually
       create: true
       name: "rabbitmq-secret"
       data:
@@ -153,12 +149,11 @@ global:
     memoryHighWatermark: 0.3
 
   ########  Settings for Corezoid services  ########
-  ##Settings for API Corezoid
+  ## Settings for API Corezoid
   capi:
     tag: "7.4.2.3"
     minReplicas: 2
     maxReplicas: 10
-    # application resources limits and requests
     resources:
       limits:
         cpu: 1200m
@@ -166,18 +161,17 @@ global:
       requests:
         cpu: 600m
         memory: 500Mi
-    # capi secret and auth_hash deps from secretalreadyexist
     ## secret for work with api-multipart ( it is a solt for sign user cookies )
     capi_api_secret: "g98g987f8f6d8yfjf8ttctc"
-    ## Auth hash for cookie (it is solt for password when we use corezoid auth method(login+password))
+    ## Auth hash for cookie
     capi_auth_hash: "0PqNKlo0QH30dcYNGUqzYj2QnQuSDGsd"
-    #Key for captcha when login in UI
+    # Key for captcha when login in UI
     capi_front_captcha_key: ""
-    #We can disable or enable  captcha
+    # We can disable or enable  captcha
     capi_front_captcha_key_disabled: true
     capi_backend_captcha_key: ""
     capi_backend_captcha_key_disabled: true
-    #max req/sec of create|modify|delete for conv|folder|dashboard in 1 sec
+    # max req/sec of create|modify|delete for conv|folder|dashboard in 1 sec
     max_reqs_limit: 300
     # merchant_api settings
     merchant_api:
@@ -212,7 +206,7 @@ global:
     ldap_port: "389"
     ldap_base: "ou=people,o=middleware"
     ldap_filter: "uid"
-    #then this param is true, bind_user_name, bind_user_pass should be filled. if it's false it is not necessary
+    # then this param is true, bind_user_name, bind_user_pass should be filled. if it's false it is not necessary
     ldap_first_bind_user: true
     ldap_bind_user_name: "uid=ldap,ou=people,o=middleware"
     ldap_bind_user_pass: ""
@@ -220,12 +214,12 @@ global:
     ldap_tls: false
     # api limit counters by user_id
     user_limits:
-      #default limit interface requests, ban after for 1 min
+      # default limit interface requests, ban after for 1 min
       max_interface_rate: 300
-      #default limit for task create/modify, other will get 429 error
+      # default limit for task create/modify, other will get 429 error
       max_user_rate: 300
     logic_settings:
-      #max allowed threads for api logic
+      # max allowed threads for api logic
       api_max_thread: 300
       sender_max_threads: 25
       timer_default: 5 # 30
@@ -239,7 +233,6 @@ global:
     tag: "3.4.1.1"
     minReplicas: 2
     maxReplicas: 10
-    # application resources limits and requests
     resources:
       limits:
         cpu: 400m
@@ -248,7 +241,6 @@ global:
         cpu: 300m
         memory: 350Mi
     max_http_resp_size: "5242880"
-    # enigma private_key_id
     enigma_pk_id: ""
 
   # usercode
@@ -328,7 +320,7 @@ global:
   # merchant
   merchant:
     tag: "v0.0.27.2"
-    #login/secret for corezoid-merchant comunications
+    # login/secret for corezoid-merchant communications
     merchant_login: apiLogin1
     merchant_secret: I9EmB170XUbe
     # application resources limits and requests
@@ -349,7 +341,6 @@ global:
       aws_kms_role: ""
       minReplicas: 1
       maxReplicas: 1
-      # application resources limits and requests
       resources:
         limits:
           cpu: 1000m
@@ -360,7 +351,7 @@ global:
 
   # single-account
   sa:
-    enabled: false # under develop
+    enabled: false
   sa_web:
     subdomain: ""
 
