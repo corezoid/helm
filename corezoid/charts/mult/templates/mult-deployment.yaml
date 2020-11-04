@@ -27,6 +27,8 @@ spec:
         tier: {{ .Values.appName }}
     spec:
       terminationGracePeriodSeconds: 300
+      securityContext:
+        fsGroup: 1000
       initContainers:
         - name: init-wait
           image: alpine
@@ -70,12 +72,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
-        - name: volume-mount-ebsmnt_share-hack
-          image: busybox
-          command: ["sh", "-c", "chown -R 1000:1000 /ebsmnt_share"]
-          volumeMounts:
-            - name: {{ .Values.appName }}-claim
-              mountPath: /ebsmnt_share
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{.Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.mult.tag }}"
