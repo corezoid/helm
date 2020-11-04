@@ -56,6 +56,8 @@ spec:
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.syncapi.tag }}"
           imagePullPolicy: Always
           env:
+            - name: NODE_COOKIE
+              value: {{ .Values.appName }}-{{ .Release.Namespace }}
             - name: NODE_IP
               valueFrom:
                 fieldRef:
