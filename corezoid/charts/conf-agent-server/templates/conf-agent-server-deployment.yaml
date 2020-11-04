@@ -54,6 +54,8 @@ spec:
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.conf_agent_server.tag }}"
           env:
+            - name: NODE_COOKIE
+              value: {{ .Values.appName }}-{{ .Release.Namespace }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
             - name: MQ_HOST
