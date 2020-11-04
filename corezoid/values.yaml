@@ -6,9 +6,9 @@ global:
   #repotype, posible values - corezoid / public
   repotype: public
   # second level domain only! / core domain (example: corezoid.com)
-  domain: "paasdevops.com"
+  domain: "devopsdev.corezoid.com"
   # subdomain / sitename - dev.mpo.corezoid.com (example: dev.mpo)
-  subdomain: "corezoid"
+  subdomain: "corezoid-k8s-public"
 
   # product name
   product: corezoid
@@ -16,29 +16,26 @@ global:
   # Ingress annotations
   ingress:
     annotations:
-      kubernetes.io/ingress.class: nginx
-      cert-manager.io/cluster-issuer: letsencrypt
-#      alb.ingress.kubernetes.io/scheme: internet-facing
-#      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
-#      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
-#      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
-#      # access restriction
-#      alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
+      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+      # access restriction
+      alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
       # for creating route53 record-set
       #external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
-  ingress_tls: true
 
+  # Define global storage class: efs / ceph / nfs / manual  (see README.md, efs is preferred)
+  storage: efs
 
-  # Define global storage class: efs / ceph / nfs / manual  (see TASK.md, efs is preferred)
-  storage: nfs
-
-######## Settings AWS EFS filesystem   ########
+  ######## Settings AWS EFS filesystem   ########
 
   efs:
     awsRegion: "eu-west-1"
     efsFileSystemId: "fs-1388e9d9"
 
-########  Settings for stateful services  ########
+  ########  Settings for stateful services  ########
 
   #######  PostgreSQL  ########
   ## Supported version  from > 9.5 - 9.6.14R1 <
@@ -155,12 +152,12 @@ global:
     # vm_memory_high_watermark.relative
     memoryHighWatermark: 0.3
 
-########  Settings for Corezoid services  ########
+  ########  Settings for Corezoid services  ########
   ##Settings for API Corezoid
   capi:
     tag: "7.4.2.3"
-    minReplicas: 1
-    maxReplicas: 1
+    minReplicas: 2
+    maxReplicas: 10
     # application resources limits and requests
     resources:
       limits:
@@ -235,13 +232,13 @@ global:
     # enigma private_key_id
     enigma_pk_id: ""
 
-########  Settings for services  ########
+  ########  Settings for services  ########
 
-# http-worker
+  # http-worker
   http:
-    tag: "3.4.0.2"
-    minReplicas: 1
-    maxReplicas: 1
+    tag: "3.4.1.1"
+    minReplicas: 2
+    maxReplicas: 10
     # application resources limits and requests
     resources:
       limits:
@@ -254,11 +251,11 @@ global:
     # enigma private_key_id
     enigma_pk_id: ""
 
-# usercode
+  # usercode
   usercode:
     tag: "7.2.0"
-    minReplicas: 1
-    maxReplicas: 1
+    minReplicas: 2
+    maxReplicas: 8
     # application resources limits and requests
     resources:
       limits:
@@ -270,11 +267,11 @@ global:
     # enigma private_key_id
     enigma_pk_id: ""
 
-# conveyor-worker
+  # conveyor-worker
   worker:
-    tag: "4.4.0.1"
-    minReplicas: 1
-    maxReplicas: 1
+    tag: "4.4.1.1"
+    minReplicas: 2
+    maxReplicas: 8
     # application resources limits and requests
     resources:
       limits:
@@ -286,11 +283,11 @@ global:
     # enigma private_key_id
     enigma_pk_id: ""
 
-# mult
+  # mult
   mult:
     tag: "2.4.0.1"
-    minReplicas: 1
-    maxReplicas: 1
+    minReplicas: 2
+    maxReplicas: 6
     # application resources limits and requests
     resources:
       limits:
@@ -302,24 +299,24 @@ global:
     # enigma private_key_id
     enigma_pk_id: ""
 
-# webadm
+  # webadm
   webadm:
-    tag: "5.4.2"
-    minReplicas: 1
+    tag: "5.4.3"
+    minReplicas: 2
     limit_req: 70
 
-# web-superadm
+  # web-superadm
   web_superadm:
     tag: "1.4.1"
     subdomain: "superadm-k8s-public"
     minReplicas: 1
 
-# syncapi
+  # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "2.0"
-    minReplicas: 1
-    maxReplicas: 1
+    tag: "2.0.2"
+    minReplicas: 2
+    maxReplicas: 10
     resources:
       limits:
         cpu: 400m
@@ -328,7 +325,7 @@ global:
         cpu: 400m
         memory: 250Mi
 
-# merchant
+  # merchant
   merchant:
     tag: "v0.0.27.2"
     #login/secret for corezoid-merchant comunications
@@ -343,7 +340,7 @@ global:
         cpu: 100m
         memory: 500Mi
 
-# enigma global settings
+  # enigma global settings
   enigma:
     enabled: false
     encryption: false
@@ -361,13 +358,13 @@ global:
           cpu: 350m
           memory: 500Mi
 
-# single-account
+  # single-account
   sa:
     enabled: false # under develop
   sa_web:
     subdomain: ""
 
-# gitcall | worker and rabbit settings
+  # gitcall | worker and rabbit settings
   gitcall:
     enabled: false # under develop
     mq_vhost: "/gitcall"
@@ -375,7 +372,7 @@ global:
     mq_username: "gitcall"
     mq_password: "QIsV6w4HaVwNkIvJvHvrS9i9JhNDEGzi"
 
-# conf-agent-server
+  # conf-agent-server
   conf_agent_server:
     tag: "1.4.2"
     minReplicas: 1
@@ -393,7 +390,7 @@ global:
     minReplicas: 1
 
 
-# debug options
-# allows write crushdumps to the stderr output for capturing by logging system
+  # debug options
+  # allows write crushdumps to the stderr output for capturing by logging system
   debug: false
 
