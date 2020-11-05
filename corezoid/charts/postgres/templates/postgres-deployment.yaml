@@ -33,6 +33,7 @@ spec:
           volumeMounts:
             - name: {{ .Values.appName }}-claim
               mountPath: {{ .Values.postgresqlDataDir }}
+              subPath: pgdata
       volumes:
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
@@ -63,6 +64,7 @@ spec:
             - name: {{ .Values.appName }}-claim
               mountPath: {{ .Values.postgresqlDataDir }}
                 {{- if not  (eq .Values.global.db.internal false) }}
+              subPath: pgdata
           livenessProbe:
             exec:
               command:
@@ -96,7 +98,11 @@ spec:
       volumes:
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
+            {{- if .Values.global.db.persistantVolumeClaimName }}
+            claimName: {{ .Values.global.db.persistantVolumeClaimName }}
+            {{- else }}
             claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
+            {{- end }}
             readOnly: false
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
