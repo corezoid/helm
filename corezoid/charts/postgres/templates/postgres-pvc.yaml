@@ -1,4 +1,4 @@
-{{- if and (.Values.global.db.internal)  ( .Values.global.db.persistantVolumeClaimName ) }}
+{{- if and (.Values.global.db.internal)  ( or  (empty .Values.global.db.persistantVolumeClaimName) ( not .Values.global.db.persistantVolumeClaimName ) ) }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
