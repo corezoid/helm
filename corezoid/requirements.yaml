@@ -10,3 +10,7 @@ dependencies:
   - name: rabbitmq-ha
     version: "0.1.0"
     condition: global.mq.internal
+
+  - name: postgres
+    version: "0.1.0"
+    condition: global.db.internal
