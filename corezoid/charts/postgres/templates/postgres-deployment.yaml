@@ -98,11 +98,7 @@ spec:
       volumes:
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
-            {{- if .Values.global.db.persistantVolumeClaimName }}
             claimName: {{ .Values.global.db.persistantVolumeClaimName }}
-            {{- else }}
-            claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
-            {{- end }}
             readOnly: false
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:

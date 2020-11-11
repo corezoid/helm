@@ -23,14 +23,22 @@ global:
       # for creating route53 record-set
       # external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
 
-  # Define global storage class: efs / ceph / nfs / manual
-  storage: efs
-
+  ###########################################
+  ######## Settings for filesystems #########
+  # Define global storage class: efs / nfs / manual
+  storage: nfs
+  # Define global storageClass name
+  storageClassName: "corezoid-storage-class-default"
   ######## Settings AWS EFS filesystem   ########
-
   efs:
     awsRegion: "eu-west-1"
     efsFileSystemId: "fs-1388e9d9"
+    ## set true if you choose storage: efs
+    enabled: false
+  ######## Settings NFS filesystem   ########
+  nfs:
+    ## set true if you choose storage: nfs
+    enabled: false
 
   ########  Settings for stateful services  ########
 
@@ -43,7 +51,7 @@ global:
     internal: true
     ## secret configuration for postgresql
 
-    ## pvc name if it already exist or was created manualy
+    ## pvc name
     persistantVolumeClaimName: "postgresql-manual-pvc"
 
     secret:
@@ -286,6 +294,11 @@ global:
     tag: "2.4.1.0"
     minReplicas: 2
     maxReplicas: 6
+    ## pvc name if it already exist or was created manualy
+    persistantVolumeClaimName: "mult-pvc"
+    ## true if pvc for mult should be created automaticaly
+    ## false if you already have pvc
+    persistantVolumeClaimCreate: true
     # application resources limits and requests
     resources:
       limits:
