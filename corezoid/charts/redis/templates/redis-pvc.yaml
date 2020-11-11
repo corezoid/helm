@@ -10,18 +10,10 @@ metadata:
   labels:
     tier: {{ .Values.appName }}
 spec:
-{{- if eq .Values.global.storage "manual" }}
   selector:
     matchLabels:
       tier: {{ .Values.appName }}
-  storageClassName: manual
-{{- else }}
-  {{- if eq .Values.global.storage "ceph" }}
-  storageClassName: csi-cephfs
-  {{- else }}
-  storageClassName: {{ .Values.global.storage}}-{{ .Release.Namespace }}
-  {{- end }}
-{{- end }}
+  storageClassName: {{ .Values.global.storageClassName }}
   accessModes:
     - ReadWriteOnce
   resources:

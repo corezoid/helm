@@ -14,3 +14,11 @@ dependencies:
   - name: postgres
     version: "0.1.0"
     condition: global.db.internal
+
+  - name: nfs-provisioner
+    version: 0.3.0
+    condition: global.nfs.enabled
+
+  - name: efs-provisioner
+    version: 0.6.0
+    condition: global.efs.enabled
