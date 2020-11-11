@@ -26,7 +26,7 @@ global:
   ###########################################
   ######## Settings for filesystems #########
   # Define global storage class: efs / nfs / manual
-  storage: efs
+  storage: nfs
   # Define global storageClass name
   storageClassName: "corezoid-storage-class-default"
   ######## Settings AWS EFS filesystem   ########
