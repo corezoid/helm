@@ -38,7 +38,7 @@ global:
   ######## Settings NFS filesystem   ########
   nfs:
     ## set true if you choose storage: nfs
-    enabled: false
+    enabled: true
 
   ########  Settings for stateful services  ########
 
@@ -52,7 +52,7 @@ global:
     ## secret configuration for postgresql
 
     ## pvc name
-    persistantVolumeClaimName: "postgresql-manual-pvc"
+    persistantVolumeClaimName: "postgresql-pvc"
 
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -109,7 +109,7 @@ global:
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
     internal: true
     ## pvc name if it already exist or was created manualy
-    persistantVolumeClaimName: "redis-manual-pvc"
+    persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
     secret:
       ## true - secret will be created automatically with provided values
