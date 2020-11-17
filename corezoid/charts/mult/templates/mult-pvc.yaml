@@ -10,9 +10,6 @@ metadata:
   labels:
     tier: {{ .Values.appName }}
 spec:
-  selector:
-    matchLabels:
-      tier: {{ .Values.appName }}
   storageClassName: {{ .Values.global.storageClassName }}
   accessModes:
     - ReadWriteMany
