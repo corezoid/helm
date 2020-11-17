@@ -10,6 +10,9 @@ global:
   # product name
   product: corezoid
 
+  # docker image registry
+  imageRegistry: docker-hub.middleware.biz
+
   # Ingress annotations
   ingress:
     annotations:
@@ -48,12 +51,11 @@ global:
   db:
     # if internal true - create and use internal postgres container
     # if internal false - enable external db, like aws rds
-    internal: true
+    internal: false
     ## secret configuration for postgresql
 
     ## pvc name
     persistantVolumeClaimName: "postgresql-pvc"
-
     secret:
       ## true - secret will be created automaticaly with provided values
       ## false - secret should be created manualy
@@ -61,7 +63,7 @@ global:
       ## secret name
       name: "postgresql-secret"
       data:
-        dbhost: "postgresql"
+        dbhost: "pg-postgresql"
         ## dbuser - for work from Corezoid services
         dbuser: "internal_user"
         ## password - for dbuser
@@ -107,7 +109,7 @@ global:
   redis:
     # if internal true - create and use internal k8s redis container
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
-    internal: true
+    internal: false
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
@@ -119,7 +121,7 @@ global:
       data:
         host: "redis-master"
         port: "6379"
-        password: "fWZj6NVRlx"
+        password: "gqqm3wnCrr"
 
 
   #######  Elasticsearch  ########
@@ -128,15 +130,15 @@ global:
     tag: "6.7.1"
     # if internal true - create and use internal elasticsearch container
     # if internal false - enable external elasticsearch, like aws elasticsearch service
-    internal: true
+    internal: false
     ## secret configuration for elasticsearch
     secret:
       ## true - secret will be created automaticaly with provided values
       ## false - secret should be created manualy
       create: true
-      name: "elasticsearch-master"
+      name: "elasticsearch-secret"
       data:
-        host: "elasticsearch-service"
+        host: "elasticsearch-elasticsearch-master"
         ## be careful with port - in internal install used 9200, in aws uses 443
         port: "9200"
 
@@ -145,7 +147,7 @@ global:
   mq:
     # if internal true - create and use internal rmq container
     # if internal false - enable external rmq (on aws ec2 instances as example)
-    internal: true
+    internal: false
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values

@@ -2,10 +2,10 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ .Values.appName }}-taskarchive-cron
+  name: postgres-taskarchive-cron
   labels:
     app: {{ .Values.global.product }}
-    tier: {{ .Values.appName }}
+    tier: postgres
 spec:
   schedule: {{ .Values.global.db.rotation.schedule | quote }}
   successfulJobsHistoryLimit: 1
@@ -16,14 +16,14 @@ spec:
     metadata:
       labels:
         app: {{ .Values.global.product }}
-        tier: {{ .Values.appName }}
+        tier: postgres
     spec:
       template:
         spec:
           containers:
             - image: postgres:9.6.2-alpine
               imagePullPolicy: Always
-              name: {{ .Values.appName }}-taskarchive-cron
+              name: postgres-taskarchive-cron
               command:
                 - sh
                 - -c
