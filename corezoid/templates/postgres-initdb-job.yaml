@@ -1,10 +1,10 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Values.appName }}-init-database
+  name: postgres-init-database
   labels:
     app: {{ .Values.global.product }}
-    tier: {{ .Values.appName }}-job
+    tier: postgres-job
   annotations:
     "helm.sh/hook-delete-policy": hook-succeeded
 
@@ -12,20 +12,20 @@ metadata:
 spec:
   template:
     metadata:
-      name: {{ .Values.appName }}-init-database
+      name: postgres-init-database
       labels:
         app: {{ .Values.global.product }}
-        tier: {{ .Values.appName }}-job
+        tier: postgres-job
     spec:
       restartPolicy: OnFailure
       containers:
-        - image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}/pg_schema:{{ .Values.global.db.postgres_schema.version }}"
+        - image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repotype}}/pg_schema:{{ .Values.global.db.postgres_schema.version }}"
 {{/*          args:*/}}
 {{/*            - /bin/sh*/}}
 {{/*            - -c*/}}
 {{/*            - date; echo sleeping....; sleep 90000s; echo exiting...;*/}}
           imagePullPolicy: Always
-          name: {{ .Values.appName }}-initdb
+          name: postgres-initdb
           args:
             - /bin/sh
             - -c

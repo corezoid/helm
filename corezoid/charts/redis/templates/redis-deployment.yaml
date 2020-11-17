@@ -82,9 +82,5 @@ spec:
             name: {{ .Values.appName }}-config
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
-            {{- if .Values.global.redis.persistantVolumeClaimName }}
             claimName: {{ .Values.global.redis.persistantVolumeClaimName}}
-            {{- else }}
-            claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
-            {{- end }}
             readOnly: false
