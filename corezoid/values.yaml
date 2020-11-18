@@ -188,12 +188,12 @@ global:
     capi_api_secret: "g98g987f8f6d8yfjf8ttctc"
     ## Auth hash for cookie
     capi_auth_hash: "0PqNKlo0QH30dcYNGUqzYj2QnQuSDGsd"
+    # Сaptcha when login in UI enable/disable
+    capi_front_captcha_disabled: true
     # Key for captcha when login in UI
     capi_front_captcha_key: ""
-    # We can disable or enable  captcha
-    capi_front_captcha_key_disabled: true
+    # Secret for captcha
     capi_backend_captcha_key: ""
-    capi_backend_captcha_key_disabled: true
     # max req/sec of create|modify|delete for conv|folder|dashboard in 1 sec
     max_reqs_limit: 300
     # merchant_api settings
