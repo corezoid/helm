@@ -93,31 +93,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
-            - name: POSTGRES_DBHOST
-              {{- if .Values.global.db.bouncer }}
-              value: "pgbouncer-service"
-              {{- else }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.db.secret.name }}
-                  key: dbhost
-            {{- end }}
-            - name: POSTGRES_DBUSER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.db.secret.name }}
-                  key: dbuser
-            - name: POSTGRES_DBPWD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.db.secret.name }}
-                  key: dbpwd
-            - name: POSTGRES_DBPORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.db.secret.name }}
-                  key: dbport
-
           ports:
             - containerPort: 8090
           lifecycle:

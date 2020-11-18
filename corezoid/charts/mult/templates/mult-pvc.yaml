@@ -5,7 +5,7 @@ metadata:
   name: {{ .Values.global.mult.persistantVolumeClaimName }}
 {{- if eq .Values.global.storage "efs" }}
   annotations:
-    volume.beta.kubernetes.io/storage-class: efs-{{ .Release.Namespace }}
+    volume.beta.kubernetes.io/storage-class: {{ .Values.global.storageClassName }}
 {{- end }}
   labels:
     tier: {{ .Values.appName }}

@@ -56,7 +56,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
-
             - name: ELASTICSEARCH_HOST
               valueFrom:
                 secretKeyRef:

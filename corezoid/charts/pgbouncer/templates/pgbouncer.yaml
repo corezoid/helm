@@ -84,14 +84,10 @@ spec:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbuser
             - name: DB_HOST
-            {{- if .Values.global.db.internal }}
-              value: postgresql
-            {{- else }}
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbhost
-            {{- end }}
             - name: DB_PORT
               valueFrom:
                 secretKeyRef:
