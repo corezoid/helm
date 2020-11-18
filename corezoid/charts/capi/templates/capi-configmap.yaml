@@ -878,7 +878,10 @@ data:
                 {sender_env, <<"md">>}
             ]},
 
-            %% {allowed_domains, ["gmail.com", "corezoid.com", "github.com"]},
+            %% example {allowed_domains, ["gmail.com", "corezoid.com", "github.com"]},
+            {{- if .Values.global.capi.registration_restriction.enable }}
+            {allowed_domains, [{{- range .Values.global.capi.registration_restriction.allowed_domains  }} {{. | quote}},{{- end }} "{{ .Values.global.domain }}" ]},
+            {{- end }}
 
             %%    % group for super_users
             %%    %% superusers are users who can get extra privs to simple user

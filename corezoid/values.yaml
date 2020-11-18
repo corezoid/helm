@@ -177,6 +177,13 @@ global:
       requests:
         cpu: 600m
         memory: 500Mi
+    ## restricting user registration only within the domains specified below if enabled
+    registration_restriction:
+      enable: false
+      allowed_domains:
+        - "gmail.com"
+        - "yahoo.com"
+
     ## secret for work with api-multipart ( it is a solt for sign user cookies )
     capi_api_secret: "g98g987f8f6d8yfjf8ttctc"
     ## Auth hash for cookie
