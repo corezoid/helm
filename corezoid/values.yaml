@@ -257,7 +257,9 @@ global:
         cpu: 300m
         memory: 350Mi
     max_http_resp_size: "5242880"
-    enigma_pk_id: ""
+    blocked_domains:
+      - "169.254.169.254"
+      - "mail.ru"
 
   # usercode
   usercode:
