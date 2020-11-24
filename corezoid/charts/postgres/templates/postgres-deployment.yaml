@@ -50,12 +50,12 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secret.name }}
+                  name: {{ .Values.global.db.secret.name }}-root
                   key: dbsuperuser
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secret.name }}
+                  name: {{ .Values.global.db.secret.name }}-root
                   key: dbsuperuserpwd
           ports:
             - containerPort: 5432
