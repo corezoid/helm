@@ -48,12 +48,12 @@ spec:
             - name: POSTGRES_DBSUPERUSER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secret.name}}
+                  name: {{ .Values.global.db.secret.name}}-root
                   key: dbsuperuser
             - name: POSTGRES_DBSUPERUSERPWD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.db.secret.name }}
+                  name: {{ .Values.global.db.secret.name }}-root
                   key: dbsuperuserpwd
             - name: POSTGRES_DBUSER
               valueFrom:

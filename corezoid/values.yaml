@@ -51,7 +51,7 @@ global:
   db:
     # if internal true - create and use internal postgres container
     # if internal false - enable external db, like aws rds
-    internal: false
+    internal: true
     ## secret configuration for postgresql
 
     ## pvc name
@@ -62,18 +62,20 @@ global:
       create: true
       ## secret name
       name: "postgresql-secret"
+      ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
+      dbsuperuser: "postgres"
+      ## password - for dbsuperuser
+      dbsuperuserpwd: "ygyegyg8"
       data:
         dbhost: "pg-postgresql"
         ## dbuser - for work from Corezoid services
         dbuser: "internal_user"
         ## password - for dbuser
         dbpwd: "8hhgasdgiuf"
-        ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
-        dbsuperuser: "postgres"
-        ## password - for dbsuperuser
-        dbsuperuserpwd: "ygyegyg8"
         ## postgresql port
         dbport: "5432"
+
+
     ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
     # be careful in defining this variable
     # count of shards created in psql, if unset, default - 10
