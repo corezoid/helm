@@ -165,7 +165,7 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "7.4.2.3"
+    tag: "7.4.2.5"
     minReplicas: 2
     maxReplicas: 10
     resources:
@@ -321,7 +321,7 @@ global:
 
   # webadm
   webadm:
-    tag: "5.4.3"
+    tag: "5.4.4"
     minReplicas: 2
     limit_req: 70
 
