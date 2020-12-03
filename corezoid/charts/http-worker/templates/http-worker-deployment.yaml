@@ -29,7 +29,7 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: alpine
+          image: docker-hub.middleware.biz/public/alpine
           command: ["sh", "-c", "until nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 && {{- else }} nc -zvw1  ${MQ_HOST} ${MQ_PORT} && {{- end }} {{- if .Values.global.elasticsearch.internal }} nc -zvw1 {{ .Values.global.elasticsearch.secret.data.host}} {{ .Values.global.elasticsearch.secret.data.port }}  {{- else }}  nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` ${ELASTICSEARCH_PORT} {{- end }} ; do echo waiting for dependences; sleep 2; done;"]
           env:
             - name: MQ_HOST
@@ -67,7 +67,7 @@ spec:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
         - name: init-wait-rmq
-          image: alpine
+          image: docker-hub.middleware.biz/public/alpine
           command: ['sh']
           args:
             - "-c"

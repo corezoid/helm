@@ -29,7 +29,7 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: alpine
+          image: docker-hub.middleware.biz/public/alpine
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 postgresql 5432 && {{- end }} {{- if not .Values.global.db.internal }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 && {{- else }} nc -zvw1  ${MQ_HOST} ${MQ_PORT} && {{- end }}  nc -zvw1 ${ELASTICSEARCH_HOST} ${ELASTICSEARCH_PORT}  {{- if .Values.global.sa.enabled }} && nc -zvw1 {{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }} 443 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
             - name: MQ_HOST
@@ -67,7 +67,7 @@ spec:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
         - name: init-wait-rmq
-          image: alpine
+          image: docker-hub.middleware.biz/public/alpine
           command: ['sh']
           args:
             - "-c"

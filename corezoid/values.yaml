@@ -22,7 +22,7 @@ global:
       alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
       # access restriction
-      alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
+      # alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
       # for creating route53 record-set
       # external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
 
@@ -51,7 +51,7 @@ global:
   db:
     # if internal true - create and use internal postgres container
     # if internal false - enable external db, like aws rds
-    internal: false
+    internal: true
     ## secret configuration for postgresql
 
     ## pvc name
@@ -62,18 +62,16 @@ global:
       create: true
       ## secret name
       name: "postgresql-secret"
+      ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
+      dbsuperuser: "postgres"
+      ## password - for dbsuperuser
+      dbsuperuserpwd: "ygyegyg8"
       data:
         dbhost: "pg-postgresql"
-        ## dbuser - for work from Corezoid services
-        dbuser: "internal_user"
-        ## password - for dbuser
-        dbpwd: "8hhgasdgiuf"
-        ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
-        dbsuperuser: "postgres"
-        ## password - for dbsuperuser
-        dbsuperuserpwd: "ygyegyg8"
-        ## postgresql port
         dbport: "5432"
+        dbuser: "internal_user"
+        dbpwd: "8hhgasdgiuf"
+
     ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
     # be careful in defining this variable
     # count of shards created in psql, if unset, default - 10
@@ -83,7 +81,7 @@ global:
 
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
-    # Config for pg_bouncer
+    bouncer_maxReplicas: "4"
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
@@ -109,7 +107,7 @@ global:
   redis:
     # if internal true - create and use internal k8s redis container
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
-    internal: false
+    internal: true
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
@@ -130,7 +128,7 @@ global:
     tag: "6.7.1"
     # if internal true - create and use internal elasticsearch container
     # if internal false - enable external elasticsearch, like aws elasticsearch service
-    internal: false
+    internal: true
     ## secret configuration for elasticsearch
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -147,7 +145,7 @@ global:
   mq:
     # if internal true - create and use internal rmq container
     # if internal false - enable external rmq (on aws ec2 instances as example)
-    internal: false
+    internal: true
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values

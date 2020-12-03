@@ -21,7 +21,7 @@ spec:
       template:
         spec:
           containers:
-            - image: postgres:9.6.2-alpine
+            - image: docker-hub.middleware.biz/public/postgres:9.6.2-alpine
               imagePullPolicy: Always
               name: postgres-taskarchive-cron
               command:
@@ -46,12 +46,12 @@ spec:
                 - name: POSTGRES_DBSUPERUSER
                   valueFrom:
                     secretKeyRef:
-                      name: {{ .Values.global.db.secret.name }}
+                      name: {{ .Values.global.db.secret.name }}-root
                       key: postgres_dbsuperuser
                 - name: POSTGRES_DBSUPERUSERPWD
                   valueFrom:
                     secretKeyRef:
-                      name: {{ .Values.global.db.secret.name }}
+                      name: {{ .Values.global.db.secret.name }}-root
                       key: postgres_dbsuperuserpwd
                 - name: SHARD_COUNT
                   value: '{{ .Values.global.db.shards_count }}'

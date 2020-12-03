@@ -29,7 +29,7 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: alpine
+          image: docker-hub.middleware.biz/public/alpine
 {{/*          command: ["sh", "-c", "until nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT}; do echo waiting for dependences; sleep 2; done;"]*/}}
           command: ["sh", "-c", "apk add postgresql-client; until PGPASSWORD=${POSTGRES_DBPWD} psql -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBUSER} -d merchant -c \"select 1\" > /dev/null 2>&1 ; do echo Waiting while postgres created settings db ...; sleep 3; done"]
           env:
