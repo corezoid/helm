@@ -1,4 +1,18 @@
 ## Changelog
+### Chart 0.15 [Corezoid 5.4.3]
+Improvements:
+- Refactor secrets and clean old variables
+- Upgrade to Corezoid 5.4.3
+- add NODE_COOKIE to control app in current namespace
+- Add config for pvc
+- move secrets to root chart
+- Added the ability to block ip or domains in apicall
+- Added restricting user registration by domain
+- Fix for captcha configuring
+- add pgboucer min replicas from 2 
+- fix dockerhub rate limit issue  
+
+
 
 ### Chart 0.14 [Corezoid 5.4.1]
 Improvements:  

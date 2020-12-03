@@ -1,3 +1,6 @@
+{{- if ( .Values.global.elasticsearch.internal )}}
+
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -63,7 +66,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.appName }}-service
+  name: {{ .Values.global.elasticsearch.secret.data.host }}
   labels:
     app: {{ .Values.appName }}
 spec:
@@ -74,3 +77,6 @@ spec:
   - protocol: TCP
     port: 9200
     targetPort: 9200
+
+
+{{- end }}

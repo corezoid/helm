@@ -37,3 +37,14 @@ spec:
               serviceName: single-account-web
               servicePort: 80
     {{- end }}
+  {{- if .Values.global.ingress_tls }}
+  tls:
+    - hosts:
+        - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+        - {{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
+        - {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
+        {{- if .Values.global.sa.enabled }}
+        - {{ .Values.global.sa_web.subdomain}}.{{ .Values.global.domain }}
+        {{- end }}
+      secretName: tls-{{ .Values.appName }}-{{ .Release.Namespace }}
+  {{- end }}

@@ -29,8 +29,9 @@ Resolving:
 Ensure what all configmaps are updated and necessary components are restarted.
 
 #### Versioning:
-|Corezoid|Capi|Conf-agent|Enigma|Web-adm|Web-superadm|Http-worker|Merchant|Mult|Sync-API|Single Account|Usercode|Worker|
+|Corezoid|Capi|Conf-agent|Enigma|Web-adm|Web-superadm|Http-worker|Merchant|Mult|Sync-API|Limits|Usercode|Worker|
 | ------ | ------ | ------ |------ |------ | ------ | ------ | ------ |------ |------ |------ |------ | ------ |
+| 5.4.3 | 7.4.2.5 | 1.3.1 | 1.1.0 | 5.4.4 | 1.3.1 | 3.4.1.1 | v0.0.27.2 | 2.4.1.0 | 2.0.2 | 1.1.1 | 7.2.0 | 4.4.1.1 |
 | 5.4.1 | 7.4.0.3 | 1.3.1 | 1.1.0 | 5.4.1 | 1.3.1 | 3.4.0.2 | v0.0.27.2 | 2.4.0.1 | 2.0 | x | 7.2.0 | 4.4.0.2 |
 | 5.3 | 7.3.0.5 | 1.2.1 | 1.1.0 | 5.3.0 | 1.2.1 | 3.3.0.2 | v0.0.27.2 | 2.3.0.3 | 1.4.1 | x | 7.1.0 | 4.3.0.2 |
 | 5.0 | 7.0.0.3 | x | 1.1.0 | 2.43 | 0.0.1 | 3.0.0.1 | v0.0.27.2 | 2.0.0.1 | 1.1.3-e19 | x | 6.0.3 | 4.0.0.2 |

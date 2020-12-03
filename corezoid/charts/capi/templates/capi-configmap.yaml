@@ -300,7 +300,7 @@ data:
                 %{captcha_key, <<"">>},
                 {captcha, [
                     {key, <<"{{ .Values.global.capi.capi_front_captcha_key | default "" }}">>}, %% key for works with captcha (page /login if corezoid registration)
-                    {disabled, {{ .Values.global.capi.capi_front_captcha_key_disabled }} }
+                    {disabled, {{ .Values.global.capi.capi_front_captcha_disabled }} }
                 ]},
                 {whitelist, [<<"{{ .Values.global.domain }}">>]},
                 {ui, [
@@ -330,13 +330,8 @@ data:
                 %% 3. Folders
                 %% Elastic helps us to find these objects for name, It's as like in DB
             {elastic_search, [
-              {{- if eq .Values.global.elasticsearch.internal false }}
                 {host, <<"${ELASTICSEARCH_HOST}">>},
                 {port, ${ELASTICSEARCH_PORT} },
-              {{- else }}
-                {host, <<"http://elasticsearch-service">>},
-                {port, 9200},
-              {{- end }}
                 {timeout, 50000}
             ]},
 
@@ -860,7 +855,7 @@ data:
                 {captcha, [
                     {key, <<"{{ .Values.global.capi.capi_backend_captcha_key }}">>},
                     {verify_url, "https://www.google.com/recaptcha/api/siteverify"},
-                    {disabled, {{ .Values.global.capi.capi_backend_captcha_key_disabled }} }
+                    {disabled, {{ .Values.global.capi.capi_front_captcha_disabled }} }
                 ]}
             ]},
 
@@ -883,7 +878,10 @@ data:
                 {sender_env, <<"md">>}
             ]},
 
-            %% {allowed_domains, ["gmail.com", "corezoid.com", "github.com"]},
+            %% example {allowed_domains, ["gmail.com", "corezoid.com", "github.com"]},
+            {{- if .Values.global.capi.registration_restriction.enable }}
+            {allowed_domains, [{{- range .Values.global.capi.registration_restriction.allowed_domains  }} {{. | quote}},{{- end }} "{{ .Values.global.domain }}" ]},
+            {{- end }}
 
             %%    % group for super_users
             %%    %% superusers are users who can get extra privs to simple user

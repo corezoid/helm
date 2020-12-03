@@ -33,6 +33,7 @@ spec:
           volumeMounts:
             - name: {{ .Values.appName }}-claim
               mountPath: {{ .Values.postgresqlDataDir }}
+              subPath: pgdata
       volumes:
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
@@ -46,24 +47,16 @@ spec:
           env:
             - name: PGDATA
               value: {{ .Values.postgresqlDataDir }}
-          {{- if eq .Values.global.secretalreadyexist true }}
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: secrets
-                  key: postgres_dbsuperuser
+                  name: {{ .Values.global.db.secret.name }}-root
+                  key: dbsuperuser
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: secrets
-                  key: postgres_dbsuperuserpwd
-          {{- else}}
-            - name: POSTGRES_USER
-              value: {{ .Values.global.db.dbsuperuser }}
-            - name: POSTGRES_PASSWORD
-              value: {{ .Values.global.db.dbsuperuserpwd }}
-
-          {{- end }}
+                  name: {{ .Values.global.db.secret.name }}-root
+                  key: dbsuperuserpwd
           ports:
             - containerPort: 5432
               name: {{ .Values.appName }}
@@ -71,6 +64,7 @@ spec:
             - name: {{ .Values.appName }}-claim
               mountPath: {{ .Values.postgresqlDataDir }}
                 {{- if not  (eq .Values.global.db.internal false) }}
+              subPath: pgdata
           livenessProbe:
             exec:
               command:
@@ -104,7 +98,7 @@ spec:
       volumes:
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
-            claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
+            claimName: {{ .Values.global.db.persistantVolumeClaimName }}
             readOnly: false
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:

@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-init-database
+  labels:
+    app: {{ .Values.global.product }}
+    tier: postgres-job
+  annotations:
+    "helm.sh/hook-delete-policy": hook-succeeded
+
+
+spec:
+  template:
+    metadata:
+      name: postgres-init-database
+      labels:
+        app: {{ .Values.global.product }}
+        tier: postgres-job
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repotype}}/pg_schema:{{ .Values.global.db.postgres_schema.version }}"
+{{/*          args:*/}}
+{{/*            - /bin/sh*/}}
+{{/*            - -c*/}}
+{{/*            - date; echo sleeping....; sleep 90000s; echo exiting...;*/}}
+          imagePullPolicy: Always
+          name: postgres-initdb
+          args:
+            - /bin/sh
+            - -c
+            - /postgres-schema-versioner/run.sh;
+          env:
+            - name: SCHEMA_VERSION
+              value: {{ .Values.global.db.postgres_schema.version }}
+            - name: SHARD_COUNT
+              value: '{{ .Values.global.db.shards_count }}'
+            - name: POSTGRES_DBHOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbhost
+            - name: POSTGRES_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbport
+            - name: POSTGRES_DBSUPERUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name}}-root
+                  key: dbsuperuser
+            - name: POSTGRES_DBSUPERUSERPWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name }}-root
+                  key: dbsuperuserpwd
+            - name: POSTGRES_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
+            - name: POSTGRES_DBPWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbpwd
+      {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: corezoid-secret
+  {{- end }}
+

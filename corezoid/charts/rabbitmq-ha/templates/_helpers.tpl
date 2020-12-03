@@ -67,8 +67,8 @@ users, virtual hosts, permissions and parameters) to load by the management plug
    ],
   "users": [
     {
-      "name": {{ .Values.global.mq.username | quote }},
-      "password": {{ .Values.global.mq.password | quote }},
+      "name": {{ .Values.global.mq.secret.data.username | quote }},
+      "password": {{ .Values.global.mq.secret.data.password | quote }},
       "tags": "administrator"
     },
     {
@@ -86,7 +86,7 @@ users, virtual hosts, permissions and parameters) to load by the management plug
   ],
   "vhosts": [
     {
-      "name": {{ .Values.global.mq.vhost | quote }}
+      "name": {{ .Values.global.mq.secret.data.vhost | quote }}
     },
     {
       "name": {{ .Values.rabbitmqVhost | quote }}
@@ -96,8 +96,8 @@ users, virtual hosts, permissions and parameters) to load by the management plug
   ],
   "permissions": [
     {
-      "user": {{ .Values.global.mq.username | quote }},
-      "vhost": {{ .Values.global.mq.vhost | quote }},
+      "user": {{ .Values.global.mq.secret.data.username | quote }},
+      "vhost": {{ .Values.global.mq.secret.data.vhost | quote }},
       "configure": ".*",
       "read": ".*",
       "write": ".*"
@@ -119,7 +119,7 @@ users, virtual hosts, permissions and parameters) to load by the management plug
     {
       "name": "ha-all",
       "pattern": ".*",
-      "vhost": {{ .Values.global.mq.vhost | quote }},
+      "vhost": {{ .Values.global.mq.secret.data.vhost | quote }},
       "definition": {
         "ha-mode": "all",
         "ha-sync-mode": "automatic",

@@ -29,121 +29,83 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: alpine
-          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} {{- if not .Values.global.db.internal }} nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT}  {{- else }} nc -zvw1 postgresql 5432 {{- end }}; do echo waiting for dependences; sleep 2; done;"]
+          image: docker-hub.middleware.biz/public/alpine
+{{/*          command: ["sh", "-c", "until nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT}; do echo waiting for dependences; sleep 2; done;"]*/}}
+          command: ["sh", "-c", "apk add postgresql-client; until PGPASSWORD=${POSTGRES_DBPWD} psql -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBUSER} -d merchant -c \"select 1\" > /dev/null 2>&1 ; do echo Waiting while postgres created settings db ...; sleep 3; done"]
           env:
-            {{- if eq .Values.global.secretalreadyexist true }}
             - name: POSTGRES_DBHOST
+              {{- if .Values.global.db.bouncer }}
+              value: "pgbouncer-service"
+              {{- else }}
               valueFrom:
                 secretKeyRef:
-                  name: secrets
-                  key: postgres_dbhost
-            - name: POSTGRES_DBPORT
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbport
-            {{- else}}
-            - name: POSTGRES_DBHOST
-              value: {{ .Values.global.db.dbhost }}
-            - name: POSTGRES_DBPORT
-              value: {{ .Values.global.db.dbport | quote }}
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbhost
             {{- end }}
+            - name: POSTGRES_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbport
+            - name: POSTGRES_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
+            - name: POSTGRES_DBPWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbpwd
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.merchant.tag }}"
           env:
-          {{- if eq .Values.global.secretalreadyexist true }}
-                  {{- if eq .Values.global.redis.internal true }}
-          - name: SPRING_REDIS_HOST
-            value: redis-master
-          - name: SPRING_REDIS_PORT
-            value: "6379"
-                  {{- else}}
-          - name: SPRING_REDIS_HOST
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: redis_host
-          - name: SPRING_REDIS_PORT
-            valueFrom:
-              secretKeyRef:
-                name: secrets
-                key: redis_port
-                  {{- end }}
           - name: MERCHANT_LOGIN
             valueFrom:
               secretKeyRef:
-                name: secrets
+                name: merchant
                 key: merchant_login
           - name: MERCHANT_SECRET
             valueFrom:
               secretKeyRef:
-                name: secrets
+                name: merchant
                 key: merchant_secret
-                  {{- if eq .Values.global.db.internal true }}
-            - name: SPRING_DATASOURCE_URL
-              value: pgbouncer-service
-            - name: SPRING_DATASOURCE_USERNAME
-              value: {{ .Values.global.db.dbuser }}
-            - name: SPRING_DATASOURCE_PASSWORD
-              value: {{ .Values.global.db.dbpwd }}
-                   {{- else}}
-            - name: SPRING_DATASOURCE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbhost
-                - name: POSTGRES_DBPORT
-                  valueFrom:
-                    secretKeyRef:
-                      name: secrets
-                      key: postgres_dbport
-            - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbuser
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: postgres_dbpwd
-                  {{- end }}
-
-          {{- else}}
-                  {{- if eq .Values.global.redis.internal true }}
           - name: SPRING_REDIS_HOST
-            value: redis-master
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.redis.secret.name }}
+                key: host
           - name: SPRING_REDIS_PORT
-            value: "6379"
-                  {{- else}}
-          - name: SPRING_REDIS_HOST
-            value: {{ .Values.global.redis.host }}
-          - name: SPRING_REDIS_PORT
-            value: {{ .Values.global.redis.port | quote  }}
-                   {{- end }}
-          - name: MERCHANT_LOGIN
-            value: {{ .Values.global.merchant.merchant_login }}
-          - name: MERCHANT_SECRET
-            value: {{ .Values.global.merchant.merchant_secret }}
-                  {{- if eq .Values.global.db.internal true }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.redis.secret.name }}
+                key: port
           - name: SPRING_DATASOURCE_URL
-            value: pgbouncer-service
+            {{- if .Values.global.db.bouncer }}
+            value: "pgbouncer-service"
+            {{- else }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secret.name }}
+                key: dbhost
+            {{- end }}
+          - name: POSTGRES_DBPORT
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secret.name }}
+                key: dbport
           - name: SPRING_DATASOURCE_USERNAME
-            value: {{ .Values.global.db.dbuser }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secret.name }}
+                key: dbuser
           - name: SPRING_DATASOURCE_PASSWORD
-            value: {{ .Values.global.db.dbpwd }}
-                  {{- else}}
-          - name: SPRING_DATASOURCE_URL
-            value: {{ .Values.global.db.dbhost }}
-          - name: SPRING_DATASOURCE_USERNAME
-            value: {{ .Values.global.db.dbuser }}
-          - name: SPRING_DATASOURCE_PASSWORD
-            value: {{ .Values.global.db.dbpwd }}
-                   {{- end }}
-         {{- end }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secret.name }}
+                key: dbpwd
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           - containerPort: 7980

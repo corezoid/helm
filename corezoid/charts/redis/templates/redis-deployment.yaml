@@ -82,5 +82,5 @@ spec:
             name: {{ .Values.appName }}-config
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
-            claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
+            claimName: {{ .Values.global.redis.persistantVolumeClaimName}}
             readOnly: false

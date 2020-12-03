@@ -128,8 +128,9 @@ data:
         {worker_id, <<"">>},
 
         {blocked_domains, [
-          "169.254.169.254",
-          "newtestj.com"
+        {{- range .Values.global.http.blocked_domains  }}
+        {{. | quote}},{{- end }}
+        "ifconfig.me"
         ]},
 
         {{- if .Values.global.enigma.encryption }}
