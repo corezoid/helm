@@ -32,7 +32,7 @@ spec:
       initContainers:
         - name: init-wait
           image: docker-hub.middleware.biz/public/alpine
-          command: ["sh", "-c", "until  {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }}  && nc -zvw1 ${ELASTICSEARCH_HOST} ${ELASTICSEARCH_PORT} ; do echo waiting for dependences; sleep 2; done;"]
+          command: ["sh", "-c", "until  {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }}  && nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` ${ELASTICSEARCH_PORT} ; do echo waiting for dependences; sleep 2; done;"]
           env:
             - name: MQ_HOST
               valueFrom:
