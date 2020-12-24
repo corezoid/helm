@@ -1,14 +1,12 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: postgres-init-database
+  name: postgres-init-database-{{ randAlphaNum 5 | lower }}
   labels:
     app: {{ .Values.global.product }}
     tier: postgres-job
   annotations:
-    "helm.sh/hook-delete-policy": hook-succeeded
-
-
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
 spec:
   template:
     metadata:
