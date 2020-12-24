@@ -1,0 +1,25 @@
+{{- $cfg := .Values.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-gitcall-docker-server-config
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+data:
+  {{ .Values.config_file }}: |
+    {
+      "registry-mirrors": [],
+      "insecure-registries": [
+        {{- $lastRegistry := sub (len $cfg.insecure_registries) 1}}
+        {{- range $i, $r := $cfg.insecure_registries}}
+        {{ $r | quote }}{{- if ne $i $lastRegistry -}}, {{- end }}
+        {{- end}}
+      ],
+      "debug": {{ $cfg.debug }},
+      {{- if $cfg.metrics_addr }}
+      "metrics-addr" : {{ $cfg.metrics_addr | quote }},
+      {{- end }}
+      "experimental": {{ $cfg.experimental }}
+    }

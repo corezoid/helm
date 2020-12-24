@@ -1,0 +1,9 @@
+component_name: gitcall_network_policy
+
+helm:
+  enabled: true
+  app: gitcall
+  tier: network_policy
+  chart:
+    version: "1.0.0"
+    description: "The component for gitcall network policy"

@@ -1,0 +1,110 @@
+{{- $d := .Values.helm }}
+{{- $cfg := .Values.config }}
+{{- $rls := .Values.global.release }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-gitcall-pimp-deployment
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  selector:
+    matchLabels:
+      release: {{ .Release.Name | quote }}
+      app: {{ .Values.helm.app | quote }}
+      tier: {{ .Values.helm.tier | quote }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  replicas: {{ $d.min_replicas }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9100"
+        prometheus.io/scrape: "true"
+      labels:
+        release: {{ .Release.Name | quote }}
+        app: {{ .Values.helm.app | quote }}
+        tier: {{ .Values.helm.tier | quote }}
+        http: "true"
+    spec:
+      terminationGracePeriodSeconds: 240 # there is apply\delete buffer, we should wait till it is empty. 
+      serviceAccountName: {{ .Release.Name }}-gitcall-pimp-service-account
+      containers:
+        - name: main
+          imagePullPolicy: {{ $d.image_pull_policy | quote }}
+          image: {{ print .Values.image ":" $rls.require.gitcall_pimp }}
+          args:
+            - --config=/ebsmnt/services-pimp/config/{{ .Values.config_file }}
+          env:
+            - name: GOPS_CONFIG_DIR
+              value: /tmp
+            {{- include "gitcall_pimp_env_secrets" $d.secrets | indent 12 }}
+          ports:
+          - containerPort: {{ $cfg.api.server.port }}
+          {{- if .Values.helm.resources }}
+          {{- include "cz.kubernetes.container.resources.v1" .Values.helm.resources | indent 10 }}
+          {{- else }}
+          resources:
+            limits:
+              cpu: 200m
+              memory: 200Mi
+            requests:
+              cpu: 200m
+              memory: 200Mi
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /ebsmnt/services-pimp/config/{{ .Values.config_file }}
+              subPath: {{ .Values.config_file | quote }}
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            runAsUser: 501
+            runAsGroup: 501
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - NET_ADMIN
+                - SYS_ADMIN
+                - MAC_ADMIN
+                - SETUID
+                - SETGID
+                - FOWNER
+                - CHOWN
+                - MKNOD
+      {{- if $d.image_pull_secrets | default false }}
+      imagePullSecrets:
+      {{- range $d.image_pull_secrets}}
+        - name: {{ . | quote }}
+      {{- end }}
+      {{- end}}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-gitcall-pimp-config
+        - name: tmp
+          emptyDir: {}
+
+  {{- define "gitcall_pimp_env_secrets" }}
+{{- range $_, $secret := .}}
+{{- range $_, $data := $secret.data }}
+{{- if $data.env }}
+- name: {{ $data.env | quote }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ $secret.name | quote }}
+      key: {{ $data.key | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
