@@ -202,6 +202,8 @@ data:
         %% MAIN capi application
         {capi,
             [
+                {components, [<<"git_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
+
                 %% It must be changed to unique name for every api node. It's personal
                 %% queue where will come messages from others api nodes.
                 {api_id, <<"">>},
@@ -411,11 +413,11 @@ data:
                 {host, "${POSTGRES_DBHOST}"},
           {{- end }}
                 {user, "${POSTGRES_DBUSER}"},
-                {db_name, "git_call"},
+                {db_name, "gitcall"},
                 {password, "${POSTGRES_DBPWD}"},
-                {min_size, 0},
-                {max_size, 0},
-                {start_size, 0}
+                {min_size, 1},
+                {max_size, 1},
+                {start_size, 1}
             ]},
 
           %%  postgresql archive db

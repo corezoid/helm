@@ -24,10 +24,10 @@ definitionsSource: definitions.json
 ## Place any additional plugins to enable in /etc/rabbitmq/enabled_plugins
 ## Ref: https://www.rabbitmq.com/plugins.html
 extraPlugins: |
-  rabbitmq_shovel,
-  rabbitmq_shovel_management,
-  rabbitmq_federation,
-  rabbitmq_federation_management,
+#  rabbitmq_shovel,
+#  rabbitmq_shovel_management,
+#  rabbitmq_federation,
+#  rabbitmq_federation_management,
 
 definitions:
   globalParameters: |-
@@ -296,7 +296,7 @@ replicaCount: 1
 
 image:
   repository: rabbitmq
-  tag: 3.8.6-alpine
+  tag: 3.8.9
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.
   ## Secrets must be manually created in the namespace.
@@ -466,9 +466,9 @@ livenessProbe:
   failureThreshold: 6
   exec:
     command:
-      - /bin/sh
-      - -c
-      - 'wget -O - -q --header "Authorization: Basic `echo -n \"$RABBIT_MANAGEMENT_USER:$RABBIT_MANAGEMENT_PASSWORD\" | base64`" http://localhost:15672/api/healthchecks/node | grep -qF "{\"status\":\"ok\"}"'
+      - /bin/bash
+      - -ec
+      - rabbitmq-diagnostics -q ping
 
 readinessProbe:
   initialDelaySeconds: 20
@@ -477,9 +477,9 @@ readinessProbe:
   failureThreshold: 6
   exec:
     command:
-      - /bin/sh
-      - -c
-      - 'wget -O - -q --header "Authorization: Basic `echo -n \"$RABBIT_MANAGEMENT_USER:$RABBIT_MANAGEMENT_PASSWORD\" | base64`" http://localhost:15672/api/healthchecks/node | grep -qF "{\"status\":\"ok\"}"'
+      - /bin/bash
+      - -ec
+      - rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms
 
 # Specifies an existing secret to be used for RMQ password, management user password and Erlang Cookie
 existingSecret: ""

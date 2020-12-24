@@ -57,7 +57,7 @@ Generate chart ssl secret name
 {{- end -}}
 
 {{/*
-Defines a JSON file containing definitions of all broker objects (queues, exchanges, bindings, 
+Defines a JSON file containing definitions of all broker objects (queues, exchanges, bindings,
 users, virtual hosts, permissions and parameters) to load by the management plugin.
 */}}
 {{- define "rabbitmq-ha.definitions" -}}
@@ -85,9 +85,9 @@ users, virtual hosts, permissions and parameters) to load by the management plug
 {{- end }}
   ],
   "vhosts": [
-    {
-      "name": {{ .Values.global.mq.secret.data.vhost | quote }}
-    },
+    { "name": {{ .Values.global.mq.secret.data.vhost | quote }} },
+    { "name":  "/gitcall" },
+    { "name": "/dundergitcall" },
     {
       "name": {{ .Values.rabbitmqVhost | quote }}
     }{{- if .Values.definitions.vhosts -}},
@@ -98,6 +98,20 @@ users, virtual hosts, permissions and parameters) to load by the management plug
     {
       "user": {{ .Values.global.mq.secret.data.username | quote }},
       "vhost": {{ .Values.global.mq.secret.data.vhost | quote }},
+      "configure": ".*",
+      "read": ".*",
+      "write": ".*"
+    },
+    {
+      "user": {{ .Values.global.mq.secret.data.username | quote }},
+      "vhost": "/gitcall",
+      "configure": ".*",
+      "read": ".*",
+      "write": ".*"
+    },
+    {
+      "user": {{ .Values.global.mq.secret.data.username | quote }},
+      "vhost": "/dundergitcall",
       "configure": ".*",
       "read": ".*",
       "write": ".*"
