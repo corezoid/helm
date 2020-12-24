@@ -172,7 +172,7 @@ global:
       limits:
         cpu: 1200m
         memory: 1500Mi
-      limits:
+      requests:
         cpu: 1200m
         memory: 1500Mi
     ## restricting user registration only within the domains specified below if enabled
