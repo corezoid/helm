@@ -1,7 +1,6 @@
-# GitCallv2 k8s installation
+# GitCallv2 
 
-[![N|Corezoid](https://corezoid.com/static/CorezoidProduct-ce1da2c78726bb5ce1cf53b002dac519.png)](https://corezoid.com/)
-
+![diagram](misc/corezoid.png "Diagram")
 ### Requirements
 - Metric-server, prometheus and calico are required
 
