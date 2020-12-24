@@ -172,9 +172,9 @@ global:
       limits:
         cpu: 1200m
         memory: 1500Mi
-      requests:
-        cpu: 600m
-        memory: 500Mi
+      limits:
+        cpu: 1200m
+        memory: 1500Mi
     ## restricting user registration only within the domains specified below if enabled
     registration_restriction:
       enable: false
@@ -379,12 +379,14 @@ global:
 
   # single-account
   sa:
+    # true or false
     enabled: false
   sa_web:
     subdomain: ""
 
   # gitcall | worker and rabbit settings
   gitcall:
+    # true or false
     enabled: false
     mq_vhost: "/gitcall"
     dunder_mq_vhost: "/dundergitcall"

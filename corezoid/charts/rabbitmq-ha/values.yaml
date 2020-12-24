@@ -292,7 +292,7 @@ rabbitmqAmqpsSupport:
     # ssl_options.fail_if_no_peer_cert  = false
 
 ## Number of replicas
-replicaCount: 1
+replicaCount: 2
 
 image:
   repository: rabbitmq

@@ -1,4 +1,15 @@
 ## Changelog
+### Chart 0.16 [Corezoid 5.5.1]
+Improvements:
+- Upgrade to Corezoid 5.5.1
+- fix rmq always Running queue
+- fix autoclean queue from rabbit
+- add gitcallv2 support 
+- fix init containers for mult and usercode
+- upgrade pgbouncer 
+- upgrade Content-Security-Policy
+- fix error "UPGRADE FAILED: cannot patch "postgres-init-database""
+
 ### Chart 0.15 [Corezoid 5.4.3]
 Improvements:
 - Refactor secrets and clean old variables

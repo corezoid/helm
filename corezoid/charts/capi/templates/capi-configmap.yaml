@@ -202,8 +202,9 @@ data:
         %% MAIN capi application
         {capi,
             [
+                {{- if .Values.global.gitcall.enabled }}
                 {components, [<<"git_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
-
+                {{- end }}
                 %% It must be changed to unique name for every api node. It's personal
                 %% queue where will come messages from others api nodes.
                 {api_id, <<"">>},
