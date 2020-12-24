@@ -1,6 +1,6 @@
 # GitCallv2 
 
-![diagram](misc/corezoid.png "Diagram")
+![Corezoid](misc/Corezoid.png "Corezoid")
 ### Requirements
 - Metric-server, prometheus and calico are required
 
