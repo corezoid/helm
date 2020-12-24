@@ -1,0 +1,22 @@
+{{- $d := .Values.helm }}
+{{- $cfg := .Values.config }}
+{{- if $d.ingress_host }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-gitcall-pimp-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  rules:
+    - host: {{ $d.ingress_host | quote }}
+      http:
+        paths:
+          - backend:
+              serviceName: {{ .Release.Name }}-gitcall-pimp-service
+              servicePort: {{ $cfg.api.server.port }}
+{{- end }}

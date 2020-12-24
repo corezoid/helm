@@ -1,0 +1,53 @@
+{{- if .Values.gitcall_network_policy_tests.enabled }}
+{{- $d := .Values.helm }}
+{{- $rls := .Values.global.release }}
+{{- $cfg := .Values.gitcall_network_policy_tests }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-gitcall-amulet-docker-registry-network-policy-test
+  annotations:
+    "helm.sh/hook": test
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  activeDeadlineSeconds: 180 # 3min
+  ttlSecondsAfterFinished: 360 # 6min
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        # be careful, these labels MUST NOT match registry service selector
+        # https://github.com/helm/charts/blob/master/stable/docker-registry/templates/service.yaml
+        app: "docker-registry"
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: main
+          imagePullPolicy: {{ $d.image_pull_policy | quote }}
+          image: {{ print .Values.image ":" $rls.require.gitcall_amulet }}
+          command: ["/app/network_policy_test"]
+          args:
+            - "-test.v"
+            {{- range $cfg.docker_registry_allow}}
+            - "--np-allow={{ . }}"
+            {{- end }}
+            {{- range $cfg.docker_registry_deny}}
+            - "--np-deny={{ . }}"
+            {{- end }}
+          resources:
+            limits:
+              cpu: 100m
+              memory: 50Mi
+            requests:
+              cpu: 100m
+              memory: 50Mi
+      {{- if $d.image_pull_secrets }}
+      imagePullSecrets:
+      {{- range $d.image_pull_secrets}}
+      - name: {{ . | quote }}
+      {{- end }}
+      {{- end }}
+{{- end }}
