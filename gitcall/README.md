@@ -33,4 +33,4 @@ https://github.com/corezoid/gitcall-examples
 
 ### Grafana dashboards
 
-https://git.corezoid.com/gitcall/grafana-dashboards
+https://github.com/corezoid/grafana-dashboards
