@@ -26,3 +26,11 @@ Structure:
 
 Statuses:
 ![diagram](misc/states.png "Diagram")  
+
+### Code examples
+
+https://github.com/corezoid/gitcall-examples
+
+### Grafana dashboards
+
+https://github.com/corezoid/grafana-dashboards
