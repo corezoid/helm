@@ -98,6 +98,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+            - name: NODE_COOKIE
+              value: {{ .Values.appName }}-{{ .Release.Namespace }}
             {{- if .Values.global.debug }}
             - name: ERL_CRASH_DUMP
               value: "/dev/stderr"

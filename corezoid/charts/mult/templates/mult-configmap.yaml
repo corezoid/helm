@@ -8,6 +8,16 @@ data:
         {disabled, false}
       ]},
 
+        {mw_metrics, [
+          {is_enabled, true},
+          {subsystems, [erlprometheus]}
+        ]},
+
+        {erlprometheus, [
+          {host, {0,0,0,0}},
+          {port, 9100}
+        ]},
+
       {ermql, [
 
         {publish_request, [

@@ -8,6 +8,11 @@ data:
           {subsystems, [erlprometheus]}
         ]},
 
+        {erlprometheus, [
+          {host, {0,0,0,0}},
+          {port, 9100}
+        ]},
+
         {corezoid_license_client, [
           {path_to_license, "/ebsmnt/certs/corezoid_license"}
         ]},

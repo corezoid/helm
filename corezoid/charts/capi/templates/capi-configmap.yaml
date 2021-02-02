@@ -54,11 +54,21 @@ data:
           {disabled, false}
         ]},
 
+      {mw_metrics, [
+        {is_enabled, true},
+        {subsystems, [erlprometheus]}
+      ]},
+
+      {erlprometheus, [
+        {host, {0,0,0,0}},
+        {port, 9100}
+      ]},
+
           %% Envirement Variable
           {env_var, [
               %% - psql pool -
               {psql, [
-                  {host,        "pgbouncer-service"},
+                  {host,        "${POSTGRES_DBHOST}"},
                   {dbname, "conveyor"},
                   {user, "${POSTGRES_DBUSER}"},
                   {port,        5432},
@@ -341,20 +351,12 @@ data:
             % PgSQL settings
             %% main database pool settings ( the main base is company folders, processes, i.e. whole front )
             {pgsql, [
-          {{- if .Values.global.db.bouncer }}
-                {host, "pgbouncer-service"},
-                    {hosts, [
-                    { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-          {{- range $i, $e := .Values.global.db.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
-          {{- else }}
                 {host, "${POSTGRES_DBHOST}"},
                     %% hosts - tasks, settings of nodes
                     {hosts, [
                     { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
-          {{- end }}
                     ]},
                 {user, "${POSTGRES_DBUSER}"},
                 {dbname, "conveyor"},
@@ -367,20 +369,12 @@ data:
             ]},
 
             {pgsql_task_history, [
-          {{- if .Values.global.db.bouncer }}
-                      {host, "pgbouncer-service"},
-                          {hosts, [
-                          { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-          {{- range $i, $e := .Values.global.db.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
-          {{- else }}
                       {host, "${POSTGRES_DBHOST}"},
                           %% hosts - tasks, settings of nodes
                           {hosts, [
                           { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
-          {{- end }}
                     ]},
                 { user, "${POSTGRES_DBUSER}" },
                 { password, "${POSTGRES_DBPWD}" },
@@ -393,11 +387,7 @@ data:
 
             %% database pool for for usercode sandboxes only
             {pgsql_cce_temp, [
-          {{- if .Values.global.db.bouncer }}
-                {host, "pgbouncer-service"},
-          {{- else }}
                 {host, "${POSTGRES_DBHOST}"},
-          {{- end }}
                 {user, "${POSTGRES_DBUSER}"},
                 {db_name, "cce"},
                 {password, "${POSTGRES_DBPWD}"},
@@ -408,11 +398,7 @@ data:
 
             %% database for git call
             {pgsql_git_call, [
-          {{- if .Values.global.db.bouncer }}
-                {host, "pgbouncer-service"},
-          {{- else }}
                 {host, "${POSTGRES_DBHOST}"},
-          {{- end }}
                 {user, "${POSTGRES_DBUSER}"},
                 {db_name, "gitcall"},
                 {password, "${POSTGRES_DBPWD}"},
@@ -423,19 +409,11 @@ data:
 
           %%  postgresql archive db
           { pgsql_archive, [
-            {{- if .Values.global.db.bouncer }}
-              { hosts, [
-                { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-            {{- range $i, $e := .Values.global.db.shards }}
-            {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
-              ]},
-            {{- else }}
               { hosts, [
                 { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
             {{- range $i, $e := .Values.global.db.shards }}
             {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
               ]},
-            {{- end }}
               { user, "${POSTGRES_DBUSER}" },
               { password, "${POSTGRES_DBPWD}" },
               { start_size, 2 },

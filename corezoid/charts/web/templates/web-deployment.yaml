@@ -46,12 +46,7 @@ spec:
               mountPath: /usr/share/nginx/html/logo/logo_auth.svg
               subPath: logo_auth.svg
           resources:
-            limits:
-              cpu: 200m
-              memory: 400Mi
-            requests:
-              cpu: 50m
-              memory: 100Mi
+            {{ .Values.global.webadm.resources | toYaml | indent 12 | trim }}
           readinessProbe:
             tcpSocket:
               port: 80
@@ -77,7 +72,7 @@ spec:
                   "/usr/sbin/nginx", "-s", "quit"
                 ]
         - name: nginx-exporter
-          image: nginx/nginx-prometheus-exporter:0.4.2
+          image: nginx/nginx-prometheus-exporter
           resources:
             requests:
               cpu: 10m

@@ -21,8 +21,6 @@ global:
       alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
       alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
-      alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=true"
-
       # access restriction
       # alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
       # for creating route53 record-set
@@ -82,13 +80,12 @@ global:
     shards: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
     # set false to disable if you don't want to use PGBouncer recommended - true
-    bouncer: false
-    bouncer_minReplicas: "2"
-    bouncer_maxReplicas: "2"
+    bouncer: true
+    bouncer_maxReplicas: "4"
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
-    default_pool_size: "5000"
+    default_pool_size: "1500"
     # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
     # transaction | session
     default_pool_mode: transaction
@@ -122,7 +119,7 @@ global:
       data:
         host: "redis-master"
         port: "6379"
-        password: ""
+        password: "gqqm3wnCrr"
 
 
   #######  Elasticsearch  ########
@@ -170,14 +167,14 @@ global:
   capi:
     tag: "7.5.1.1"
     minReplicas: 2
-    maxReplicas: 6
+    maxReplicas: 10
     resources:
       limits:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 1200m
+        memory: 1500Mi
       requests:
-        cpu: 5
-        memory: 10000Mi
+        cpu: 1200m
+        memory: 1500Mi
     ## restricting user registration only within the domains specified below if enabled
     registration_restriction:
       enable: false
@@ -196,7 +193,7 @@ global:
     # Secret for captcha
     capi_backend_captcha_key: ""
     # max req/sec of create|modify|delete for conv|folder|dashboard in 1 sec
-    max_reqs_limit: 50000
+    max_reqs_limit: 300
     # merchant_api settings
     merchant_api:
       skip_otp: true
@@ -239,12 +236,12 @@ global:
     # api limit counters by user_id
     user_limits:
       # default limit interface requests, ban after for 1 min
-      max_interface_rate: 15000
+      max_interface_rate: 300
       # default limit for task create/modify, other will get 429 error
-      max_user_rate: 15000
+      max_user_rate: 300
     logic_settings:
       # max allowed threads for api logic
-      api_max_thread: 50000
+      api_max_thread: 300
       sender_max_threads: 25
       timer_default: 5 # 30
     # enigma private_key_id
@@ -256,14 +253,14 @@ global:
   http:
     tag: "3.4.2.1"
     minReplicas: 2
-    maxReplicas: 5
+    maxReplicas: 10
     resources:
       limits:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 400m
+        memory: 800Mi
       requests:
-        cpu: 5
-        memory: 10000Mi
+        cpu: 300m
+        memory: 350Mi
     max_http_resp_size: "5242880"
     blocked_domains:
       - "169.254.169.254"
@@ -273,15 +270,15 @@ global:
   usercode:
     tag: "7.2.0"
     minReplicas: 2
-    maxReplicas: 4
+    maxReplicas: 8
     # application resources limits and requests
     resources:
       limits:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 800m
+        memory: 900Mi
       requests:
-        cpu: 5
-        memory: 10000Mi
+        cpu: 250m
+        memory: 800Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
@@ -289,15 +286,15 @@ global:
   worker:
     tag: "4.5.1.2"
     minReplicas: 2
-    maxReplicas: 5
+    maxReplicas: 8
     # application resources limits and requests
     resources:
       limits:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 1200m
+        memory: 1500Mi
       requests:
-        cpu: 5
-        memory: 10000Mi
+        cpu: 1000m
+        memory: 500Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
@@ -325,15 +322,8 @@ global:
   # webadm
   webadm:
     tag: "5.5.1.1"
-    minReplicas: 5
-    limit_req: 10000
-    resources:
-      limits:
-        cpu: 500m
-        memory: 800Mi
-      requests:
-        cpu: 500m
-        memory: 800Mi
+    minReplicas: 2
+    limit_req: 300
 
   # web-superadm
   web_superadm:
@@ -344,16 +334,16 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "latest-dev"
+    tag: "2.0.2"
     minReplicas: 2
-    maxReplicas: 5
+    maxReplicas: 10
     resources:
       limits:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 400m
+        memory: 400Mi
       requests:
-        cpu: 5
-        memory: 10000Mi
+        cpu: 400m
+        memory: 250Mi
 
   # merchant
   merchant:
@@ -404,16 +394,16 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "1.5.1"
+    tag: "1.4.2"
     minReplicas: 1
     maxReplicas: 1
     resources:
       limits:
-        cpu: 1200m
-        memory: 1500Mi
+        cpu: 1000m
+        memory: 1300Mi
       requests:
-        cpu: 1200m
-        memory: 1500Mi
+        cpu: 350m
+        memory: 500Mi
 
   limits:
     tag: "1.2.1"
