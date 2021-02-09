@@ -78,7 +78,11 @@ data:
 
     %% pool_size to resolve ip through dns services.
     {kernel, [
-      {gethost_poolsize, 10}
+      {gethost_poolsize, 10},
+      {inet_cache_refresh, 60000}, % default 1h
+{{/*      {inet_lookup, [file, dns]},  % default native*/}}
+      {inet_cache_size, 100}       % default 100
+
     ]},
 
     %% These queues is for send full http logs to external systems
@@ -250,10 +254,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 8},
-          {connections_per_queue, 2},        %% The specified number of tcp connections will be created for each queue
-          {channels_per_connection, 2},       %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 20}      %% The number of queues within the channel
+          {queues_count, {{ .Values.global.http.tune.http_consumer_queues_count | default 8 }} },
+          {connections_per_queue, {{ .Values.global.http.tune.http_consumer_connections_per_queue | default 1 }} },        %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, {{ .Values.global.http.tune.http_consumer_channels_per_connection | default 1 }} },       %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, {{ .Values.global.http.tune.http_consumer_messages_prefetch_size_per_channel | default 10 }} }      %% The number of queues within the channel
         ]},
 
         %% producer of settings

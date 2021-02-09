@@ -26,7 +26,7 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
-{{/*      terminationGracePeriodSeconds: 30*/}}
+      terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-wait-rmq
           image: docker-hub.middleware.biz/public/alpine

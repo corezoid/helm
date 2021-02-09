@@ -43,11 +43,11 @@ metadata:
     tier: {{ .Values.appName}}
     service: {{ .Values.appName }}
 spec:
-  replicas: 2
+  replicas: {{ .Values.global.db.bouncer_minReplicas }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1
+      maxSurge: {{ .Values.global.db.bouncer_minReplicas }}
       maxUnavailable: 0
   selector:
     matchLabels:

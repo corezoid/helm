@@ -179,8 +179,8 @@ data:
               {port, 5432},
               {password, "${POSTGRES_DBPWD}"},
               %% pool size
-              {start_size,  3},
-              {min_size,    3},
+              {start_size,  1},
+              {min_size,    1},
               {max_size,    10}
           ]}
       ]},
@@ -268,8 +268,8 @@ data:
             { user, "${POSTGRES_DBUSER}" },
             { password, "${POSTGRES_DBPWD}" },
             { dbname, "conveyor" },
-            { start_size, 2 },
-            { min_size, 2 },
+            { start_size, 0 },
+            { min_size, 0 },
             { max_size, 50 }
           ]
         },

@@ -95,7 +95,7 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.5.0"
+      version: "5.6.0"
 
     rotation:
       ## enabled: true or false
@@ -254,20 +254,27 @@ global:
 
   # http-worker
   http:
-    tag: "3.4.2.1"
-    minReplicas: 2
-    maxReplicas: 5
+    tag: "3.5.0.1-tini"
+    minReplicas: 10
+    maxReplicas: 10
     resources:
       limits:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 4
+        memory: 6000Mi
       requests:
-        cpu: 5
-        memory: 10000Mi
+        cpu: 4
+        memory: 6000Mi
     max_http_resp_size: "5242880"
     blocked_domains:
       - "169.254.169.254"
       - "mail.ru"
+    tune:
+      http_consumer_queues_count: 8
+      http_consumer_connections_per_queue: 1
+      http_consumer_channels_per_connection: 1
+      http_consumer_messages_prefetch_size_per_channel: 10
+
+
 
   # usercode
   usercode:
@@ -288,7 +295,7 @@ global:
   # conveyor-worker
   worker:
     tag: "4.5.1.2"
-    minReplicas: 2
+    minReplicas: 5
     maxReplicas: 5
     # application resources limits and requests
     resources:
@@ -296,7 +303,7 @@ global:
         cpu: 6
         memory: 10000Mi
       requests:
-        cpu: 5
+        cpu: 6
         memory: 10000Mi
     # enigma private_key_id
     enigma_pk_id: ""
@@ -344,16 +351,16 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "latest-dev"
-    minReplicas: 2
-    maxReplicas: 5
+    tag: "latest-e19"
+    minReplicas: 3
+    maxReplicas: 3
     resources:
       limits:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 3
+        memory: 3000Mi
       requests:
-        cpu: 5
-        memory: 10000Mi
+        cpu: 3
+        memory: 3000Mi
 
   # merchant
   merchant:
