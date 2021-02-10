@@ -30,7 +30,7 @@ spec:
       initContainers:
         - name: init-wait
           image: docker-hub.middleware.biz/public/alpine
-          command: ["sh", "-c", "until nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 && {{- else }} nc -zvw1  ${MQ_HOST} ${MQ_PORT} && {{- end }} {{- if .Values.global.elasticsearch.internal }} nc -zvw1 {{ .Values.global.elasticsearch.secret.data.host}} {{ .Values.global.elasticsearch.secret.data.port }}  {{- else }}  nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` ${ELASTICSEARCH_PORT} {{- end }} ; do echo waiting for dependences; sleep 2; done;"]
+          command: ["sh", "-c", "until nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 {{- else }} nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }}; do echo waiting for deps; sleep 2; done;"]
           env:
             - name: MQ_HOST
               valueFrom:
@@ -41,16 +41,6 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
-                  key: port
-            - name: ELASTICSEARCH_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.elasticsearch.secret.name }}
-                  key: host
-            - name: ELASTICSEARCH_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.elasticsearch.secret.name }}
                   key: port
             - name: POSTGRES_DBHOST
               {{- if .Values.global.db.bouncer }}
