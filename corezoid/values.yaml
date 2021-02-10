@@ -82,7 +82,7 @@ global:
     shards: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
     # set false to disable if you don't want to use PGBouncer recommended - true
-    bouncer: false
+    bouncer: true
     bouncer_minReplicas: "2"
     bouncer_maxReplicas: "2"
     # Maximum number of client connections allowed.
@@ -168,7 +168,7 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "7.5.1.1"
+    tag: "7.6.0.1"
     minReplicas: 2
     maxReplicas: 6
     resources:
@@ -176,7 +176,7 @@ global:
         cpu: 6
         memory: 10000Mi
       requests:
-        cpu: 5
+        cpu: 6
         memory: 10000Mi
     ## restricting user registration only within the domains specified below if enabled
     registration_restriction:
@@ -236,12 +236,6 @@ global:
     ldap_bind_user_pass: ""
     ldap_user_nick_entry: "cn"
     ldap_tls: false
-    # api limit counters by user_id
-    user_limits:
-      # default limit interface requests, ban after for 1 min
-      max_interface_rate: 15000
-      # default limit for task create/modify, other will get 429 error
-      max_user_rate: 15000
     logic_settings:
       # max allowed threads for api logic
       api_max_thread: 50000
@@ -254,8 +248,8 @@ global:
 
   # http-worker
   http:
-    tag: "3.5.0.1-tini"
-    minReplicas: 10
+    tag: "3.5.0.2"
+    minReplicas: 2
     maxReplicas: 10
     resources:
       limits:
@@ -295,7 +289,7 @@ global:
   # conveyor-worker
   worker:
     tag: "4.5.1.2"
-    minReplicas: 5
+    minReplicas: 2
     maxReplicas: 5
     # application resources limits and requests
     resources:
@@ -310,7 +304,7 @@ global:
 
   # mult
   mult:
-    tag: "2.5.0.1"
+    tag: "2.5.0.2"
     minReplicas: 2
     maxReplicas: 6
     ## pvc name if it already exist or was created manualy
@@ -332,7 +326,7 @@ global:
   # webadm
   webadm:
     tag: "5.5.1.1"
-    minReplicas: 5
+    minReplicas: 2
     limit_req: 10000
     resources:
       limits:
@@ -351,8 +345,8 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "latest-e19"
-    minReplicas: 3
+    tag: "2.0.3"
+    minReplicas: 2
     maxReplicas: 3
     resources:
       limits:
@@ -411,7 +405,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "1.5.1"
+    tag: "1.5.2"
     minReplicas: 1
     maxReplicas: 1
     resources:
@@ -423,7 +417,7 @@ global:
         memory: 1500Mi
 
   limits:
-    tag: "1.2.1"
+    tag: "1.2.2"
     minReplicas: 1
 
 

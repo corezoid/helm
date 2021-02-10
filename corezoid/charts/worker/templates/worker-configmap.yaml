@@ -280,7 +280,7 @@ data:
           {user, "${POSTGRES_DBUSER}"},
           {password, "${POSTGRES_DBPWD}"},
           {dbname, "conveyor_statistics"},
-          {min_size, 2},
+          {min_size, 0},
           {max_size, 25},
           {start_size, 2}
         ]},
@@ -297,7 +297,7 @@ data:
             { user, "${POSTGRES_DBUSER}" },
             { password, "${POSTGRES_DBPWD}" },
             { start_size, 1 },
-            { min_size, 1 },
+            { min_size, 0 },
             { max_size, 25 }
           ]},
 
@@ -314,7 +314,7 @@ data:
                     ]},
                 { user, "${POSTGRES_DBUSER}" },
                 { password, "${POSTGRES_DBPWD}" },
-                {min_size, 3},
+                {min_size, 0},
                 {max_size, 50},
                 {start_size, 3}
             ]},

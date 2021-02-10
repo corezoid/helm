@@ -174,7 +174,7 @@ data:
             {dbname, "cce"},
             {password, "${POSTGRES_DBPWD}"},
             {start_size, 1},
-            {min_size, 1},
+            {min_size, 0},
             {max_size, 5}
         ]},
 
@@ -189,7 +189,7 @@ data:
             {dbname, "conveyor"},
             {password, "${POSTGRES_DBPWD}"},
             {start_size, 1},
-            {min_size, 1},
+            {min_size, 0},
             {max_size, 5}
         ]},
 

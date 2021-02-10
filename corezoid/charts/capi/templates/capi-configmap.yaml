@@ -361,11 +361,9 @@ data:
                 {user, "${POSTGRES_DBUSER}"},
                 {dbname, "conveyor"},
                 {password, "${POSTGRES_DBPWD}"},
-                {min_size, 2},          %% The minimum number of connections after the start and 30 seconds of work.
+                {min_size, 0},          %% The minimum number of connections after the start and 30 seconds of work.
                 {max_size, 5},            %% The maximum number of connections is the border to which we can raise, within 30 seconds.
                 {start_size, 2}           %% The number of connections that rises to the pool, at the start of this pool. Every 30 seconds check connect and then go to min_size
-                %%{max_overflow_pool_size, 50},   %% Legacy: will be removed
-                %%{dismiss_overflow, false}       %% Legacy: will be removed
             ]},
 
             {pgsql_task_history, [
@@ -378,7 +376,7 @@ data:
                     ]},
                 { user, "${POSTGRES_DBUSER}" },
                 { password, "${POSTGRES_DBPWD}" },
-                {min_size, 3},
+                {min_size, 0},
                 {max_size, 50},
                 {start_size, 3}
             ]},
@@ -391,7 +389,7 @@ data:
                 {user, "${POSTGRES_DBUSER}"},
                 {db_name, "cce"},
                 {password, "${POSTGRES_DBPWD}"},
-                {min_size, 2},
+                {min_size, 0},
                 {max_size, 25},
                 {start_size, 2}
             ]},
@@ -402,7 +400,7 @@ data:
                 {user, "${POSTGRES_DBUSER}"},
                 {db_name, "gitcall"},
                 {password, "${POSTGRES_DBPWD}"},
-                {min_size, 1},
+                {min_size, 0},
                 {max_size, 1},
                 {start_size, 1}
             ]},
@@ -417,7 +415,7 @@ data:
               { user, "${POSTGRES_DBUSER}" },
               { password, "${POSTGRES_DBPWD}" },
               { start_size, 2 },
-              { min_size, 2 },
+              { min_size, 0 },
               { max_size, 50 }
             ]},
 
@@ -868,12 +866,6 @@ data:
             %%    %% superusers are users who can get extra privs to simple user
             %%    %% DD move to table
             {super_admin_id, 1},
-
-            % api limit counters by user_id
-            {user_limits, [
-                {max_interface_rate, {{ .Values.global.capi.user_limits.max_interface_rate | default 100 }} },  %% default limit interface requests, ban after for 1 min
-                {max_user_rate, {{ .Values.global.capi.user_limits.max_user_rate | default 2000 }} }         %% default limit for task create/modify, other will get 429 error
-            ]},
 
             {logic_settings, [
                 {api, [

@@ -183,7 +183,7 @@ data:
             { dbname, "conveyor" },
             { password, "${POSTGRES_DBPWD}" },
             { start_size, 2 },
-            { min_size, 2 },
+            { min_size, 0 },
             { max_size, 100 }
           ]
         },
