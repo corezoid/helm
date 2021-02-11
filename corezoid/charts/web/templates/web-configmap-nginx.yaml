@@ -26,16 +26,8 @@ data:
         real_ip_header      X-Forwarded-For;
         set_real_ip_from    0.0.0.0/0;
 
-        limit_req_zone $binary_remote_addr zone=one:20m rate=1r/s;
-        limit_req_zone $binary_remote_addr zone=five:20m rate=5r/s;
-        limit_req_zone $binary_remote_addr zone=ten:20m rate=10r/s;
-        limit_req_zone $binary_remote_addr zone=fifteen:20m rate=15r/s;
-        limit_req_zone $binary_remote_addr zone=fifty:20m rate=50r/s;
-        limit_req_zone $binary_remote_addr zone=hundred:20m rate=100r/s;
-        limit_req_zone $binary_remote_addr zone=twohundred:20m rate=200r/s;
-        limit_req_zone $binary_remote_addr zone=fivehundred:20m rate=500r/s;
 
-        sendfile        on;
+        sendfile       on;
         tcp_nopush     on;
 
         server_tokens   off;

@@ -21,7 +21,6 @@ global:
       alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
       alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
-      alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=true"
 
       # access restriction
       # alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
@@ -288,7 +287,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "4.5.1.2"
+    tag: "4.6.0.1"
     minReplicas: 2
     maxReplicas: 5
     # application resources limits and requests
@@ -325,16 +324,16 @@ global:
 
   # webadm
   webadm:
-    tag: "5.5.1.1"
+    tag: "5.6.0"
     minReplicas: 2
     limit_req: 10000
     resources:
       limits:
-        cpu: 500m
-        memory: 800Mi
+        cpu: 2000m
+        memory: 500Mi
       requests:
-        cpu: 500m
-        memory: 800Mi
+        cpu: 200m
+        memory: 500Mi
 
   # web-superadm
   web_superadm:

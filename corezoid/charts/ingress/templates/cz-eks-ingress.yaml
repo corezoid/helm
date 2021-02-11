@@ -14,9 +14,22 @@ spec:
     - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
       http:
         paths:
+          - path: /api/*
+            backend:
+              serviceName: capi-service-node
+              servicePort: 9080
+          - path: /auth*
+            backend:
+              serviceName: capi-service-node
+              servicePort: 9080
+          - path: /system
+            backend:
+              serviceName: capi-service-node
+              servicePort: 9080
           - backend:
               serviceName: corezoid-web-adm
               servicePort: 80
+
     - host: {{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
       http:
         paths:
