@@ -155,7 +155,7 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["api.ctrl", "settings"]}
+          {gc_queues_regexp, ["api.ctrl","settings.capi"]}
         ]},
 
         {conv_params, [

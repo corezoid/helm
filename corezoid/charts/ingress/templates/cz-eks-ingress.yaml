@@ -14,11 +14,27 @@ spec:
     - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
       http:
         paths:
+          - path: /api/?/upload*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /api/?/copy*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /user_downloads*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /api/?/download*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
           - path: /api/*
             backend:
               serviceName: capi-service-node
               servicePort: 9080
-          - path: /auth*
+          - path: /auth/*
             backend:
               serviceName: capi-service-node
               servicePort: 9080

@@ -82,7 +82,7 @@ spec:
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.usercode.tag }}"
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           env:
             - name: IPNODEDOMAIN
               valueFrom:

@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: {{ .Values.appName }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
           ports:
           - containerPort: 80
           volumeMounts:
@@ -48,7 +48,8 @@ spec:
           resources:
             {{ .Values.global.webadm.resources | toYaml | indent 12 | trim }}
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /nginx_status
               port: 80
             initialDelaySeconds: 15
             periodSeconds: 10
@@ -56,14 +57,15 @@ spec:
             successThreshold: 1
             failureThreshold: 3
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /nginx_status
               port: 80
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
-          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           lifecycle:
             preStop:
               exec:

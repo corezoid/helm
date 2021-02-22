@@ -88,8 +88,8 @@ spec:
                   key: password
       containers:
         - name: {{ .Values.appName }}
-          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.limits.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.limits.tag }}"
           env:
             - name: RELX_REPLACE_OS_VARS
               value: "true"

@@ -43,7 +43,6 @@ data:
 
 
         if ($host !~* ^({{ .Values.global.subdomain}}.{{ .Values.global.domain }})$ ) { return 444; }
-        if ($http_x_forwarded_proto = 'http'){ return 301 https://$host$request_uri; }
 
         location ~ ^/avatars { return 200; }
 
@@ -59,21 +58,29 @@ data:
         location / {
             root $admin_root;
             try_files $uri /index.html;
+            expires 1y;
+            add_header Cache-Control "public";
         }
 
         location ~ ^/editor {
             root $admin_root;
             try_files $uri /editor.html;
+            expires 1y;
+            add_header Cache-Control "public";
         }
 
         location ~^/dashboard {
             root $admin_root;
             try_files $uri /dashboard.html;
+            expires 1y;
+            add_header Cache-Control "public";
         }
 
         location ~ ^/health {
             root $admin_root;
             try_files $uri /health.html;
+            expires 1y;
+            add_header Cache-Control "public";
         }
 
         # web
@@ -177,12 +184,16 @@ data:
         # multitenancy support
         location ~ ^/multitenant/(js|css) {
             root /usr/share/nginx/html/multitenant;
+            expires 1M;
+            add_header Cache-Control "public";
         }
 
         location ~ ^/multitenant {
             root /usr/share/nginx/html/multitenant;
             rewrite / /index.html break;
             try_files $uri /index.html;
+            expires 1M;
+            add_header Cache-Control "public";
         }
 
     }

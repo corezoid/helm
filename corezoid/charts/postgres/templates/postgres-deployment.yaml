@@ -40,7 +40,7 @@ spec:
             claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
       containers:
         - image: "postgres:9.6.2-alpine"
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           name: {{ .Values.appName }}
           securityContext:
             runAsUser: 70

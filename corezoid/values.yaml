@@ -1,18 +1,16 @@
 # Global values for subcharts | production
 global:
-  # repotype, posible values - corezoid / public
-  repotype: public
   # second level domain only! / core domain (example: corezoid.com)
   domain: "devopsdev.corezoid.com"
   # subdomain / sitename - dev.mpo.corezoid.com (example: dev.mpo)
   subdomain: "corezoid-k8s-public"
 
-  # product name
-  product: corezoid
-
   # docker image registry
-  imageRegistry: docker-hub.middleware.biz
-
+  imageRegistry: "docker-hub.middleware.biz"
+  #IfNotPresent | Always | Never
+  imagePullPolicy: "IfNotPresent"
+  repotype: "public"
+  product: "corezoid"
   # Ingress annotations
   ingress:
     annotations:
@@ -21,6 +19,7 @@ global:
       alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
       alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+      alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=false"
 
       # access restriction
       # alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
@@ -83,7 +82,7 @@ global:
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
     bouncer_minReplicas: "2"
-    bouncer_maxReplicas: "2"
+    bouncer_maxReplicas: "4"
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
@@ -104,7 +103,8 @@ global:
       schedule: "0 0 1 * *"
 
   #######  Redis  ########
-  ## Supported version  from > 3.2.4 - 3.2.12 <
+  ## Supported version  from > 3.2.4 - 3.2.12
+
   ## NO CLUSTER Mode!
   redis:
     # if internal true - create and use internal k8s redis container
@@ -167,27 +167,22 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "7.6.0.1"
+    tag: "7.6.1.0"
     minReplicas: 2
-    maxReplicas: 6
+    maxReplicas: 20
     resources:
       limits:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 2
+        memory: 2000Mi
       requests:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 2
+        memory: 2000Mi
     ## restricting user registration only within the domains specified below if enabled
     registration_restriction:
       enable: false
       allowed_domains:
         - "gmail.com"
         - "yahoo.com"
-
-    ## secret for work with api-multipart ( it is a solt for sign user cookies )
-    capi_api_secret: "g98g987f8f6d8yfjf8ttctc"
-    ## Auth hash for cookie
-    capi_auth_hash: "0PqNKlo0QH30dcYNGUqzYj2QnQuSDGsd"
     # Сaptcha when login in UI enable/disable
     capi_front_captcha_disabled: true
     # Key for captcha when login in UI
@@ -249,14 +244,14 @@ global:
   http:
     tag: "3.5.0.2"
     minReplicas: 2
-    maxReplicas: 10
+    maxReplicas: 20
     resources:
       limits:
-        cpu: 4
-        memory: 6000Mi
+        cpu: 2
+        memory: 1000Mi
       requests:
-        cpu: 4
-        memory: 6000Mi
+        cpu: 2
+        memory: 1000Mi
     max_http_resp_size: "5242880"
     blocked_domains:
       - "169.254.169.254"
@@ -265,47 +260,47 @@ global:
       http_consumer_queues_count: 8
       http_consumer_connections_per_queue: 1
       http_consumer_channels_per_connection: 1
-      http_consumer_messages_prefetch_size_per_channel: 10
-
-
+      http_consumer_messages_prefetch_size_per_channel: 20
+      consumer_settings_messages_prefetch_size_per_channel: 50
+      consumer_response_prefetch_size_per_channel: 50
 
   # usercode
   usercode:
-    tag: "7.2.0"
+    tag: "7.2.1"
     minReplicas: 2
-    maxReplicas: 4
+    maxReplicas: 8
     # application resources limits and requests
     resources:
       limits:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 2
+        memory: 2000Mi
       requests:
-        cpu: 5
-        memory: 10000Mi
+        cpu: 2
+        memory: 2000Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
   # conveyor-worker
   worker:
-    tag: "4.6.0.1"
+    tag: "4.6.1.0"
     minReplicas: 2
-    maxReplicas: 5
+    maxReplicas: 20
     # application resources limits and requests
     resources:
       limits:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 2
+        memory: 2000M
       requests:
-        cpu: 6
-        memory: 10000Mi
+        cpu: 2
+        memory: 2000M
     # enigma private_key_id
     enigma_pk_id: ""
 
   # mult
   mult:
-    tag: "2.5.0.2"
+    tag: "2.5.1.0"
     minReplicas: 2
-    maxReplicas: 6
+    maxReplicas: 15
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "mult-pvc"
     ## true if pvc for mult should be created automaticaly
@@ -314,8 +309,8 @@ global:
     # application resources limits and requests
     resources:
       limits:
-        cpu: 600m
-        memory: 800Mi
+        cpu: 1600m
+        memory: 2000Mi
       requests:
         cpu: 500m
         memory: 800Mi
@@ -324,12 +319,11 @@ global:
 
   # webadm
   webadm:
-    tag: "5.6.0"
+    tag: "5.6.1"
     minReplicas: 2
-    limit_req: 10000
     resources:
       limits:
-        cpu: 2000m
+        cpu: 200m
         memory: 500Mi
       requests:
         cpu: 200m
@@ -346,21 +340,27 @@ global:
     subdomain: "syncapi-k8s-public"
     tag: "2.0.3"
     minReplicas: 2
-    maxReplicas: 3
+    maxReplicas: 20
     resources:
       limits:
-        cpu: 3
-        memory: 3000Mi
+        cpu: 2
+        memory: 1000Mi
       requests:
-        cpu: 3
-        memory: 3000Mi
+        cpu: 2
+        memory: 1000Mi
 
   # merchant
   merchant:
     tag: "v0.0.27.2"
-    # login/secret for corezoid-merchant communications
-    merchant_login: apiLogin1
-    merchant_secret: I9EmB170XUbe
+    secret:
+      ## true - secret will be created automaticaly with provided values
+      ## false - secret should be created manualy
+      create: true
+      name: "merchant-secret"
+      data:
+        # login/secret for corezoid-merchant communications
+        merchant_login: apiLogin1
+        merchant_secret: I9EmB170XUbe
     # application resources limits and requests
     resources:
       limits:

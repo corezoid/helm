@@ -70,7 +70,7 @@ spec:
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{.Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.mult.tag }}"
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           env:
             - name: NODE_COOKIE
               value: {{ .Values.appName }}-{{ .Release.Namespace }}
@@ -124,11 +124,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
-            - name: CAPI_AUTH_HASH
-              valueFrom:
-                secretKeyRef:
-                  key: capi_auth_hash
-                  name: capi
           ports:
           - containerPort: 9082
           lifecycle:
