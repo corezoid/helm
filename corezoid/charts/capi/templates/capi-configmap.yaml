@@ -312,7 +312,7 @@ data:
                 ]},
                 %{captcha_key, <<"">>},
                 {captcha, [
-                    {key, <<"{{ .Values.global.capi.capi_front_captcha_key | default "" }}">>}, %% key for works with captcha (page /login if corezoid registration)
+                    {key, <<"${capi_front_captcha_key}">>}, %% key for works with captcha (page /login if corezoid registration)
                     {disabled, {{ .Values.global.capi.capi_front_captcha_disabled }} }
                 ]},
                 {whitelist, [<<"{{ .Values.global.domain }}">>]},
@@ -832,7 +832,7 @@ data:
             %% Setting captcha backend
             {backend_settings, [
                 {captcha, [
-                    {key, <<"{{ .Values.global.capi.capi_backend_captcha_key }}">>},
+                    {key, <<"${capi_backend_captcha_key}">>},
                     {verify_url, "https://www.google.com/recaptcha/api/siteverify"},
                     {disabled, {{ .Values.global.capi.capi_front_captcha_disabled }} }
                 ]}

@@ -183,12 +183,18 @@ global:
       allowed_domains:
         - "gmail.com"
         - "yahoo.com"
-    # Сaptcha when login in UI enable/disable
-    capi_front_captcha_disabled: true
-    # Key for captcha when login in UI
-    capi_front_captcha_key: ""
-    # Secret for captcha
-    capi_backend_captcha_key: ""
+      # Сaptcha when login in UI enable/disable
+      capi_front_captcha_disabled: true
+    secret:
+      ## true - secret will be created automatically with provided values
+      ## false - secret should be created manually
+      create: true
+      name: "capi-secret"
+      data:
+        # Key for captcha when login in UI
+        capi_front_captcha_key: ""
+        # Secret for captcha
+        capi_backend_captcha_key: ""
     # max req/sec of create|modify|delete for conv|folder|dashboard in 1 sec
     max_reqs_limit: 50000
     # merchant_api settings

@@ -101,6 +101,16 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.redis.secret.name }}
                 key: host
+          - name: capi_front_captcha_key
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.capi.secret.name }}
+                key: capi_front_captcha_key
+          - name: capi_backend_captcha_key
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.capi.secret.name }}
+                key: capi_backend_captcha_key
           - name: REDIS_PORT
             valueFrom:
               secretKeyRef:
