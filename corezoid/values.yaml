@@ -184,7 +184,7 @@ global:
         - "gmail.com"
         - "yahoo.com"
       # Сaptcha when login in UI enable/disable
-      capi_front_captcha_disabled: true
+    capi_front_captcha_disabled: true
     secret:
       ## true - secret will be created automatically with provided values
       ## false - secret should be created manually
