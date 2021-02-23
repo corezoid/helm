@@ -27,7 +27,6 @@ spec:
       initContainers:
         - name: init-wait
           image: docker-hub.middleware.biz/public/alpine
-{{/*          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }}   nc -zvw1  ${MQ_HOST} ${MQ_PORT}  ; do echo waiting for dependences; sleep 2; done;"]*/}}
           command: ["sh", "-c", "apk add postgresql-client; until PGPASSWORD=${POSTGRES_DBPWD} psql -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBUSER} -d settings -c \"select 1\" > /dev/null 2>&1 ; do echo Waiting while postgres created settings db ...; sleep 3; done"]
           env:
             - name: MQ_HOST
@@ -64,12 +63,10 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbpwd
-
-
       containers:
         - name: {{ .Values.appName }}
-          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.conf_agent_server.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.conf_agent_server.tag }}"
           env:
             - name: NODE_COOKIE
               value: {{ .Values.appName }}-{{ .Release.Namespace }}
@@ -124,7 +121,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
-
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           lifecycle:

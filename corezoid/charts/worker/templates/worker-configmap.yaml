@@ -21,6 +21,20 @@ data:
                 ]
             ]}
         ]},
+      {conv_params, [
+        {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid.
+                           %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
+      ]},
+
+        {mw_metrics, [
+          {is_enabled, true},
+          {subsystems, [erlprometheus]}
+        ]},
+
+        {erlprometheus, [
+          {host, {0,0,0,0}},
+          {port, 9100}
+        ]},
 
        {corezoid_license_client, [
          {path_to_license, "/ebsmnt/certs/corezoid_license"}
@@ -147,7 +161,7 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["api.ctrl", "settings"]}
+          {gc_queues_regexp, ["worker.ctrl", "settings.worker"]}
         ]},
 
       {conv_params, [
@@ -159,14 +173,14 @@ data:
       {env_var, [
           %% - psql pool -
           {psql, [
-              {host,        "pgbouncer-service"},
+              {host, "${POSTGRES_DBHOST}"},
               {dbname, "conveyor"},
               {user, "${POSTGRES_DBUSER}"},
-              {port,        5432},
+              {port, 5432},
               {password, "${POSTGRES_DBPWD}"},
               %% pool size
-              {start_size,  3},
-              {min_size,    3},
+              {start_size,  1},
+              {min_size,    1},
               {max_size,    10}
           ]}
       ]},
@@ -245,41 +259,28 @@ data:
         %% DB settings
         { pgsql,
           [
-          {{- if .Values.global.db.bouncer }}
-            { host, "pgbouncer-service" },
-            { hosts, [
-              { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-          {{- range $i, $e := .Values.global.db.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
-            ]},
-          {{- else }}
             { host, "${POSTGRES_DBHOST}" },
             { hosts, [
               { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
             ]},
-          {{- end }}
             { user, "${POSTGRES_DBUSER}" },
             { password, "${POSTGRES_DBPWD}" },
             { dbname, "conveyor" },
-            { start_size, 2 },
-            { min_size, 2 },
-            { max_size, 5 }
+            { start_size, 0 },
+            { min_size, 0 },
+            { max_size, 50 }
           ]
         },
 
         % postgresql settings for statistics db
         {pgsql_statistics, [
-          {{- if .Values.global.db.bouncer }}
-          {host, "pgbouncer-service"},
-          {{- else }}
           {host, "${POSTGRES_DBHOST}"},
-          {{- end }}
           {user, "${POSTGRES_DBUSER}"},
           {password, "${POSTGRES_DBPWD}"},
           {dbname, "conveyor_statistics"},
-          {min_size, 2},
+          {min_size, 0},
           {max_size, 25},
           {start_size, 2}
         ]},
@@ -288,23 +289,15 @@ data:
 
         %%  postgresql archive db
         { pgsql_archive, [
-          {{- if .Values.global.db.bouncer }}
-            { hosts, [
-              { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-          {{- range $i, $e := .Values.global.db.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
-            ]},
-          {{- else }}
             { hosts, [
               { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
             ]},
-          {{- end }}
             { user, "${POSTGRES_DBUSER}" },
             { password, "${POSTGRES_DBPWD}" },
             { start_size, 1 },
-            { min_size, 1 },
+            { min_size, 0 },
             { max_size, 25 }
           ]},
 
@@ -312,24 +305,16 @@ data:
         { pgsql2, [] },
 
            {pgsql_task_history, [
-        {{- if .Values.global.db.bouncer }}
-                          {host, "pgbouncer-service"},
-                              {hosts, [
-                              { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-        {{- range $i, $e := .Values.global.db.shards }}
-        {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
-        {{- else }}
                           {host, "${POSTGRES_DBHOST}"},
                               %% hosts - tasks, settings of nodes
                               {hosts, [
                               { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
         {{- range $i, $e := .Values.global.db.shards }}
         {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
-        {{- end }}
                     ]},
                 { user, "${POSTGRES_DBUSER}" },
                 { password, "${POSTGRES_DBPWD}" },
-                {min_size, 3},
+                {min_size, 0},
                 {max_size, 50},
                 {start_size, 3}
             ]},
@@ -394,7 +379,7 @@ data:
             {database,3},
             {start_size, 5},
             {min_size, 5},
-            {max_size, 50}
+            {max_size, 100}
           ]
         ]},
 
@@ -609,10 +594,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 1},
-          {min_size, 5},
-          {max_size, 5},
-          {start_size, 5}
+          {queues_count, 8},
+          {min_size, 15},
+          {max_size, 15},
+          {start_size, 15}
         ]},
 
         %% consumer for http responses, API logic

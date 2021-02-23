@@ -8,6 +8,16 @@ data:
         {disabled, false}
       ]},
 
+        {mw_metrics, [
+          {is_enabled, true},
+          {subsystems, [erlprometheus]}
+        ]},
+
+        {erlprometheus, [
+          {host, {0,0,0,0}},
+          {port, 9100}
+        ]},
+
       {ermql, [
 
         {publish_request, [
@@ -93,7 +103,7 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["api.ctrl", "settings"]}
+          {gc_queues_regexp, ["mult.ctrl", "settings.conveyor_api_multipart"]}
         ]},
 
         {enigma, [

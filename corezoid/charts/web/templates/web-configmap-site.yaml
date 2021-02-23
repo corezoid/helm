@@ -43,47 +43,44 @@ data:
 
 
         if ($host !~* ^({{ .Values.global.subdomain}}.{{ .Values.global.domain }})$ ) { return 444; }
-        if ($http_x_forwarded_proto = 'http'){ return 301 https://$host$request_uri; }
 
-
-
-
-        location ~ ^/avatars {
-            return 200;
-            #add_header      Content-Type image/jpeg;
-            #error_page  404  =200   /avatars/0.jpg;
-            #root $static_local;
-        }
+        location ~ ^/avatars { return 200; }
 
         location /favicon/ {
            root /usr/share/nginx/html;
            add_header X-Content-Type-Options "nosniff";
         }
 
-        location /logo/ {
-           root /usr/share/nginx/html;
-        }
+        location /logo/ { root /usr/share/nginx/html; }
 
         location = /favicon.ico { return 200; 	add_header X-Content-Type-Options "nosniff"; }
 
         location / {
             root $admin_root;
             try_files $uri /index.html;
+            expires 1y;
+            add_header Cache-Control "public";
         }
 
         location ~ ^/editor {
             root $admin_root;
             try_files $uri /editor.html;
+            expires 1y;
+            add_header Cache-Control "public";
         }
 
         location ~^/dashboard {
             root $admin_root;
             try_files $uri /dashboard.html;
+            expires 1y;
+            add_header Cache-Control "public";
         }
 
         location ~ ^/health {
             root $admin_root;
             try_files $uri /health.html;
+            expires 1y;
+            add_header Cache-Control "public";
         }
 
         # web
@@ -99,7 +96,6 @@ data:
         location ~ ^/api/[0-9]/json {
             add_header X-Content-Type-Options "nosniff";
             add_header X-Frame-Options "SAMEORIGIN";
-            limit_req zone=hundred burst={{ .Values.global.webadm.limit_req }};
             proxy_pass http://capi-service:9080;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
@@ -111,7 +107,6 @@ data:
 
         location ~ ^/api/[0-9]/xml {
             add_header X-Content-Type-Options "nosniff";
-            limit_req zone=hundred burst={{ .Values.global.webadm.limit_req }};
             proxy_pass http://capi-service:9080;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
@@ -123,7 +118,6 @@ data:
 
         location ~ ^/api/[0-9]/nvp {
             add_header X-Content-Type-Options "nosniff";
-            limit_req zone=hundred burst={{ .Values.global.webadm.limit_req }};
             proxy_pass http://capi-service:9080;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
@@ -136,7 +130,6 @@ data:
         # api plugins route
         location ~ ^/api/[0-9]/plugins {
             add_header X-Content-Type-Options "nosniff";
-            limit_req zone=hundred burst={{ .Values.global.webadm.limit_req }};
             proxy_pass http://capi-service:9080;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
@@ -158,7 +151,6 @@ data:
 
         location /user_downloads {
             add_header X-Content-Type-Options "nosniff";
-            limit_req zone=hundred burst={{ .Values.global.webadm.limit_req }};
             proxy_pass http://mult-service:9082;
             proxy_set_header   Host           $host;
             proxy_set_header X-Forwarded-For  $remote_addr;
@@ -192,12 +184,16 @@ data:
         # multitenancy support
         location ~ ^/multitenant/(js|css) {
             root /usr/share/nginx/html/multitenant;
+            expires 1M;
+            add_header Cache-Control "public";
         }
 
         location ~ ^/multitenant {
             root /usr/share/nginx/html/multitenant;
             rewrite / /index.html break;
             try_files $uri /index.html;
+            expires 1M;
+            add_header Cache-Control "public";
         }
 
     }

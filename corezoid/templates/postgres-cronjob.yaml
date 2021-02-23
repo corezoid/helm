@@ -22,7 +22,7 @@ spec:
         spec:
           containers:
             - image: docker-hub.middleware.biz/public/postgres:9.6.2-alpine
-              imagePullPolicy: Always
+              imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
               name: postgres-taskarchive-cron
               command:
                 - sh

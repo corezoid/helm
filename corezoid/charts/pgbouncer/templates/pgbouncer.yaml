@@ -7,7 +7,6 @@ metadata:
   labels:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName}}
-    service: {{ .Values.appName }}
 spec:
   selector:
     service: {{ .Values.appName }}
@@ -26,7 +25,7 @@ metadata:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
-  minReplicas: 2
+  minReplicas: {{ .Values.global.db.bouncer_minReplicas }}
   maxReplicas: {{ .Values.global.db.bouncer_maxReplicas }}
   scaleTargetRef:
     apiVersion: apps/v1
@@ -44,11 +43,11 @@ metadata:
     tier: {{ .Values.appName}}
     service: {{ .Values.appName }}
 spec:
-  replicas: 2
+  replicas: {{ .Values.global.db.bouncer_minReplicas }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1
+      maxSurge: {{ .Values.global.db.bouncer_minReplicas }}
       maxUnavailable: 0
   selector:
     matchLabels:
@@ -114,10 +113,10 @@ spec:
           resources:
             limits:
               cpu: 1000m
-              memory: 500Mi
+              memory: 1500Mi
             requests:
-              cpu: 350m
-              memory: 350Mi
+              cpu: 1000m
+              memory: 1000Mi
           readinessProbe:
             tcpSocket:
               port: 5432

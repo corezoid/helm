@@ -32,7 +32,7 @@ spec:
       initContainers:
         - name: init-wait
           image: docker-hub.middleware.biz/public/alpine
-          command: ["sh", "-c", "until  {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }}  && nc -zvw1 `echo ${ELASTICSEARCH_HOST} | sed -e 's|http.://||g'` ${ELASTICSEARCH_PORT} ; do echo waiting for dependences; sleep 2; done;"]
+          command: ["sh", "-c", "until  {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }}; do echo waiting for deps; sleep 2; done;"]
           env:
             - name: MQ_HOST
               valueFrom:
@@ -44,16 +44,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: port
-            - name: ELASTICSEARCH_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.elasticsearch.secret.name }}
-                  key: host
-            - name: ELASTICSEARCH_PORT
-              valueFrom:
-                secretKeyRef:
-                  key: port
-                  name: {{ .Values.global.elasticsearch.secret.name }}
         - name: init-wait-rmq
           image: docker-hub.middleware.biz/public/alpine
           command: ['sh']
@@ -80,7 +70,7 @@ spec:
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{.Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.mult.tag }}"
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           env:
             - name: NODE_COOKIE
               value: {{ .Values.appName }}-{{ .Release.Namespace }}
@@ -134,21 +124,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
-            - name: ELASTICSEARCH_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.elasticsearch.secret.name }}
-                  key: host
-            - name: ELASTICSEARCH_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.elasticsearch.secret.name }}
-                  key: port
-            - name: CAPI_AUTH_HASH
-              valueFrom:
-                secretKeyRef:
-                  key: capi_auth_hash
-                  name: capi
           ports:
           - containerPort: 9082
           lifecycle:

@@ -74,7 +74,7 @@ data:
                 {user, "${POSTGRES_DBUSER}"},
                 {dbname, "corezoid_limits"},
                 {password, "${POSTGRES_DBPWD}"},
-                {min_size, 1},
+                {min_size, 0},
                 {max_size, 2},
                 {start_size, 1}
             ]}

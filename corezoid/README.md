@@ -1,6 +1,6 @@
 # Corezoid k8s installation
 
-[![N|Corezoid](https://corezoid.com/static/CorezoidProduct-ce1da2c78726bb5ce1cf53b002dac519.png)](https://corezoid.com/)
+[![N|Corezoid](https://corezoid.com/static/CorezoidProduct-80991adc0bc80fdda3e177ea20d188e1.png)](https://corezoid.com/)
 
 ##Corezoid Docs: 
 https://doc.corezoid.com/

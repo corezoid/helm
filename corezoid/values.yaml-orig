@@ -1,16 +1,18 @@
 # Global values for subcharts | production
 global:
+  # repotype, posible values - corezoid / public
+  repotype: public
   # second level domain only! / core domain (example: corezoid.com)
   domain: "devopsdev.corezoid.com"
   # subdomain / sitename - dev.mpo.corezoid.com (example: dev.mpo)
   subdomain: "corezoid-k8s-public"
 
+  # product name
+  product: corezoid
+
   # docker image registry
-  imageRegistry: "docker-hub.middleware.biz"
-  #IfNotPresent | Always | Never
-  imagePullPolicy: "IfNotPresent"
-  repotype: "public"
-  product: "corezoid"
+  imageRegistry: docker-hub.middleware.biz
+
   # Ingress annotations
   ingress:
     annotations:
@@ -19,8 +21,6 @@ global:
       alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
       alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
-      alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=false"
-
       # access restriction
       # alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
       # for creating route53 record-set
@@ -81,19 +81,18 @@ global:
 
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
-    bouncer_minReplicas: "2"
     bouncer_maxReplicas: "4"
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
-    default_pool_size: "5000"
+    default_pool_size: "1500"
     # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
     # transaction | session
     default_pool_mode: transaction
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.6.0"
+      version: "5.5.0"
 
     rotation:
       ## enabled: true or false
@@ -103,8 +102,7 @@ global:
       schedule: "0 0 1 * *"
 
   #######  Redis  ########
-  ## Supported version  from > 3.2.4 - 3.2.12
-
+  ## Supported version  from > 3.2.4 - 3.2.12 <
   ## NO CLUSTER Mode!
   redis:
     # if internal true - create and use internal k8s redis container
@@ -121,7 +119,7 @@ global:
       data:
         host: "redis-master"
         port: "6379"
-        password: ""
+        password: "gqqm3wnCrr"
 
 
   #######  Elasticsearch  ########
@@ -167,36 +165,35 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "7.6.1.0"
+    tag: "7.5.1.1"
     minReplicas: 2
-    maxReplicas: 20
+    maxReplicas: 10
     resources:
       limits:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 1200m
+        memory: 1500Mi
       requests:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 1200m
+        memory: 1500Mi
     ## restricting user registration only within the domains specified below if enabled
     registration_restriction:
       enable: false
       allowed_domains:
         - "gmail.com"
         - "yahoo.com"
-      # Сaptcha when login in UI enable/disable
+
+    ## secret for work with api-multipart ( it is a solt for sign user cookies )
+    capi_api_secret: "g98g987f8f6d8yfjf8ttctc"
+    ## Auth hash for cookie
+    capi_auth_hash: "0PqNKlo0QH30dcYNGUqzYj2QnQuSDGsd"
+    # Сaptcha when login in UI enable/disable
     capi_front_captcha_disabled: true
-    secret:
-      ## true - secret will be created automatically with provided values
-      ## false - secret should be created manually
-      create: true
-      name: "capi-secret"
-      data:
-        # Key for captcha when login in UI
-        capi_front_captcha_key: ""
-        # Secret for captcha
-        capi_backend_captcha_key: ""
+    # Key for captcha when login in UI
+    capi_front_captcha_key: ""
+    # Secret for captcha
+    capi_backend_captcha_key: ""
     # max req/sec of create|modify|delete for conv|folder|dashboard in 1 sec
-    max_reqs_limit: 50000
+    max_reqs_limit: 300
     # merchant_api settings
     merchant_api:
       skip_otp: true
@@ -236,9 +233,15 @@ global:
     ldap_bind_user_pass: ""
     ldap_user_nick_entry: "cn"
     ldap_tls: false
+    # api limit counters by user_id
+    user_limits:
+      # default limit interface requests, ban after for 1 min
+      max_interface_rate: 300
+      # default limit for task create/modify, other will get 429 error
+      max_user_rate: 300
     logic_settings:
       # max allowed threads for api logic
-      api_max_thread: 50000
+      api_max_thread: 300
       sender_max_threads: 25
       timer_default: 5 # 30
     # enigma private_key_id
@@ -248,65 +251,58 @@ global:
 
   # http-worker
   http:
-    tag: "3.5.0.2"
+    tag: "3.4.2.1"
     minReplicas: 2
-    maxReplicas: 20
+    maxReplicas: 10
     resources:
       limits:
-        cpu: 2
-        memory: 1000Mi
+        cpu: 400m
+        memory: 800Mi
       requests:
-        cpu: 2
-        memory: 1000Mi
+        cpu: 300m
+        memory: 350Mi
     max_http_resp_size: "5242880"
     blocked_domains:
       - "169.254.169.254"
       - "mail.ru"
-    tune:
-      http_consumer_queues_count: 8
-      http_consumer_connections_per_queue: 1
-      http_consumer_channels_per_connection: 1
-      http_consumer_messages_prefetch_size_per_channel: 20
-      consumer_settings_messages_prefetch_size_per_channel: 50
-      consumer_response_prefetch_size_per_channel: 50
 
   # usercode
   usercode:
-    tag: "7.2.1"
+    tag: "7.2.0"
     minReplicas: 2
     maxReplicas: 8
     # application resources limits and requests
     resources:
       limits:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 800m
+        memory: 900Mi
       requests:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 250m
+        memory: 800Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
   # conveyor-worker
   worker:
-    tag: "4.6.1.0"
+    tag: "4.5.1.2"
     minReplicas: 2
-    maxReplicas: 20
+    maxReplicas: 8
     # application resources limits and requests
     resources:
       limits:
-        cpu: 2
-        memory: 2000M
+        cpu: 1200m
+        memory: 1500Mi
       requests:
-        cpu: 2
-        memory: 2000M
+        cpu: 1000m
+        memory: 500Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
   # mult
   mult:
-    tag: "2.5.1.0"
+    tag: "2.5.0.1"
     minReplicas: 2
-    maxReplicas: 15
+    maxReplicas: 6
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "mult-pvc"
     ## true if pvc for mult should be created automaticaly
@@ -315,8 +311,8 @@ global:
     # application resources limits and requests
     resources:
       limits:
-        cpu: 1600m
-        memory: 2000Mi
+        cpu: 600m
+        memory: 800Mi
       requests:
         cpu: 500m
         memory: 800Mi
@@ -325,15 +321,9 @@ global:
 
   # webadm
   webadm:
-    tag: "5.6.1"
+    tag: "5.5.1.1"
     minReplicas: 2
-    resources:
-      limits:
-        cpu: 200m
-        memory: 500Mi
-      requests:
-        cpu: 200m
-        memory: 500Mi
+    limit_req: 300
 
   # web-superadm
   web_superadm:
@@ -344,29 +334,23 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "2.0.3"
+    tag: "2.0.2"
     minReplicas: 2
-    maxReplicas: 20
+    maxReplicas: 10
     resources:
       limits:
-        cpu: 2
-        memory: 1000Mi
+        cpu: 400m
+        memory: 400Mi
       requests:
-        cpu: 2
-        memory: 1000Mi
+        cpu: 400m
+        memory: 250Mi
 
   # merchant
   merchant:
     tag: "v0.0.27.2"
-    secret:
-      ## true - secret will be created automaticaly with provided values
-      ## false - secret should be created manualy
-      create: true
-      name: "merchant-secret"
-      data:
-        # login/secret for corezoid-merchant communications
-        merchant_login: apiLogin1
-        merchant_secret: I9EmB170XUbe
+    # login/secret for corezoid-merchant communications
+    merchant_login: apiLogin1
+    merchant_secret: I9EmB170XUbe
     # application resources limits and requests
     resources:
       limits:
@@ -410,19 +394,19 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "1.5.2"
+    tag: "1.4.2"
     minReplicas: 1
     maxReplicas: 1
     resources:
       limits:
-        cpu: 1200m
-        memory: 1500Mi
+        cpu: 1000m
+        memory: 1300Mi
       requests:
-        cpu: 1200m
-        memory: 1500Mi
+        cpu: 350m
+        memory: 500Mi
 
   limits:
-    tag: "1.2.2"
+    tag: "1.2.1"
     minReplicas: 1
 
 

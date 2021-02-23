@@ -1,4 +1,23 @@
 ## Changelog
+### Chart 0.17 [ Corezoid 5.6.1 ]
+Improvements:
+- Upgrade to Corezoid 5.6.1
+- performance tune
+- fix garbage collector work, (queues ctrl and settings)
+- remove legacy code
+- fix reconect app to pgbouncer while them restart
+- add dns cache on http-worker
+- move http_consumer block to http-values
+- testing pgbouncer ha with pods when pgbouncer is scale up/down
+- remove http2 from alb - fix MAX_CONCURRENT_STREAMS error for server: Cowboy
+- remove nginx from chain from lb to app
+- remove check connect to elasticsearch as dependency to allow start
+- move queues from config to  values http-worker 
+- testing autoscale CPUUtilizationPercentage
+- add NODE_COOKIE to http-worker
+- add metrics to apps (127.0.0.1:9100/metrics)
+- fix redis - passwd must be empty
+
 ### Chart 0.16 [Corezoid 5.5.1]
 Improvements:
 - Upgrade to Corezoid 5.5.1

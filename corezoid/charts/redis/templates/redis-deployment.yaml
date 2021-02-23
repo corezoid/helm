@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
       - name: master
-        image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         resources:
           limits:
             cpu: 300m
