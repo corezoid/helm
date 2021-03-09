@@ -1,4 +1,4 @@
-{{- if eq .Values.global.storage "manual" }}
+{{- if  eq .Values.global.storage "manual" }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -6,7 +6,7 @@ metadata:
   labels:
     tier: {{ .Values.appName }}
 spec:
-  storageClassName: manual
+  storageClassName: {{ .Values.global.storageClassName }}
   capacity:
     storage: 1Gi
   volumeMode: Filesystem

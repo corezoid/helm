@@ -1,0 +1,50 @@
+{{- if .Values.usercode_network_policy_tests.enabled }}
+{{- $d := .Values.helm }}
+{{- $rls := .Values.global.release }}
+{{- $cfg := .Values.usercode_network_policy_tests }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-gitcall-amulet-usercode-network-policy-tests-job
+  annotations:
+    "helm.sh/hook": test
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  activeDeadlineSeconds: 180 # 3min
+  ttlSecondsAfterFinished: 360 # 6min
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        release: {{ .Release.Name | quote }}
+        app: {{ .Values.helm.app | quote }}
+        tier: {{ .Values.helm.tier | quote }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: main
+          imagePullPolicy: {{ $d.image_pull_policy | quote }}
+          image: {{ print .Values.image ":" $rls.require.gitcall_amulet }}
+          command: ["/app/usercode_network_policy_tests"]
+          args:
+            - "-test.v"
+            - "--gitcall-amqp=amqp://{{ $cfg.rabbitmq_user }}:{{ $cfg.rabbitmq_password }}@{{ $cfg.rabbitmq_host }}:5672/{{ $cfg.rabbitmq_gitcall_vhost }}"
+            - "--dundergitcall-amqp=amqp://{{ $cfg.rabbitmq_user }}:{{ $cfg.rabbitmq_password }}@{{ $cfg.rabbitmq_host }}:5672/{{ $cfg.rabbitmq_dundergitcall_vhost }}"
+            - "--rabbitmq-addr={{ $cfg.rabbitmq_host }}:5672"
+          resources:
+            limits:
+              cpu: 100m
+              memory: 50Mi
+            requests:
+              cpu: 100m
+              memory: 50Mi
+      {{- if $d.image_pull_secrets }}
+      imagePullSecrets:
+      {{- range $d.image_pull_secrets}}
+      - name: {{ . | quote }}
+      {{- end }}
+      {{- end }}
+{{- end }}

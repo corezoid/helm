@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
       - name: master
-        image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         resources:
           limits:
             cpu: 300m
@@ -82,5 +82,5 @@ spec:
             name: {{ .Values.appName }}-config
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
-            claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
+            claimName: {{ .Values.global.redis.persistantVolumeClaimName}}
             readOnly: false

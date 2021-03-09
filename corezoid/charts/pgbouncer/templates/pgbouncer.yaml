@@ -7,7 +7,6 @@ metadata:
   labels:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName}}
-    service: {{ .Values.appName }}
 spec:
   selector:
     service: {{ .Values.appName }}
@@ -26,13 +25,13 @@ metadata:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
-  minReplicas: 1
-  maxReplicas: 4
+  minReplicas: {{ .Values.global.db.bouncer_minReplicas }}
+  maxReplicas: {{ .Values.global.db.bouncer_maxReplicas }}
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ .Values.appName }}-deployment
-  targetCPUUtilizationPercentage: 65
+  targetCPUUtilizationPercentage: 70
 
 ---
 apiVersion: apps/v1
@@ -44,11 +43,11 @@ metadata:
     tier: {{ .Values.appName}}
     service: {{ .Values.appName }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.global.db.bouncer_minReplicas }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1
+      maxSurge: {{ .Values.global.db.bouncer_minReplicas }}
       maxUnavailable: 0
   selector:
     matchLabels:
@@ -68,52 +67,31 @@ spec:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           env:
-          {{- if eq .Values.global.secretalreadyexist true }}
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: secrets
-                  key: postgres_dbuser
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: secrets
-                  key: postgres_dbpwd
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbpwd
             - name: STATS_USERS
               valueFrom:
                 secretKeyRef:
-                  name: secrets
-                  key: postgres_dbuser
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
             - name: DB_HOST
-            {{- if .Values.global.db.internal }}
-              value: postgresql
-            {{- else }}
               valueFrom:
                 secretKeyRef:
-                  name: secrets
-                  key: postgres_dbhost
-            {{- end }}
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbhost
             - name: DB_PORT
               valueFrom:
                 secretKeyRef:
-                  name: secrets
-                  key: postgres_dbport
-            {{- else}}
-            - name: DB_HOST
-            {{- if .Values.global.db.internal }}
-              value: postgresql
-             {{- else }}
-              value: {{ .Values.global.db.dbhost }}
-             {{- end }}
-            - name: DB_PORT
-              value: {{ .Values.global.db.dbport | quote }}
-            - name: DB_USER
-              value: {{ .Values.global.db.dbuser }}
-            - name: DB_PASSWORD
-              value: {{ .Values.global.db.dbpwd }}
-            - name: STATS_USERS
-              value: {{ .Values.global.db.dbuser }}
-            {{- end }}
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbport
             - name: IGNORE_STARTUP_PARAMETERS
               value: "extra_float_digits"
             - name: DB_NAME
@@ -135,10 +113,10 @@ spec:
           resources:
             limits:
               cpu: 1000m
-              memory: 500Mi
+              memory: 1500Mi
             requests:
-              cpu: 350m
-              memory: 350Mi
+              cpu: 1000m
+              memory: 1000Mi
           readinessProbe:
             tcpSocket:
               port: 5432
@@ -166,23 +144,16 @@ spec:
               value: localhost
             - name: PGBOUNCER_PORT
               value: "5432"
-            {{- if eq .Values.global.secretalreadyexist true }}
             - name: PGBOUNCER_USER
               valueFrom:
                 secretKeyRef:
-                  name: secrets
-                  key: postgres_dbuser
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser
             - name: PGBOUNCER_PASS
               valueFrom:
                 secretKeyRef:
-                  name: secrets
-                  key: postgres_dbpwd
-            {{- else}}
-            - name: PGBOUNCER_USER
-              value: {{ .Values.global.db.dbuser }}
-            - name: PGBOUNCER_PASS
-              value: {{ .Values.global.db.dbpwd }}
-            {{- end }}
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbpwd
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret

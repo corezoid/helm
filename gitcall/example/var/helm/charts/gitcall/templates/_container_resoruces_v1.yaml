@@ -1,0 +1,9 @@
+{{- define "cz.kubernetes.container.resources.v1" }}
+resources:
+  limits:
+    cpu: {{ .limits.cpu | quote }}
+    memory: {{ .limits.memory | quote }}
+  requests:
+    cpu: {{ .requests.cpu | quote }}
+    memory: {{ .requests.memory | quote }}
+{{- end }}

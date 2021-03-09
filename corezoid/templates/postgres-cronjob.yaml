@@ -1,11 +1,11 @@
-{{- if .Values.global.db.rotation.enabled }}
+{{- if  (.Values.global.db.rotation.enabled) }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ .Values.appName }}-taskarchive-cron
+  name: postgres-taskarchive-cron
   labels:
     app: {{ .Values.global.product }}
-    tier: {{ .Values.appName }}
+    tier: postgres
 spec:
   schedule: {{ .Values.global.db.rotation.schedule | quote }}
   successfulJobsHistoryLimit: 1
@@ -16,14 +16,14 @@ spec:
     metadata:
       labels:
         app: {{ .Values.global.product }}
-        tier: {{ .Values.appName }}
+        tier: postgres
     spec:
       template:
         spec:
           containers:
-            - image: postgres:9.6.2-alpine
-              imagePullPolicy: Always
-              name: {{ .Values.appName }}-taskarchive-cron
+            - image: docker-hub.middleware.biz/public/postgres:9.6.2-alpine
+              imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+              name: postgres-taskarchive-cron
               command:
                 - sh
                 - -c
@@ -34,38 +34,25 @@ spec:
               securityContext:
                 runAsUser: 70
               env:
-                {{- if eq .Values.global.secretalreadyexist true }}
                 - name: POSTGRES_DBHOST
                   {{- if .Values.global.db.bouncer }}
                   value: "pgbouncer-service"
                   {{- else }}
                   valueFrom:
                     secretKeyRef:
-                      name: secrets
+                      name: {{ .Values.global.db.secret.name }}
                       key: postgres_dbhost
                   {{- end }}
                 - name: POSTGRES_DBSUPERUSER
                   valueFrom:
                     secretKeyRef:
-                      name: secrets
+                      name: {{ .Values.global.db.secret.name }}-root
                       key: postgres_dbsuperuser
                 - name: POSTGRES_DBSUPERUSERPWD
                   valueFrom:
                     secretKeyRef:
-                      name: secrets
+                      name: {{ .Values.global.db.secret.name }}-root
                       key: postgres_dbsuperuserpwd
-                {{- else}}
-                - name: POSTGRES_DBHOST
-                  {{- if .Values.global.db.internal }}
-                  value: localhost
-                  {{- else }}
-                  value: {{ .Values.global.db.dbhost }}
-                  {{- end }}
-                - name: POSTGRES_DBSUPERUSER
-                  value: {{ .Values.global.db.dbsuperuser }}
-                - name: POSTGRES_DBSUPERUSERPWD
-                  value: {{ .Values.global.db.dbsuperuserpwd }}
-                {{- end }}
                 - name: SHARD_COUNT
                   value: '{{ .Values.global.db.shards_count }}'
           restartPolicy: OnFailure

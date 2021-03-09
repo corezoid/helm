@@ -9,6 +9,16 @@ data:
       {path_to_license, "/ebsmnt/certs/corezoid_license"}
     ]},
 
+      {mw_metrics, [
+        {is_enabled, true},
+        {subsystems, [erlprometheus]}
+      ]},
+
+      {erlprometheus, [
+        {host, {0,0,0,0}},
+        {port, 9100}
+      ]},
+
     {ermql, [
         {publish_request, [
           {servers, [
@@ -58,7 +68,7 @@ data:
             ]},
         {connections_per_queue, 1},
         {channels_per_connection, 1},
-        {messages_prefetch_size_per_channel, 50}
+        {messages_prefetch_size_per_channel, {{ .Values.global.http.tune.consumer_response_prefetch_size_per_channel | default 50 }} }
         ]}
         ]},
 
@@ -68,7 +78,11 @@ data:
 
     %% pool_size to resolve ip through dns services.
     {kernel, [
-      {gethost_poolsize, 10}
+      {gethost_poolsize, 10},
+      {inet_cache_refresh, 60000}, % default 1h
+{{/*      {inet_lookup, [file, dns]},  % default native*/}}
+      {inet_cache_size, 100}       % default 100
+
     ]},
 
     %% These queues is for send full http logs to external systems
@@ -128,8 +142,9 @@ data:
         {worker_id, <<"">>},
 
         {blocked_domains, [
-          "169.254.169.254",
-          "newtestj.com"
+        {{- range .Values.global.http.blocked_domains  }}
+        {{. | quote}},{{- end }}
+        "ifconfig.me"
         ]},
 
         {{- if .Values.global.enigma.encryption }}
@@ -168,7 +183,7 @@ data:
             { dbname, "conveyor" },
             { password, "${POSTGRES_DBPWD}" },
             { start_size, 2 },
-            { min_size, 2 },
+            { min_size, 0 },
             { max_size, 100 }
           ]
         },
@@ -239,10 +254,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 1},
-          {connections_per_queue, 8},        %% The specified number of tcp connections will be created for each queue
-          {channels_per_connection, 4},       %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 50}      %% The number of queues within the channel
+          {queues_count, {{ .Values.global.http.tune.http_consumer_queues_count | default 8 }} },
+          {connections_per_queue, {{ .Values.global.http.tune.http_consumer_connections_per_queue | default 1 }} },        %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, {{ .Values.global.http.tune.http_consumer_channels_per_connection | default 1 }} },       %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, {{ .Values.global.http.tune.http_consumer_messages_prefetch_size_per_channel | default 10 }} }      %% The number of queues within the channel
         ]},
 
         %% producer of settings
@@ -294,11 +309,11 @@ data:
                 ]},
           {connections_per_queue, 1},        %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},       %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 50}      %% The number of queues within the channel
+          {messages_prefetch_size_per_channel, {{ .Values.global.http.tune.consumer_settings_messages_prefetch_size_per_channel | default 50 }} }      %% The number of queues within the channel
         ]},
 
         {logs, [
-          {info, on},
+          {info, off},
           {error, on}
         ]},
         %% Statistics of http logging to elastic
@@ -313,9 +328,10 @@ data:
           {log_root, "/ebsmnt/erlang/http_worker/log"},
           {handlers, [
             {lager_console_backend, info},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
+            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
+{{/*    ,*/}}
+{{/*            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]},*/}}
+{{/*            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 50000000}, {date, "$D0"}, {count, 1}]}*/}}
           ]},
 
           %% What colors to use with what log levels

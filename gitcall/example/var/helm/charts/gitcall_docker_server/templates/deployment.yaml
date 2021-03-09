@@ -1,0 +1,77 @@
+{{- $d := .Values.helm }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-gitcall-docker-server-deployment
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  selector:
+    matchLabels:
+      release: {{ .Release.Name | quote }}
+      app: {{ .Values.helm.app | quote }}
+      tier: {{ .Values.helm.tier | quote }}
+  strategy:
+    type: RollingUpdate
+  replicas: {{ $d.min_replicas }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        #prometheus.io/path: /metrics
+        #prometheus.io/port: "9323"
+        prometheus.io/scrape: "true"
+      labels:
+        release: {{ .Release.Name | quote }}
+        app: {{ .Values.helm.app | quote }}
+        tier: {{ .Values.helm.tier | quote }}
+        http: "true"
+    spec:
+      terminationGracePeriodSeconds: 40
+      containers:
+        - name: main
+          imagePullPolicy: {{ $d.image_pull_policy | quote }}
+          image: {{ print .Values.image ":" .Values.image_version }}
+          ports:
+            - name: container-port
+              containerPort: 2375
+              protocol: TCP
+            - name: metrics
+              containerPort: 9323
+          {{- if .Values.helm.resources }}
+          {{- include "cz.kubernetes.container.resources.v1" .Values.helm.resources | indent 10 }}
+          {{- else }}
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1000Mi
+            requests:
+              cpu: 1000m
+              memory: 1000Mi
+          {{- end }}
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: config
+              mountPath: /etc/docker/daemon.json
+              subPath: {{ .Values.config_file }}
+            - name: data
+              mountPath: /var/lib/docker/
+        {{- if $d.exporter.enabled }}
+        - name: docker-daemon-exporter
+          image: docker-hub.middleware.biz/utils/docker-daemon-exporter:0.1
+          ports:
+            - name: metrics
+              containerPort: 8080
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/docker/
+        {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-gitcall-docker-server-config
+        - name: data
+          emptyDir: {}

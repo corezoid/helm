@@ -54,11 +54,21 @@ data:
           {disabled, false}
         ]},
 
+      {mw_metrics, [
+        {is_enabled, true},
+        {subsystems, [erlprometheus]}
+      ]},
+
+      {erlprometheus, [
+        {host, {0,0,0,0}},
+        {port, 9100}
+      ]},
+
           %% Envirement Variable
           {env_var, [
               %% - psql pool -
               {psql, [
-                  {host,        "pgbouncer-service"},
+                  {host,        "${POSTGRES_DBHOST}"},
                   {dbname, "conveyor"},
                   {user, "${POSTGRES_DBUSER}"},
                   {port,        5432},
@@ -145,7 +155,7 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["api.ctrl", "settings"]}
+          {gc_queues_regexp, ["api.ctrl","settings.capi"]}
         ]},
 
         {conv_params, [
@@ -202,6 +212,9 @@ data:
         %% MAIN capi application
         {capi,
             [
+                {{- if .Values.global.gitcall.enabled }}
+                {components, [<<"git_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
+                {{- end }}
                 %% It must be changed to unique name for every api node. It's personal
                 %% queue where will come messages from others api nodes.
                 {api_id, <<"">>},
@@ -299,8 +312,8 @@ data:
                 ]},
                 %{captcha_key, <<"">>},
                 {captcha, [
-                    {key, <<"{{ .Values.global.capi.capi_front_captcha_key | default "" }}">>}, %% key for works with captcha (page /login if corezoid registration)
-                    {disabled, {{ .Values.global.capi.capi_front_captcha_key_disabled }} }
+                    {key, <<"${capi_front_captcha_key}">>}, %% key for works with captcha (page /login if corezoid registration)
+                    {disabled, {{ .Values.global.capi.capi_front_captcha_disabled }} }
                 ]},
                 {whitelist, [<<"{{ .Values.global.domain }}">>]},
                 {ui, [
@@ -330,63 +343,40 @@ data:
                 %% 3. Folders
                 %% Elastic helps us to find these objects for name, It's as like in DB
             {elastic_search, [
-              {{- if eq .Values.global.elasticsearch.internal false }}
                 {host, <<"${ELASTICSEARCH_HOST}">>},
                 {port, ${ELASTICSEARCH_PORT} },
-              {{- else }}
-                {host, <<"http://elasticsearch-service">>},
-                {port, 9200},
-              {{- end }}
                 {timeout, 50000}
             ]},
 
             % PgSQL settings
             %% main database pool settings ( the main base is company folders, processes, i.e. whole front )
             {pgsql, [
-          {{- if .Values.global.db.bouncer }}
-                {host, "pgbouncer-service"},
-                    {hosts, [
-                    { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-          {{- range $i, $e := .Values.global.db.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
-          {{- else }}
                 {host, "${POSTGRES_DBHOST}"},
                     %% hosts - tasks, settings of nodes
                     {hosts, [
                     { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
-          {{- end }}
                     ]},
                 {user, "${POSTGRES_DBUSER}"},
                 {dbname, "conveyor"},
                 {password, "${POSTGRES_DBPWD}"},
-                {min_size, 2},          %% The minimum number of connections after the start and 30 seconds of work.
+                {min_size, 0},          %% The minimum number of connections after the start and 30 seconds of work.
                 {max_size, 5},            %% The maximum number of connections is the border to which we can raise, within 30 seconds.
                 {start_size, 2}           %% The number of connections that rises to the pool, at the start of this pool. Every 30 seconds check connect and then go to min_size
-                %%{max_overflow_pool_size, 50},   %% Legacy: will be removed
-                %%{dismiss_overflow, false}       %% Legacy: will be removed
             ]},
 
             {pgsql_task_history, [
-          {{- if .Values.global.db.bouncer }}
-                      {host, "pgbouncer-service"},
-                          {hosts, [
-                          { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-          {{- range $i, $e := .Values.global.db.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
-          {{- else }}
                       {host, "${POSTGRES_DBHOST}"},
                           %% hosts - tasks, settings of nodes
                           {hosts, [
                           { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
-          {{- end }}
                     ]},
                 { user, "${POSTGRES_DBUSER}" },
                 { password, "${POSTGRES_DBPWD}" },
-                {min_size, 3},
+                {min_size, 0},
                 {max_size, 50},
                 {start_size, 3}
             ]},
@@ -395,53 +385,37 @@ data:
 
             %% database pool for for usercode sandboxes only
             {pgsql_cce_temp, [
-          {{- if .Values.global.db.bouncer }}
-                {host, "pgbouncer-service"},
-          {{- else }}
                 {host, "${POSTGRES_DBHOST}"},
-          {{- end }}
                 {user, "${POSTGRES_DBUSER}"},
                 {db_name, "cce"},
                 {password, "${POSTGRES_DBPWD}"},
-                {min_size, 2},
+                {min_size, 0},
                 {max_size, 25},
                 {start_size, 2}
             ]},
 
             %% database for git call
             {pgsql_git_call, [
-          {{- if .Values.global.db.bouncer }}
-                {host, "pgbouncer-service"},
-          {{- else }}
                 {host, "${POSTGRES_DBHOST}"},
-          {{- end }}
                 {user, "${POSTGRES_DBUSER}"},
-                {db_name, "git_call"},
+                {db_name, "gitcall"},
                 {password, "${POSTGRES_DBPWD}"},
                 {min_size, 0},
-                {max_size, 0},
-                {start_size, 0}
+                {max_size, 1},
+                {start_size, 1}
             ]},
 
           %%  postgresql archive db
           { pgsql_archive, [
-            {{- if .Values.global.db.bouncer }}
-              { hosts, [
-                { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
-            {{- range $i, $e := .Values.global.db.shards }}
-            {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
-              ]},
-            {{- else }}
               { hosts, [
                 { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
             {{- range $i, $e := .Values.global.db.shards }}
             {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
               ]},
-            {{- end }}
               { user, "${POSTGRES_DBUSER}" },
               { password, "${POSTGRES_DBPWD}" },
               { start_size, 2 },
-              { min_size, 2 },
+              { min_size, 0 },
               { max_size, 50 }
             ]},
 
@@ -858,9 +832,9 @@ data:
             %% Setting captcha backend
             {backend_settings, [
                 {captcha, [
-                    {key, <<"{{ .Values.global.capi.capi_backend_captcha_key }}">>},
+                    {key, <<"${capi_backend_captcha_key}">>},
                     {verify_url, "https://www.google.com/recaptcha/api/siteverify"},
-                    {disabled, {{ .Values.global.capi.capi_backend_captcha_key_disabled }} }
+                    {disabled, {{ .Values.global.capi.capi_front_captcha_disabled }} }
                 ]}
             ]},
 
@@ -883,18 +857,15 @@ data:
                 {sender_env, <<"md">>}
             ]},
 
-            %% {allowed_domains, ["gmail.com", "corezoid.com", "github.com"]},
+            %% example {allowed_domains, ["gmail.com", "corezoid.com", "github.com"]},
+            {{- if .Values.global.capi.registration_restriction.enable }}
+            {allowed_domains, [{{- range .Values.global.capi.registration_restriction.allowed_domains  }} {{. | quote}},{{- end }} "{{ .Values.global.domain }}" ]},
+            {{- end }}
 
             %%    % group for super_users
             %%    %% superusers are users who can get extra privs to simple user
             %%    %% DD move to table
             {super_admin_id, 1},
-
-            % api limit counters by user_id
-            {user_limits, [
-                {max_interface_rate, {{ .Values.global.capi.user_limits.max_interface_rate | default 100 }} },  %% default limit interface requests, ban after for 1 min
-                {max_user_rate, {{ .Values.global.capi.user_limits.max_user_rate | default 2000 }} }         %% default limit for task create/modify, other will get 429 error
-            ]},
 
             {logic_settings, [
                 {api, [

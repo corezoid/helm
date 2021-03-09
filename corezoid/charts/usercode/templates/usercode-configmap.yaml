@@ -8,6 +8,11 @@ data:
           {subsystems, [erlprometheus]}
         ]},
 
+        {erlprometheus, [
+          {host, {0,0,0,0}},
+          {port, 9100}
+        ]},
+
         {corezoid_license_client, [
           {path_to_license, "/ebsmnt/certs/corezoid_license"}
         ]},
@@ -95,7 +100,7 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["api.ctrl", "settings"]}
+          {gc_queues_regexp, ["cce.ctrl", "settings.cce"]}
         ]},
 
       %% for clustering components
@@ -169,7 +174,7 @@ data:
             {dbname, "cce"},
             {password, "${POSTGRES_DBPWD}"},
             {start_size, 1},
-            {min_size, 1},
+            {min_size, 0},
             {max_size, 5}
         ]},
 
@@ -184,7 +189,7 @@ data:
             {dbname, "conveyor"},
             {password, "${POSTGRES_DBPWD}"},
             {start_size, 1},
-            {min_size, 1},
+            {min_size, 0},
             {max_size, 5}
         ]},
 

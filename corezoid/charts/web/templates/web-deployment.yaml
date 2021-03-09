@@ -29,9 +29,14 @@ spec:
     spec:
       containers:
         - name: {{ .Values.appName }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
           ports:
-          - containerPort: 80
+            - containerPort: 80
+          lifecycle:
+            preStop:
+              exec:
+                #waiting for the pod to be removed from the service
+                command: ["/bin/sleep","5"]
           volumeMounts:
             - name: web-config-nginx
               mountPath: /etc/nginx/nginx.conf
@@ -46,47 +51,29 @@ spec:
               mountPath: /usr/share/nginx/html/logo/logo_auth.svg
               subPath: logo_auth.svg
           resources:
-            limits:
-              cpu: 200m
-              memory: 400Mi
-            requests:
-              cpu: 50m
-              memory: 100Mi
+          {{ .Values.global.webadm.resources | toYaml | indent 12 | trim }}
           readinessProbe:
             tcpSocket:
               port: 80
-            initialDelaySeconds: 15
-            periodSeconds: 10
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
-          livenessProbe:
-            tcpSocket:
-              port: 80
-            initialDelaySeconds: 15
-            periodSeconds: 10
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
-          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          lifecycle:
-            preStop:
-              exec:
-                command: [
-                  # Gracefully shutdown nginx
-                  "/usr/sbin/nginx", "-s", "quit"
-                ]
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
         - name: nginx-exporter
-          image: nginx/nginx-prometheus-exporter:0.4.2
+          image: nginx/nginx-prometheus-exporter
           resources:
             requests:
               cpu: 10m
               memory: 30Mi
+          readinessProbe:
+            tcpSocket:
+              port: 9113
+            failureThreshold: 2
           ports:
             - name: nginx-exp-port
               containerPort: 9113
           args:
+            #A URI or unix domain socket path for scraping NGINX
             - -nginx.scrape-uri=http://localhost/nginx_status
+            #A number of retries the exporter will make on start to connect to the NGINX stub_status page
+            - -nginx.retries=10
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret

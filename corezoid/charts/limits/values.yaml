@@ -2,7 +2,6 @@ appName: limits
 image:
   registry: docker-hub.middleware.biz
   repository: /corezoid_limits
-  imagePullPolicy: Always
 
 containers:
   containerPort: 8585

@@ -14,9 +14,38 @@ spec:
     - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
       http:
         paths:
+          - path: /api/?/upload*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /api/?/copy*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /user_downloads*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /api/?/download*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /api/*
+            backend:
+              serviceName: capi-service-node
+              servicePort: 9080
+          - path: /auth/*
+            backend:
+              serviceName: capi-service-node
+              servicePort: 9080
+          - path: /system
+            backend:
+              serviceName: capi-service-node
+              servicePort: 9080
           - backend:
               serviceName: corezoid-web-adm
               servicePort: 80
+
     - host: {{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
       http:
         paths:
@@ -37,3 +66,14 @@ spec:
               serviceName: single-account-web
               servicePort: 80
     {{- end }}
+  {{- if .Values.global.ingress_tls }}
+  tls:
+    - hosts:
+        - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+        - {{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
+        - {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
+        {{- if .Values.global.sa.enabled }}
+        - {{ .Values.global.sa_web.subdomain}}.{{ .Values.global.domain }}
+        {{- end }}
+      secretName: tls-{{ .Values.appName }}-{{ .Release.Namespace }}
+  {{- end }}
