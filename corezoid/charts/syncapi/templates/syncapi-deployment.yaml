@@ -26,7 +26,18 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.syncapi.affinity }}
+      affinity:
+        {{ .Values.global.syncapi.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 30
+      {{ if .Values.global.syncapi.crash_dump_persistance }}
+      volumes:
+      - name: {{ .Values.appName }}-crash-dumps
+        persistentVolumeClaim:
+          claimName: {{ .Values.appName }}-crash-dumps
+          readOnly: false
+      {{- end}}
       initContainers:
         - name: init-wait-rmq
           image: docker-hub.middleware.biz/public/alpine
@@ -93,6 +104,10 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+            {{ if .Values.global.syncapi.crash_dump_persistance }}
+            - name: ERL_CRASH_DUMP
+              value: "/var/crash-dumps/crash.dump"
+            {{- end }}
           ports:
             - containerPort: 8090
           lifecycle:
@@ -103,6 +118,10 @@ spec:
             - name: {{ .Values.appName }}-config
               mountPath: /ebsmnt/conf/corezoid_api_sync.config
               subPath: corezoid_api_sync.config
+            {{ if .Values.global.syncapi.crash_dump_persistance }}
+            - name: {{ .Values.appName }}-crash-dumps
+              mountPath: /var/crash-dumps
+            {{- end}}
           resources:
             {{ .Values.global.syncapi.resources | toYaml | indent 12 | trim }}
           livenessProbe:

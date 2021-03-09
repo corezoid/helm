@@ -26,7 +26,18 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.worker.affinity }}
+      affinity:
+        {{ .Values.global.worker.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 60
+      {{ if .Values.global.worker.crash_dump_persistance }}
+      volumes:
+        - name: {{ .Values.appName }}-crash-dumps
+          persistentVolumeClaim:
+            claimName: {{ .Values.appName }}-crash-dumps
+            readOnly: false
+      {{- end}}
       initContainers:
         - name: init-wait
           image: docker-hub.middleware.biz/public/alpine
@@ -164,6 +175,10 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
+            {{ if .Values.global.worker.crash_dump_persistance }}
+            - name: ERL_CRASH_DUMP
+              value: "/var/crash-dumps/crash.dump"
+            {{- end }}
           ports:
           - containerPort: 9080
           lifecycle:
@@ -176,6 +191,10 @@ spec:
               subPath: worker.config
             - name: corezoid-license
               mountPath: /ebsmnt/certs
+            {{ if .Values.global.worker.crash_dump_persistance }}
+            - name: {{ .Values.appName }}-crash-dumps
+              mountPath: /var/crash-dumps
+            {{- end}}
           resources:
             {{ .Values.global.worker.resources | toYaml | indent 12 | trim }}
           livenessProbe:

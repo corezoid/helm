@@ -1,0 +1,19 @@
+{{- if .Values.global.syncapi.crash_dump_persistance }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Values.appName }}-crash-dumps
+  {{- if eq .Values.global.storage "efs" }}
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{ .Values.global.storageClassName }}
+  {{- end }}
+  labels:
+    tier: {{ .Values.appName }}
+spec:
+  storageClassName: {{ .Values.global.storageClassName }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  {{- end }}

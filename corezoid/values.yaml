@@ -243,6 +243,29 @@ global:
       timer_default: 5 # 30
     # enigma private_key_id
     enigma_pk_id: ""
+    crash_dump_persistance: true
+    affinity: {}
+#    # hard AZ-based affinity
+#      podAntiAffinity:
+#        requiredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#              - key: tier
+#                operator: In
+#                values:
+#                  - capi
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
+#    # soft AZ-based affinity
+#      podAntiAffinity:
+#        preferredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#                - key: tier
+#                  operator: In
+#                  values:
+#                    - capi
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
+
 
   ########  Settings for services  ########
 
@@ -269,6 +292,28 @@ global:
       http_consumer_messages_prefetch_size_per_channel: 20
       consumer_settings_messages_prefetch_size_per_channel: 50
       consumer_response_prefetch_size_per_channel: 50
+    crash_dump_persistance: true
+    affinity: {}
+#    # hard AZ-based affinity
+#      podAntiAffinity:
+#        requiredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#              - key: tier
+#                operator: In
+#                values:
+#                  - http-worker
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
+#    # soft AZ-based affinity
+#      podAntiAffinity:
+#        preferredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#                - key: tier
+#                  operator: In
+#                  values:
+#                    - http-worker
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
 
   # usercode
   usercode:
@@ -285,6 +330,28 @@ global:
         memory: 2000Mi
     # enigma private_key_id
     enigma_pk_id: ""
+    crash_dump_persistance: true
+    affinity: {}
+#    # hard AZ-based affinity
+#      podAntiAffinity:
+#        requiredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#              - key: tier
+#                operator: In
+#                values:
+#                  - usercode
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
+#    # soft AZ-based affinity
+#      podAntiAffinity:
+#        preferredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#                - key: tier
+#                  operator: In
+#                  values:
+#                    - usercode
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
 
   # conveyor-worker
   worker:
@@ -301,6 +368,27 @@ global:
         memory: 2000M
     # enigma private_key_id
     enigma_pk_id: ""
+    affinity: {}
+#    # hard AZ-based affinity
+#      podAntiAffinity:
+#        requiredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#              - key: tier
+#                operator: In
+#                values:
+#                  - worker
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
+#    # soft AZ-based affinity
+#      podAntiAffinity:
+#        preferredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#                - key: tier
+#                  operator: In
+#                  values:
+#                    - worker
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
 
   # mult
   mult:
@@ -322,6 +410,28 @@ global:
         memory: 800Mi
     # enigma private_key_id
     enigma_pk_id: ""
+    crash_dump_persistance: true
+    affinity: {}
+#    # hard AZ-based affinity
+#      podAntiAffinity:
+#        requiredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#              - key: tier
+#                operator: In
+#                values:
+#                  - mult
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
+#    # soft AZ-based affinity
+#      podAntiAffinity:
+#        preferredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#                - key: tier
+#                  operator: In
+#                  values:
+#                    - mult
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
 
   # webadm
   webadm:
@@ -334,6 +444,27 @@ global:
       requests:
         cpu: 200m
         memory: 500Mi
+    affinity: {}
+#    # hard AZ-based affinity
+#      podAntiAffinity:
+#        requiredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#              - key: tier
+#                operator: In
+#                values:
+#                  - corezoid-web-adm
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
+#    # soft AZ-based affinity
+#      podAntiAffinity:
+#        preferredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#                - key: tier
+#                  operator: In
+#                  values:
+#                    - corezoid-web-adm
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
 
   # web-superadm
   web_superadm:
@@ -354,6 +485,28 @@ global:
       requests:
         cpu: 2
         memory: 1000Mi
+    crash_dump_persistance: true
+    affinity: {}
+#    # hard AZ-based affinity
+#      podAntiAffinity:
+#        requiredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#              - key: tier
+#                operator: In
+#                values:
+#                  - syncapi
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
+#    # soft AZ-based affinity
+#      podAntiAffinity:
+#        preferredDuringSchedulingIgnoredDuringExecution:
+#          - labelSelector:
+#              matchExpressions:
+#                - key: tier
+#                  operator: In
+#                  values:
+#                    - syncapi
+#            topologyKey: failure-domain.beta.kubernetes.io/zone
 
   # merchant
   merchant:
