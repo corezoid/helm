@@ -23,7 +23,7 @@ data:
         ]},
       {conv_params, [
         {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid.
-                           %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
+        %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
       ]},
 
         {mw_metrics, [
@@ -161,7 +161,7 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["worker.ctrl", "settings.worker"]}
+          {gc_queues_regexp, ["worker.ctrl", "to_worker_.*.cce.*","to_worker_.*.es_call.*","to_worker_.*.git_call.*","settings.worker"]}
         ]},
 
       {conv_params, [
@@ -703,7 +703,7 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 4},
+          {queues_count, 5},
           {min_size, 5},
           {max_size, 5},
           {start_size, 5}
