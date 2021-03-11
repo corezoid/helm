@@ -134,7 +134,7 @@ spec:
             successThreshold: 1
             failureThreshold: 3
         - name: pgbouncer-exporter
-          image: spreaker/prometheus-pgbouncer-exporter
+          image: docker-hub.middleware.biz/public/prometheus-pgbouncer-exporter
           env:
             - name: PGBOUNCER_EXPORTER_HOST
               value: 0.0.0.0
