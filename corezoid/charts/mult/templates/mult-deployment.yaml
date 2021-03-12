@@ -33,13 +33,6 @@ spec:
       terminationGracePeriodSeconds: 300
       securityContext:
         fsGroup: 1000
-      {{ if .Values.global.mult.crash_dump_persistance }}
-      volumes:
-        - name: {{ .Values.appName }}-crash-dumps
-          persistentVolumeClaim:
-            claimName: {{ .Values.appName }}-crash-dumps
-            readOnly: false
-      {{- end}}
       initContainers:
         - name: init-wait
           image: docker-hub.middleware.biz/public/alpine
@@ -135,10 +128,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
-            {{ if .Values.global.mult.crash_dump_persistance }}
-            - name: ERL_CRASH_DUMP
-              value: "/var/crash-dumps/crash.dump"
-            {{- end }}
           ports:
           - containerPort: 9082
           lifecycle:
@@ -151,10 +140,6 @@ spec:
               subPath: conveyor_api_multipart.config
             - name: {{ .Values.appName }}-claim
               mountPath: /ebsmnt_share
-            {{ if .Values.global.mult.crash_dump_persistance }}
-            - name: {{ .Values.appName }}-crash-dumps
-              mountPath: /var/crash-dumps
-            {{- end}}
           resources:
             {{ .Values.global.mult.resources | toYaml | indent 12 | trim }}
           livenessProbe:
