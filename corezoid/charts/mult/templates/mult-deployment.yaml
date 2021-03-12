@@ -26,6 +26,10 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.mult.affinity }}
+      affinity:
+        {{ .Values.global.mult.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 300
       securityContext:
         fsGroup: 1000

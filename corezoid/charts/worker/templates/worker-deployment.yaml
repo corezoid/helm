@@ -26,6 +26,10 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.worker.affinity }}
+      affinity:
+        {{ .Values.global.worker.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 60
       initContainers:
         - name: init-wait
