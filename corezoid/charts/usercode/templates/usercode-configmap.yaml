@@ -215,10 +215,10 @@ data:
                     ]
           {{- end }}
                 ]},
-            {queues_count, 1},
+            {queues_count, 8},
             {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
             {channels_per_connection, 2},   %% Virtual connections for one connections_per_queue
-            {messages_prefetch_size_per_channel, 10}    %% The number of queues within the channel
+            {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
         ]},
 
         %% answer producer cce
@@ -271,7 +271,7 @@ data:
             {queues_count, 5},
             {connections_per_queue, 5},   %% The specified number of tcp connections will be created for each queue
             {channels_per_connection, 2},   %% Virtual connections for one connections_per_queue
-            {messages_prefetch_size_per_channel, 50}    %% The number of queues within the channel
+            {messages_prefetch_size_per_channel, 100}    %% The number of queues within the channel
         ]},
 
         %% sending metrics to zabbix

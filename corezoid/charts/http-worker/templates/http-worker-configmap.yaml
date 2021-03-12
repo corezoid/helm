@@ -134,7 +134,7 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["api.ctrl", "settings"]}
+          {gc_queues_regexp, ["api.ctrl", "settings.http_worker"]}
         ]},
 
       {http_worker, [
@@ -158,6 +158,10 @@ data:
 
         %% maximum response size
         {max_http_resp_size, {{ .Values.global.http.max_http_resp_size | default 5242880  }} },
+        %% in seconds
+        {max_client_response_wait_time, 60},
+        %% use for poolling keep-alive connections. If zerro it'll open new connection each query
+        {max_keep_alive_connections_len, 600},
 
         %% shards in whole system. This one must be eq with shards_count in worker section
         { shards_count, {{ .Values.global.db.shards_count | default 10 }} },
@@ -200,9 +204,9 @@ data:
             {password,""},
           {{- end }}
             {database,3},
-            {start_size, 2},
-            {min_size, 2},
-            {max_size, 50}
+            {start_size, 20},
+            {min_size, 20},
+            {max_size, 100}
           ]
         ]},
 

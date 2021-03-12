@@ -26,6 +26,10 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.syncapi.affinity }}
+      affinity:
+        {{ .Values.global.syncapi.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-wait-rmq

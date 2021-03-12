@@ -27,6 +27,10 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.webadm.affinity }}
+      affinity:
+        {{ .Values.global.webadm.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
