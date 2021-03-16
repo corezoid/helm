@@ -367,9 +367,9 @@ data:
         { redis2, [
           [
           {{- if eq .Values.global.redis.internal false }}
-            {host, "${REDIS_HOST}"},
-            {port, ${REDIS_PORT}},
-            {password,"${REDIS_PASSWORD}"},
+            {host, "${REDIS_HOST_CACHE}"},
+            {port, ${REDIS_PORT_CACHE}},
+            {password,"${REDIS_PASSWORD_CACHE}"},
           {{- else }}
             {host, "redis-master"},
             {port, 6379},
@@ -388,9 +388,9 @@ data:
         {redis_timers, [
           [
           {{- if eq .Values.global.redis.internal false }}
-            {host, "${REDIS_HOST}"},
-            {port, ${REDIS_PORT}},
-            {password,"${REDIS_PASSWORD}"},
+            {host, "${REDIS_HOST_TIMERS}"},
+            {port, ${REDIS_PORT_TIMERS}},
+            {password,"${REDIS_PASSWORD_TIMERS}"},
           {{- else }}
             {host, "redis-master"},
             {port, 6379},

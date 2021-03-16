@@ -81,8 +81,15 @@ global:
 
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
-    bouncer_minReplicas: "2"
-    bouncer_maxReplicas: "4"
+    bouncer_minReplicas: "3"
+    bouncer_maxReplicas: "3"
+    bouncer_resources:
+      limits:
+        cpu: "500m"
+        memory: "500Mi"
+      requests:
+        cpu: "500m"
+        memory: "500Mi"
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
@@ -93,7 +100,7 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.6.0"
+      version: "5.6.1"
 
     rotation:
       ## enabled: true or false
@@ -119,9 +126,19 @@ global:
       create: true
       name: "redis-secret"
       data:
+        # default redis for counters
         host: "redis-master"
         port: "6379"
         password: ""
+        # default redis for cache
+        host_cache: "redis-master"
+        port_cache: "6379"
+        password_cache: ""
+        # default redis for timers
+        host_timers: "redis-master"
+        port_timers: "6379"
+        password_timers: ""
+
 
 
   #######  Elasticsearch  ########

@@ -115,6 +115,36 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.redis.secret.name }}
                   key: password
+            - name: REDIS_HOST_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: host_cache
+            - name: REDIS_PORT_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: port_cache
+            - name: REDIS_PASSWORD_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: password_cache
+            - name: REDIS_HOST_TIMERS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: host_timers
+            - name: REDIS_PORT_TIMERS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: port_timers
+            - name: REDIS_PASSWORD_TIMERS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: password_timers
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:

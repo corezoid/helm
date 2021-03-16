@@ -103,11 +103,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
-          - name: REDIS_HOST
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.global.redis.secret.name }}
-                key: host
+
           - name: capi_front_captcha_key
             valueFrom:
               secretKeyRef:
@@ -118,6 +114,11 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.capi.secret.name }}
                 key: capi_backend_captcha_key
+          - name: REDIS_HOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.redis.secret.name }}
+                key: host
           - name: REDIS_PORT
             valueFrom:
               secretKeyRef:
@@ -128,6 +129,21 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.redis.secret.name }}
                 key: password
+          - name: REDIS_HOST_CACHE
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.redis.secret.name }}
+                key: host_cache
+          - name: REDIS_PORT_CACHE
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.redis.secret.name }}
+                key: port_cache
+          - name: REDIS_PASSWORD_CACHE
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.redis.secret.name }}
+                key: password_cache
           - name: MQ_HOST
             valueFrom:
               secretKeyRef:
