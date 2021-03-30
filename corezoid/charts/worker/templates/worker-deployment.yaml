@@ -101,6 +101,8 @@ spec:
             {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
+            - name: SCHEDULERS
+              value: "4"
             - name: REDIS_HOST
               valueFrom:
                 secretKeyRef:
@@ -201,14 +203,17 @@ spec:
                   key: dbport
           ports:
           - containerPort: 9080
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/ebsmnt/erlang/worker/bin/worker","stop"]
+{{/*          lifecycle:*/}}
+{{/*            preStop:*/}}
+{{/*              exec:*/}}
+{{/*                command: ["/ebsmnt/erlang/worker/bin/worker","stop"]*/}}
           volumeMounts:
             - name: workerconfig
               mountPath: /ebsmnt/conf/worker.config
               subPath: worker.config
+            - name: {{ .Values.appName }}-config-vm
+              mountPath: /ebsmnt/erlang/worker/releases/1/vm.args
+              subPath: vm.args
             - name: corezoid-license
               mountPath: /ebsmnt/certs
           resources:
@@ -252,6 +257,9 @@ spec:
         - name: workerconfig
           configMap:
             name: {{ .Values.appName }}-config
+        - name: {{ .Values.appName }}-config-vm
+          configMap:
+            name: {{ .Values.appName }}-config-vm
         - name: corezoid-license
           secret:
             secretName: license-share-new

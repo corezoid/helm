@@ -73,6 +73,8 @@ spec:
             {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
+            - name: SCHEDULERS
+              value: "4"
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -100,14 +102,17 @@ spec:
                   key: password
           ports:
             - containerPort: 8090
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/ebsmnt/erlang/corezoid_api_sync/bin/corezoid_api_sync","stop"]
+{{/*          lifecycle:*/}}
+{{/*            preStop:*/}}
+{{/*              exec:*/}}
+{{/*                command: ["/ebsmnt/erlang/corezoid_api_sync/bin/corezoid_api_sync","stop"]*/}}
           volumeMounts:
             - name: {{ .Values.appName }}-config
               mountPath: /ebsmnt/conf/corezoid_api_sync.config
               subPath: corezoid_api_sync.config
+            - name: {{ .Values.appName }}-config-vm
+              mountPath: /ebsmnt/erlang/corezoid_api_sync/releases/1/vm.args
+              subPath: vm.args
           resources:
             {{ .Values.global.syncapi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
@@ -136,4 +141,7 @@ spec:
         - name: {{ .Values.appName }}-config
           configMap:
             name: {{ .Values.appName }}-config
+        - name: {{ .Values.appName }}-config-vm
+          configMap:
+            name: {{ .Values.appName }}-config-vm
 

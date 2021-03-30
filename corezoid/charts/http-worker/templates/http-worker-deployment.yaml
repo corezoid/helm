@@ -93,6 +93,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+            - name: SCHEDULERS
+              value: "4"
             - name: NODE_COOKIE
               value: {{ .Values.appName }}-{{ .Release.Namespace }}
             {{- if .Values.global.debug }}
@@ -183,10 +185,10 @@ spec:
                   key: dbport
           ports:
           - containerPort: 9080
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/ebsmnt/erlang/http_worker/bin/http_worker","stop"]
+{{/*          lifecycle:*/}}
+{{/*            preStop:*/}}
+{{/*              exec:*/}}
+{{/*                command: ["/ebsmnt/erlang/http_worker/bin/http_worker","stop"]*/}}
           volumeMounts:
             - name: {{ .Values.appName}}-config
               mountPath: /ebsmnt/conf/http_worker.config

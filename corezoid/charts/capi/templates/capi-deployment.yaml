@@ -104,7 +104,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
-
+          - name: SCHEDULERS
+            value: "4"
           - name: capi_front_captcha_key
             valueFrom:
               secretKeyRef:
@@ -217,14 +218,17 @@ spec:
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           - containerPort: 8585
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/ebsmnt/erlang/capi/bin/capi","stop"]
+{{/*          lifecycle:*/}}
+{{/*            preStop:*/}}
+{{/*              exec:*/}}
+{{/*                command: ["/ebsmnt/erlang/capi/bin/capi","stop"]*/}}
           volumeMounts:
             - name: {{ .Values.appName }}config
               mountPath: /ebsmnt/conf/capi.config
               subPath: capi.config
+            - name: {{ .Values.appName }}-config-vm
+              mountPath: /ebsmnt/erlang/worker/releases/1/vm.args
+              subPath: vm.args
             - name: corezoid-license
               mountPath: /ebsmnt/certs
           resources:
@@ -268,6 +272,9 @@ spec:
         - name: {{ .Values.appName }}config
           configMap:
             name: {{ .Values.appName }}-config
+        - name: {{ .Values.appName }}-config-vm
+          configMap:
+            name: {{ .Values.appName }}-config-vm
         - name: corezoid-license
           secret:
             secretName: license-share-new
