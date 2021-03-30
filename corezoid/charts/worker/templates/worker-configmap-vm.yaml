@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-config-vm
+data:
+  vm.args: |
+    ## Name of the node
+    -name worker@${IPNODEDOMAIN}
+
+    ## Cookie for distributed erlang
+    -setcookie ${NODE_COOKIE}
+
+    ## Determine ssl session lifetime for HTTP processes
+    -ssl session_lifetime 10
+
+    ## Mode without input and shell starting
+    #-noinput
+    #-detached
+
+    ## Max tables per VM
+    -env ERL_MAX_ETS_TABLES 100000
+    ## Max ports per VM
+    -env ERL_MAX_PORTS 165000
+
+    ## Heartbeat management; auto-restarts VM if it dies or becomes unresponsive
+    ## (Disabled by default..use with caution!)
+    ##-heart
+
+    ## Enable kernel poll and a few async threads
+    +K true
+    +A 500
+    +P 1000000
+
+    ## Increase number of concurrent ports/sockets
+    ##-env ERL_MAX_PORTS 4096
+
+    ## Tweak GC to run more often
+    ##-env ERL_FULLSWEEP_AFTER 10
+    +sbwt none
+    +S ${SCHEDULERS}
+
+
+
