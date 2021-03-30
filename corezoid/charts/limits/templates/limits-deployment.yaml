@@ -86,6 +86,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+      shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}

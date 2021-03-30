@@ -55,6 +55,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+      shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.syncapi.tag }}"
@@ -62,7 +63,7 @@ spec:
           env:
             - name: NODE_COOKIE
               value: {{ .Values.appName }}-{{ .Release.Namespace }}
-            - name: NODE_IP
+            - name: IPNODEDOMAIN
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP

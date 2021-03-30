@@ -83,6 +83,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+      shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName}}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.http.tag }}"
@@ -190,6 +191,9 @@ spec:
             - name: {{ .Values.appName}}-config
               mountPath: /ebsmnt/conf/http_worker.config
               subPath: http_worker.config
+            - name: {{ .Values.appName }}-config-vm
+              mountPath: /ebsmnt/erlang/http_worker/releases/1/vm.args
+              subPath: vm.args
             - name: corezoid-license
               mountPath: /ebsmnt/certs
           resources:
@@ -202,6 +206,9 @@ spec:
         - name: {{ .Values.appName}}-config
           configMap:
             name: {{ .Values.appName}}-config
+        - name: {{ .Values.appName }}-config-vm
+          configMap:
+            name: {{ .Values.appName }}-config-vm
         - name: corezoid-license
           secret:
             secretName: license-share-new

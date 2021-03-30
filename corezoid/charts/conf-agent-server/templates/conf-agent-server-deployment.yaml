@@ -63,6 +63,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbpwd
+      shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
