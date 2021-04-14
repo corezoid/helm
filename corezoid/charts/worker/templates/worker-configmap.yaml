@@ -595,9 +595,9 @@ data:
           {{- end }}
                 ]},
           {queues_count, 8},
-          {min_size, 15},
-          {max_size, 15},
-          {start_size, 15}
+          {min_size, 30},
+          {max_size, 30},
+          {start_size, 30}
         ]},
 
         %% consumer for http responses, API logic
