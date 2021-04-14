@@ -11,7 +11,7 @@ data:
         {is_enabled, true},
         {subsystems, [erlprometheus]}
       ]},
-
+      {corezoid_sdk, [{scheme, "http://"}]},
       {erlprometheus, [
         {host, {0,0,0,0}},
         {port, 9100}
@@ -78,9 +78,11 @@ data:
 
       {corezoid_api_sync, [
       {nodes, []},
-      {domain, <<"https://{{ .Values.global.syncapi.subdomain }}.{{ .Values.global.domain }}">> }, %% Application url
+      {domain, <<"http://syncapi-main:8090">> }, %% Application url
+{{/*      {domain, <<"https://{{ .Values.global.syncapi.subdomain }}.{{ .Values.global.domain }}">> }, %% Application url*/}}
       {api_port, 8090},
-      {corezoid_host, <<"https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},
+      {corezoid_host, <<"http://capi-service:9080">>},
+{{/*      {corezoid_host, <<"https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},*/}}
 
       %% CALLBACK SETUP
       {callback, [
