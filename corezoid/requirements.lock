@@ -1,0 +1,24 @@
+dependencies:
+- name: redis
+  repository: ""
+  version: 0.1.0
+- name: elasticsearch
+  repository: ""
+  version: 0.1.0
+- name: rabbitmq-ha
+  repository: ""
+  version: 1.35.0
+- name: postgres
+  repository: ""
+  version: 0.1.0
+- name: nfs-provisioner
+  repository: ""
+  version: 0.3.0
+- name: efs-provisioner
+  repository: ""
+  version: 0.6.0
+- name: dumps
+  repository: ""
+  version: 0.0.1
+digest: sha256:604bddd25b57cd16a27f0ce019d9dbe8e97a2079aba1840411d02842881f412c
+generated: "2021-04-14T15:40:06.72617+03:00"
