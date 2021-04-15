@@ -66,9 +66,20 @@ spec:
               serviceName: single-account-web
               servicePort: 80
     {{- end }}
+    {{- if .Values.global.store_dumps.domain_name }}
+    - host: {{ .Values.global.store_dumps.domain_name }}
+      http:
+        paths:
+          - backend:
+              serviceName: dump-service-node
+              servicePort: 80
+  {{- end }}
   {{- if .Values.global.ingress_tls }}
   tls:
     - hosts:
+        {{- if .Values.global.store_dumps.domain_name }}
+        - {{ .Values.global.store_dumps.domain_name }}
+        {{- end }}
         - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
         - {{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
         - {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}

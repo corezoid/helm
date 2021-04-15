@@ -4,11 +4,11 @@ metadata:
   name: {{ .Values.appName }}-deployment
   labels:
     app: {{ .Values.global.product }}
-    tier: {{ .Values.appName }}
+    tier: {{ .Values.appName }}-ui
 spec:
   selector:
     matchLabels:
-      tier: {{ .Values.appName }}
+      tier: {{ .Values.appName }}-ui
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -19,7 +19,7 @@ spec:
     metadata:
       labels:
         app: {{ .Values.global.product }}
-        tier: {{ .Values.appName }}
+        tier: {{ .Values.appName }}-ui
     spec:
       containers:
         - name: {{ .Values.appName }}-node
@@ -27,12 +27,12 @@ spec:
           image: clubdevops/node-file-uploader:0.0.4
           env:
             - name: TELEGRAM_TOKEN
-              value: {{ .Values.global.store_dumps.telegram_token}}
+              value: {{ .Values.global.store_dumps.telegram_token | quote }}
             - name: TELEGRAM_GROUP
-              value: {{ .Values.global.store_dumps.telegram_group}}
+              value: {{ .Values.global.store_dumps.telegram_group | quote  }}
             {{ if .Values.global.store_dumps.domain_name }}
             - name: DUMPS_URL
-              value: {{ .Values.global.store_dumps.domain_name }}
+              value: {{ .Values.global.store_dumps.domain_name | quote }}
             {{- end }}
           ports:
             - containerPort: 3000
