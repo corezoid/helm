@@ -1,6 +1,6 @@
 # Corezoid k8s installation
 
-[![N|Corezoid](https://corezoid.com/static/CorezoidProduct-ce1da2c78726bb5ce1cf53b002dac519.png)](https://corezoid.com/)
+[![N|Corezoid](https://corezoid.com/static/CorezoidProduct-80991adc0bc80fdda3e177ea20d188e1.png)](https://corezoid.com/)
 
 ##Corezoid Docs: 
 https://doc.corezoid.com/
@@ -10,11 +10,17 @@ https://doc.corezoid.com/docs/release-notes
 
 ## Installation notes:
 
+- Just clone repo end ``` cd corezoid ``` edit values.yaml and ```helm install corezoid-public -n public .```
 - If you install chart to the new environment with empty DB — all will be provisioned automatically and should be fine.
 
--  If you upgrade previous working installation that doesn't have setuped Sync-API or/and download/upload API (*Check info group id: sync_api_key* and *api_multipart_key* keys) — these keys will not be provisioned automatically either. You have to do some manual fixes (please ask Support Team and see admin-book troubleshooting).
-In case if they were working — nothing to do, all should be fine.
 
+
+## Upgrading notes:
+In version 0.16 of the chart, the rabbitmq version has been updated along with livenes and readynes samples - to update, you need to manually reload the rabbitmq nodes one by one. To check the correct update -
+- run ```kubectl port-forward --namespace public svc/rabbit-service 15672:15672```
+- check from browser  localhost:15672
+    username and password can be taken from values.yaml
+- go to the queue tab and make sure that idle queues are present
 
 ### Known issues:
 ---
@@ -26,14 +32,12 @@ Resolving:
 - ```$ kubectl delete job postgresql-init-database```
 - ```$ helm upgrade chart .```
 
+
+
+
 Ensure what all configmaps are updated and necessary components are restarted.
 
-#### Versioning:
-|Corezoid|Capi|Conf-agent|Enigma|Web-adm|Web-superadm|Http-worker|Merchant|Mult|Sync-API|Single Account|Usercode|Worker|
-| ------ | ------ | ------ |------ |------ | ------ | ------ | ------ |------ |------ |------ |------ | ------ |
-| 5.4.1 | 7.4.0.3 | 1.3.1 | 1.1.0 | 5.4.1 | 1.3.1 | 3.4.0.2 | v0.0.27.2 | 2.4.0.1 | 2.0 | x | 7.2.0 | 4.4.0.2 |
-| 5.3 | 7.3.0.5 | 1.2.1 | 1.1.0 | 5.3.0 | 1.2.1 | 3.3.0.2 | v0.0.27.2 | 2.3.0.3 | 1.4.1 | x | 7.1.0 | 4.3.0.2 |
-| 5.0 | 7.0.0.3 | x | 1.1.0 | 2.43 | 0.0.1 | 3.0.0.1 | v0.0.27.2 | 2.0.0.1 | 1.1.3-e19 | x | 6.0.3 | 4.0.0.2 |
+
 
 ## Using different PersistentVolume storage classes:
 

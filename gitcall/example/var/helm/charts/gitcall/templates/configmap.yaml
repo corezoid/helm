@@ -1,0 +1,12 @@
+{{- $cfg := .Values.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-gitcall-config
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+data:
+  {{ .Values.config_file }}: |
+{{ $cfg | mustToPrettyJson | trim | indent 4 }}

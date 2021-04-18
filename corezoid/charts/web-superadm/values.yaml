@@ -2,4 +2,3 @@ appName: corezoid-web-superadm
 image:
   registry: docker-hub.middleware.biz
   repository: /conf_agent_admin
-  imagePullPolicy: Always

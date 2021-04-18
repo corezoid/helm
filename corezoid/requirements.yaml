@@ -1,12 +1,24 @@
 dependencies:
   - name: redis
-    version: 0.1.0
+    version: "0.1.0"
     condition: global.redis.internal
 
   - name: elasticsearch
-    version: 0.1.0
+    version: "0.1.0"
     condition: global.elasticsearch.internal
 
   - name: rabbitmq-ha
-    version: 0.1.0
+    version: "0.1.0"
     condition: global.mq.internal
+
+  - name: postgres
+    version: "0.1.0"
+    condition: global.db.internal
+
+  - name: nfs-provisioner
+    version: 0.3.0
+    condition: global.nfs.enabled
+
+  - name: efs-provisioner
+    version: 0.6.0
+    condition: global.efs.enabled

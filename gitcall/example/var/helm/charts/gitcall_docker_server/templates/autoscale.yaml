@@ -1,0 +1,17 @@
+{{- $d := .Values.helm }}
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-gitcall-docker-server-autoscale
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  minReplicas: {{ $d.min_replicas }}
+  maxReplicas: {{ $d.max_replicas }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-gitcall-docker-server-deployment
+  targetCPUUtilizationPercentage: 80

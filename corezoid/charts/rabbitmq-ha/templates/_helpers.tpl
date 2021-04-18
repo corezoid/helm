@@ -57,7 +57,7 @@ Generate chart ssl secret name
 {{- end -}}
 
 {{/*
-Defines a JSON file containing definitions of all broker objects (queues, exchanges, bindings, 
+Defines a JSON file containing definitions of all broker objects (queues, exchanges, bindings,
 users, virtual hosts, permissions and parameters) to load by the management plugin.
 */}}
 {{- define "rabbitmq-ha.definitions" -}}
@@ -67,8 +67,8 @@ users, virtual hosts, permissions and parameters) to load by the management plug
    ],
   "users": [
     {
-      "name": {{ .Values.global.mq.username | quote }},
-      "password": {{ .Values.global.mq.password | quote }},
+      "name": {{ .Values.global.mq.secret.data.username | quote }},
+      "password": {{ .Values.global.mq.secret.data.password | quote }},
       "tags": "administrator"
     },
     {
@@ -85,9 +85,9 @@ users, virtual hosts, permissions and parameters) to load by the management plug
 {{- end }}
   ],
   "vhosts": [
-    {
-      "name": {{ .Values.global.mq.vhost | quote }}
-    },
+    { "name": {{ .Values.global.mq.secret.data.vhost | quote }} },
+    { "name":  "/gitcall" },
+    { "name": "/dundergitcall" },
     {
       "name": {{ .Values.rabbitmqVhost | quote }}
     }{{- if .Values.definitions.vhosts -}},
@@ -96,8 +96,22 @@ users, virtual hosts, permissions and parameters) to load by the management plug
   ],
   "permissions": [
     {
-      "user": {{ .Values.global.mq.username | quote }},
-      "vhost": {{ .Values.global.mq.vhost | quote }},
+      "user": {{ .Values.global.mq.secret.data.username | quote }},
+      "vhost": {{ .Values.global.mq.secret.data.vhost | quote }},
+      "configure": ".*",
+      "read": ".*",
+      "write": ".*"
+    },
+    {
+      "user": {{ .Values.global.mq.secret.data.username | quote }},
+      "vhost": "/gitcall",
+      "configure": ".*",
+      "read": ".*",
+      "write": ".*"
+    },
+    {
+      "user": {{ .Values.global.mq.secret.data.username | quote }},
+      "vhost": "/dundergitcall",
       "configure": ".*",
       "read": ".*",
       "write": ".*"
@@ -119,7 +133,7 @@ users, virtual hosts, permissions and parameters) to load by the management plug
     {
       "name": "ha-all",
       "pattern": ".*",
-      "vhost": {{ .Values.global.mq.vhost | quote }},
+      "vhost": {{ .Values.global.mq.secret.data.vhost | quote }},
       "definition": {
         "ha-mode": "all",
         "ha-sync-mode": "automatic",

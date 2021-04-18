@@ -312,7 +312,7 @@ spec:
       {{- if (eq "-" .Values.persistentVolume.storageClass) }}
         storageClassName: ""
       {{- else }}
-        storageClassName: "{{ .Values.persistentVolume.storageClass }}"
+        storageClassName: "{{ .Values.global.storageClassName }}"
       {{- end }}
       {{- end }}
 {{- else }}

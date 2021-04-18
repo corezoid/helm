@@ -1,0 +1,12 @@
+component_name: gitcall_pimp
+include:
+  kube: 7d2612ac # 1.0-dev
+helm:
+  enabled: true
+  app: gitcall
+  tier: pimp
+  chart:
+    version: "0.1.1"
+    description: "The shim layer over K8S API."
+config_file: pimp.json
+image: docker-hub.middleware.biz/public/gitcall/servicespimp

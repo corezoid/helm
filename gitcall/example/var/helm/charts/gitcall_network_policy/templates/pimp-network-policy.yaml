@@ -1,0 +1,55 @@
+apiVersion: crd.projectcalico.org/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-gitcall-pimp-network-policy
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  selector: tier == 'pimp'
+  types:
+    - Egress
+    - Ingress
+  ingress:
+    # Gitcall
+    - action: Allow
+      protocol: TCP
+      source:
+        selector: tier == 'gitcall'
+      destination:
+        ports:
+          - 8080
+    # Prometheus
+    - action: Allow
+      protocol: TCP
+      source:
+        namespaceSelector: projectcalico.org/name == 'monitoring'
+        selector: app == 'prometheus'
+      destination:
+        ports:
+          - 9100
+  egress:
+    # DNS
+    - action: Allow
+      protocol: UDP
+      destination:
+        namespaceSelector: projectcalico.org/name == 'kube-system'
+        selector: k8s-app == 'kube-dns'
+        ports:
+          - 53
+    # Kube API
+    # rule for apiserver with labels is impossible for now
+    # see https://jira.corezoid.com/browse/COR-6832
+    # https://github.com/projectcalico/calico/issues/4017
+    - action: Allow
+      protocol: TCP
+      destination:
+        nets:
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+        ports:
+          - 6443
+          - 443
