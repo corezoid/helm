@@ -41,18 +41,18 @@ spec:
                   valueFrom:
                     secretKeyRef:
                       name: {{ .Values.global.db.secret.name }}
-                      key: postgres_dbhost
+                      key: dbhost
                   {{- end }}
                 - name: POSTGRES_DBSUPERUSER
                   valueFrom:
                     secretKeyRef:
                       name: {{ .Values.global.db.secret.name }}-root
-                      key: postgres_dbsuperuser
+                      key: dbsuperuser
                 - name: POSTGRES_DBSUPERUSERPWD
                   valueFrom:
                     secretKeyRef:
                       name: {{ .Values.global.db.secret.name }}-root
-                      key: postgres_dbsuperuserpwd
+                      key: dbsuperuserpwd
                 - name: SHARD_COUNT
                   value: '{{ .Values.global.db.shards_count }}'
           restartPolicy: OnFailure
