@@ -23,6 +23,6 @@ dependencies:
     version: "0.6.0"
     condition: global.efs.enabled
 
-#  - name: dumps
-#    version: "0.0.1"
-#    condition: global.store_dumps.enabled
+  - name: dumps
+    version: "0.0.1"
+    condition: global.store_dumps.enabled

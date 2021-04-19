@@ -74,7 +74,7 @@ spec:
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
-          image: "{{ .Values.image.registry }}/{{.Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.mult.tag }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.image.repository }}:{{ .Values.global.mult.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           env:
             - name: NODE_COOKIE
