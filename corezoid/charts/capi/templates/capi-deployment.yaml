@@ -92,9 +92,13 @@ spec:
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.capi.tag }}"
           env:
-          {{- if .Values.global.debug }}
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          {{- if .Values.global.store_dumps.enabled }}
           - name: ERL_CRASH_DUMP
-            value: "/dev/stderr"
+            value: "/var/dumps/$(POD_NAME)-erl.dump"
           {{- end }}
           - name: NODE_COOKIE
             value: {{ .Values.appName }}-{{ .Release.Namespace }}
@@ -231,6 +235,10 @@ spec:
               subPath: vm.args
             - name: corezoid-license
               mountPath: /ebsmnt/certs
+            {{- if .Values.global.store_dumps.enabled }}
+            - name: dumps-volume
+              mountPath: /var/dumps
+            {{- end }}
           resources:
             {{ .Values.global.capi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
@@ -278,3 +286,8 @@ spec:
         - name: corezoid-license
           secret:
             secretName: license-share-new
+        {{- if .Values.global.store_dumps.enabled }}
+        - name: dumps-volume
+          hostPath:
+            path: /var/dumps
+        {{- end }}

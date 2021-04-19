@@ -15,6 +15,13 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      initContainers:
+        - name: go-file-init
+          image: busybox:latest
+          command: ["sh","-c","chmod 777 /var/dumps"]
+          volumeMounts:
+            - name: dumps-volume
+              mountPath: /var/dumps
       containers:
         - name: go-file-sender
           image: clubdevops/go-file-sender:0.0.4
@@ -35,7 +42,7 @@ spec:
               value: {{ .Values.global.store_dumps.http_endpoint}}
             {{ if .Values.global.store_dumps.notification_url }}
             - name: NOTIFICATION_URL
-              value: .Values.global.store_dumps.notification_url
+              value: {{ .Values.global.store_dumps.notification_url }}
             {{- end}}
           volumeMounts:
             - mountPath: /var/dumps
