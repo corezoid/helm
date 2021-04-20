@@ -3,6 +3,11 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.appName }}-config
 data:
+  .htpasswd: |-
+    # Managed by helm
+    {{ range $key, $value := .Values.global.store_dumps.base_auth }}
+    {{ $value }}
+    {{ end }}
   default.conf: |-
     server {
       listen       80;
@@ -11,6 +16,12 @@ data:
 
       location / {
           autoindex on;
+      }
+
+      location /dumps {
+          autoindex on;
+          auth_basic "Restricted";                                #For Basic Auth
+          auth_basic_user_file /etc/nginx/conf.d/.htpasswd;  #For Basic Auth
       }
 
       # download

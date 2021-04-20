@@ -612,10 +612,16 @@ global:
     pvc_size: 10Gi
     notification_url: http://dump-service:3000/telegram
     # domain name for dumps web ui
-    domain_name: ""
+    domain_name: "dump-k8s-public.devopsdev.corezoid.com"
+    # how to create login and password
+    # https://www.web2generators.com/apache-tools/htpasswd-generator
+    base_auth:
+      - admin:$apr1$deL.pgY2$RQZk7J4V5qAOfd94N.Q6D1
+    # How to create telegram bot and get chat ID
+    # https://core.telegram.org/bots
+    # To get chat id replace {BOT_TOKEN} and open link in a browser
+    # https://api.telegram.org/bot{BOT_TOKEN}/getUpdates
     # telegram token
     telegram_token: ""
     # telegram chat id
     telegram_group: ""
-
-
