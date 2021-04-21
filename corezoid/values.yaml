@@ -625,3 +625,8 @@ global:
     telegram_token: ""
     # telegram chat id
     telegram_group: ""
+    rotate:
+      # dumps rotate interval (hourly|daily|weekly|monthly|yearly)
+      interval: daily
+      # number of rotation
+      copies: 7
