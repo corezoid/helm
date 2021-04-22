@@ -222,10 +222,10 @@ spec:
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           - containerPort: 8585
-{{/*          lifecycle:*/}}
-{{/*            preStop:*/}}
-{{/*              exec:*/}}
-{{/*                command: ["/ebsmnt/erlang/capi/bin/capi","stop"]*/}}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/ebsmnt/erlang/capi/bin/capi","stop"]
           volumeMounts:
             - name: {{ .Values.appName }}config
               mountPath: /ebsmnt/conf/capi.config

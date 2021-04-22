@@ -17,6 +17,8 @@ spec:
   replicas: 1
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/dumps-configmap.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}-ui
@@ -30,9 +32,9 @@ spec:
               value: {{ .Values.global.store_dumps.telegram_token | quote }}
             - name: TELEGRAM_GROUP
               value: {{ .Values.global.store_dumps.telegram_group | quote  }}
-            {{ if .Values.global.store_dumps.domain_name }}
+            {{ if .Values.global.store_dumps.subdomain }}
             - name: DUMPS_URL
-              value: {{ .Values.global.store_dumps.domain_name | quote }}
+              value: {{ .Values.global.store_dumps.subdomain }}.{{ .Values.global.domain }}
             {{- end }}
           ports:
             - containerPort: 3000
@@ -44,7 +46,7 @@ spec:
               cpu: 100m
               memory: 100Mi
             limits:
-              memory: 500Mi
+              memory: 200Mi
           livenessProbe:
             httpGet:
               path: /
@@ -98,7 +100,7 @@ spec:
               cpu: 100m
               memory: 100Mi
             limits:
-              memory: 500Mi
+              memory: 200Mi
           livenessProbe:
             httpGet:
               path: /

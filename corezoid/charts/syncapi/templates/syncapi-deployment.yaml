@@ -67,9 +67,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            {{- if .Values.global.debug }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- if .Values.global.store_dumps.enabled }}
             - name: ERL_CRASH_DUMP
-              value: "/dev/stderr"
+              value: "/var/dumps/$(POD_NAME)-erl.dump"
             {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
@@ -102,10 +106,10 @@ spec:
                   key: password
           ports:
             - containerPort: 8090
-{{/*          lifecycle:*/}}
-{{/*            preStop:*/}}
-{{/*              exec:*/}}
-{{/*                command: ["/ebsmnt/erlang/corezoid_api_sync/bin/corezoid_api_sync","stop"]*/}}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/ebsmnt/erlang/corezoid_api_sync/bin/corezoid_api_sync","stop"]
           volumeMounts:
             - name: {{ .Values.appName }}-config
               mountPath: /ebsmnt/conf/corezoid_api_sync.config
@@ -113,6 +117,10 @@ spec:
             - name: {{ .Values.appName }}-config-vm
               mountPath: /ebsmnt/erlang/corezoid_api_sync/releases/1/vm.args
               subPath: vm.args
+            {{- if .Values.global.store_dumps.enabled }}
+            - name: dumps-volume
+              mountPath: /var/dumps
+            {{- end }}
           resources:
             {{ .Values.global.syncapi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
@@ -144,4 +152,8 @@ spec:
         - name: {{ .Values.appName }}-config-vm
           configMap:
             name: {{ .Values.appName }}-config-vm
-
+        {{- if .Values.global.store_dumps.enabled }}
+        - name: dumps-volume
+          hostPath:
+            path: /var/dumps
+        {{- end }}
