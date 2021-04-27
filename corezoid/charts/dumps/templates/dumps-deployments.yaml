@@ -103,7 +103,7 @@ spec:
               memory: 200Mi
           livenessProbe:
             httpGet:
-              path: /
+              path: /ping
               port: 80
             initialDelaySeconds: 20
             periodSeconds: 20
@@ -112,7 +112,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /
+              path: /ping
               port: 80
             initialDelaySeconds: 15
             periodSeconds: 5

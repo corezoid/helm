@@ -174,7 +174,7 @@ global:
       create: true
       name: "rabbitmq-secret"
       data:
-        host: "rmq-29fca952f45ab1e9.elb.eu-west-1.amazonaws.com"
+        host: "rmq.devopsdev.corezoid.com"
         port: "5672"
         vhost: "/conveyor"
         username: "app-user"
@@ -291,7 +291,8 @@ global:
 
   # http-worker
   http:
-    tag: "3.5.0.2-without-tini"
+    tag: "master-kub"
+#    tag: "3.5.0.2-without-tini"
     minReplicas: 4
     maxReplicas: 4
     resources:
@@ -307,9 +308,9 @@ global:
       - "mail.ru"
     tune:
       http_consumer_queues_count: 8
-      http_consumer_connections_per_queue: 1
-      http_consumer_channels_per_connection: 1
-      http_consumer_messages_prefetch_size_per_channel: 20
+      http_consumer_connections_per_queue: 3
+      http_consumer_channels_per_connection: 3
+      http_consumer_messages_prefetch_size_per_channel: 3
       consumer_settings_messages_prefetch_size_per_channel: 50
       consumer_response_prefetch_size_per_channel: 50
 
@@ -496,7 +497,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "2.0.3-without-tini"
+    tag: "2.0.4"
     minReplicas: 4
     maxReplicas: 4
     resources:
@@ -587,15 +588,15 @@ global:
   # conf-agent-server
   conf_agent_server:
     tag: "1.5.2-without-tini"
-    minReplicas: 1
-    maxReplicas: 1
+    minReplicas: 2
+    maxReplicas: 2
     resources:
       limits:
-        cpu: 1200m
-        memory: 1500Mi
+        cpu: 1000m
+        memory: 1000Mi
       requests:
-        cpu: 1200m
-        memory: 1500Mi
+        cpu: 1000m
+        memory: 1000Mi
 
   limits:
     tag: "1.2.2-without-tini"
@@ -606,17 +607,17 @@ global:
   # allows write crushdumps to the stderr output for capturing by logging system
   debug: false
   store_dumps:
-    enabled: true
+    enabled: false
     dumps_dir: /var/dumps/
     http_endpoint: http://dump-service:3000/upload
     pvc_size: 10Gi
     notification_url: http://dump-service:3000/telegram
     # domain name for dumps web ui
-    domain_name: "dump-k8s-public.devopsdev.corezoid.com"
+    subdomain: "dump-k8s-public"
     # how to create login and password
     # https://www.web2generators.com/apache-tools/htpasswd-generator
     base_auth:
-      - admin:$apr1$deL.pgY2$RQZk7J4V5qAOfd94N.Q6D1
+      - admin:$apr1$kdvn7ybj$Wp1TO4qCvlTpUu1x248Nb0
     # How to create telegram bot and get chat ID
     # https://core.telegram.org/bots
     # To get chat id replace {BOT_TOKEN} and open link in a browser

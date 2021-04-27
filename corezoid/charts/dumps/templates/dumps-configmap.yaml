@@ -10,11 +10,11 @@ data:
     {{ end }}
   default.conf: |-
     server {
-      listen       80;
+      listen       80 default;
       server_name {{ .Values.global.store_dumps.subdomain }}.{{ .Values.global.domain }} ;
       root /var/www;
-
-      location / {
+      location /ping { return 200 ok; types { } default_type  text/plain; }
+      location /dumps {
           autoindex on;
           auth_basic "Restricted";                           #For Basic Auth
           auth_basic_user_file /etc/nginx/conf.d/.htpasswd;  #For Basic Auth

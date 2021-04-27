@@ -232,9 +232,9 @@ data:
           {password, <<"${MQ_PASSWORD}">>},
           {{- end }}
           {vhost, <<"${MQ_VHOST}">>},
-          {min_size, 5},
-          {max_size, 5},
-          {start_size, 5}
+          {min_size, 15},
+          {max_size, 15},
+          {start_size, 15}
         ]},
 
         %% consumer http

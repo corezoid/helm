@@ -78,11 +78,9 @@ data:
 
       {corezoid_api_sync, [
       {nodes, []},
-      {domain, <<"http://syncapi-main:8090">> }, %% Application url
-{{/*      {domain, <<"https://{{ .Values.global.syncapi.subdomain }}.{{ .Values.global.domain }}">> }, %% Application url*/}}
+      {domain, <<"https://{{ .Values.global.syncapi.subdomain }}.{{ .Values.global.domain }}">> }, %% Application url
       {api_port, 8090},
       {corezoid_host, <<"http://capi-service:9080">>},
-{{/*      {corezoid_host, <<"https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},*/}}
 
       %% CALLBACK SETUP
       {callback, [
@@ -96,8 +94,7 @@ data:
         {handlers, [
         {lager_console_backend, info},
         {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 1500000}, {date, "$D0"}, {count, 0}]},
-        {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 1500000}, {date, "$D0"}, {count, 0}]},
-        {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 1500000}, {date, "$D0"}, {count, 0}]}
+        {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 1500000}, {date, "$D0"}, {count, 0}]}
         ]},
 
         {extra_sinks,
