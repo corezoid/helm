@@ -19,6 +19,8 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/http-worker-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/http-worker-configmap-vm.yaml") . | sha256sum }}
+
         prometheus.io/path: /metrics
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"
