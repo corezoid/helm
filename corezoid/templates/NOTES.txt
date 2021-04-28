@@ -4,10 +4,12 @@
 Corezoid url    https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}
 Superadmin url  https://{{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
 Syncapi url     https://{{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
- {{- if .Values.global.sa.enabled }}
-SingleAccount: {{ .Values.global.sa_web.subdomain}}.{{ .Values.global.domain }}
- {{- end }}
-
+{{- if .Values.global.sa.enabled }}
+SingleAccount:  https://{{ .Values.global.sa_web.subdomain}}.{{ .Values.global.domain }}
+{{- end }}
+{{- if .Values.global.store_dumps.enabled }}
+Dumps url:      https://{{ .Values.global.store_dumps.subdomain}}.{{ .Values.global.domain }}
+{{- end }}
 Default login : admin@corezoid.loc
      password : admin111
 

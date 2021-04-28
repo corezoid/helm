@@ -86,11 +86,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+      shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.limits.tag }}"
           env:
+            {{- if .Values.global.store_dumps.enabled }}
+            - name: ERL_CRASH_DUMP
+              value: "/var/dumps/$(POD_NAME)-erl.dump"
+            {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
             - name: MQ_HOST
@@ -154,6 +159,10 @@ spec:
               subPath: corezoid_limits.config
             - name: corezoid-license
               mountPath: /ebsmnt/certs
+            {{- if .Values.global.store_dumps.enabled }}
+            - name: dumps-volume
+              mountPath: /var/dumps
+            {{- end }}
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret
@@ -165,3 +174,8 @@ spec:
         - name: corezoid-license
           secret:
             secretName: license-share-new
+        {{- if .Values.global.store_dumps.enabled }}
+        - name: dumps-volume
+          hostPath:
+            path: /var/dumps
+        {{- end }}

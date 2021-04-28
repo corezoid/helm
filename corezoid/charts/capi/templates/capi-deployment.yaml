@@ -19,6 +19,8 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/capi-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/capi-configmap-vm.yaml") . | sha256sum }}
+
         prometheus.io/path: /metrics
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"
@@ -26,9 +28,16 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.capi.affinity }}
+      affinity:
+        {{ .Values.global.capi.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
+
       terminationGracePeriodSeconds: 300
+
       initContainers:
         - name: init-wait
+
           image: docker-hub.middleware.biz/public/alpine
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- end }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}; do echo waiting for deps; sleep 2; done;"]
           env:
@@ -79,14 +88,19 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+      shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.capi.tag }}"
           env:
-          {{- if .Values.global.debug }}
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          {{- if .Values.global.store_dumps.enabled }}
           - name: ERL_CRASH_DUMP
-            value: "/dev/stderr"
+            value: "/var/dumps/$(POD_NAME)-erl.dump"
           {{- end }}
           - name: NODE_COOKIE
             value: {{ .Values.appName }}-{{ .Release.Namespace }}
@@ -96,11 +110,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
-          - name: REDIS_HOST
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.global.redis.secret.name }}
-                key: host
+          - name: SCHEDULERS
+            value: "4"
           - name: capi_front_captcha_key
             valueFrom:
               secretKeyRef:
@@ -111,6 +122,11 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.capi.secret.name }}
                 key: capi_backend_captcha_key
+          - name: REDIS_HOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.redis.secret.name }}
+                key: host
           - name: REDIS_PORT
             valueFrom:
               secretKeyRef:
@@ -121,6 +137,21 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.redis.secret.name }}
                 key: password
+          - name: REDIS_HOST_CACHE
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.redis.secret.name }}
+                key: host_cache
+          - name: REDIS_PORT_CACHE
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.redis.secret.name }}
+                key: port_cache
+          - name: REDIS_PASSWORD_CACHE
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.redis.secret.name }}
+                key: password_cache
           - name: MQ_HOST
             valueFrom:
               secretKeyRef:
@@ -201,8 +232,15 @@ spec:
             - name: {{ .Values.appName }}config
               mountPath: /ebsmnt/conf/capi.config
               subPath: capi.config
+            - name: {{ .Values.appName }}-config-vm
+              mountPath: /ebsmnt/erlang/worker/releases/1/vm.args
+              subPath: vm.args
             - name: corezoid-license
               mountPath: /ebsmnt/certs
+            {{- if .Values.global.store_dumps.enabled }}
+            - name: dumps-volume
+              mountPath: /var/dumps
+            {{- end }}
           resources:
             {{ .Values.global.capi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
@@ -244,6 +282,14 @@ spec:
         - name: {{ .Values.appName }}config
           configMap:
             name: {{ .Values.appName }}-config
+        - name: {{ .Values.appName }}-config-vm
+          configMap:
+            name: {{ .Values.appName }}-config-vm
         - name: corezoid-license
           secret:
             secretName: license-share-new
+        {{- if .Values.global.store_dumps.enabled }}
+        - name: dumps-volume
+          hostPath:
+            path: /var/dumps
+        {{- end }}

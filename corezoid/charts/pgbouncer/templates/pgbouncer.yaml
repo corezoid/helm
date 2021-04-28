@@ -9,8 +9,8 @@ metadata:
     tier: {{ .Values.appName}}
 spec:
   selector:
-    service: {{ .Values.appName }}
     app: {{ .Values.global.product }}
+    tier: {{ .Values.appName}}
   ports:
   - name: pgbouncer
     protocol: TCP
@@ -41,17 +41,15 @@ metadata:
   labels:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName}}
-    service: {{ .Values.appName }}
 spec:
   replicas: {{ .Values.global.db.bouncer_minReplicas }}
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: {{ .Values.global.db.bouncer_minReplicas }}
-      maxUnavailable: 0
   selector:
     matchLabels:
-      tier: {{ .Values.appName }}
+      tier: {{ .Values.appName}}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       annotations:
@@ -61,7 +59,6 @@ spec:
       labels:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName}}
-        service: {{ .Values.appName }}
     spec:
       containers:
         - name: {{ .Values.appName }}
@@ -111,12 +108,7 @@ spec:
           ports:
           - containerPort: 5432
           resources:
-            limits:
-              cpu: 1000m
-              memory: 1500Mi
-            requests:
-              cpu: 1000m
-              memory: 1000Mi
+            {{ .Values.global.db.bouncer_resources | toYaml | indent 12 | trim }}
           readinessProbe:
             tcpSocket:
               port: 5432
@@ -133,8 +125,9 @@ spec:
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
+
         - name: pgbouncer-exporter
-          image: spreaker/prometheus-pgbouncer-exporter
+          image: docker-hub.middleware.biz/public/prometheus-pgbouncer-exporter
           env:
             - name: PGBOUNCER_EXPORTER_HOST
               value: 0.0.0.0
@@ -154,6 +147,13 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbpwd
+          resources:
+            limits:
+              cpu: "50m"
+              memory: "50Mi"
+            requests:
+              cpu: "50m"
+              memory: "50Mi"
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret

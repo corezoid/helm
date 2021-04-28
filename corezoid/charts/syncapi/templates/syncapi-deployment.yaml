@@ -19,6 +19,7 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/syncapi-configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/syncapi-configmap-vm.yaml") . | sha256sum }}
         prometheus.io/path: /metrics
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"
@@ -26,6 +27,10 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.syncapi.affinity }}
+      affinity:
+        {{ .Values.global.syncapi.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-wait-rmq
@@ -51,6 +56,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+      shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.syncapi.tag }}"
@@ -58,16 +64,22 @@ spec:
           env:
             - name: NODE_COOKIE
               value: {{ .Values.appName }}-{{ .Release.Namespace }}
-            - name: NODE_IP
+            - name: IPNODEDOMAIN
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            {{- if .Values.global.debug }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- if .Values.global.store_dumps.enabled }}
             - name: ERL_CRASH_DUMP
-              value: "/dev/stderr"
+              value: "/var/dumps/$(POD_NAME)-erl.dump"
             {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
+            - name: SCHEDULERS
+              value: "4"
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -103,6 +115,13 @@ spec:
             - name: {{ .Values.appName }}-config
               mountPath: /ebsmnt/conf/corezoid_api_sync.config
               subPath: corezoid_api_sync.config
+            - name: {{ .Values.appName }}-config-vm
+              mountPath: /ebsmnt/erlang/corezoid_api_sync/releases/1/vm.args
+              subPath: vm.args
+            {{- if .Values.global.store_dumps.enabled }}
+            - name: dumps-volume
+              mountPath: /var/dumps
+            {{- end }}
           resources:
             {{ .Values.global.syncapi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
@@ -131,4 +150,11 @@ spec:
         - name: {{ .Values.appName }}-config
           configMap:
             name: {{ .Values.appName }}-config
-
+        - name: {{ .Values.appName }}-config-vm
+          configMap:
+            name: {{ .Values.appName }}-config-vm
+        {{- if .Values.global.store_dumps.enabled }}
+        - name: dumps-volume
+          hostPath:
+            path: /var/dumps
+        {{- end }}

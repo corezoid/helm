@@ -26,6 +26,10 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.usercode.affinity }}
+      affinity:
+        {{ .Values.global.usercode.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
@@ -79,6 +83,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+      shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.global.usercode.tag }}"
@@ -88,9 +93,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            {{- if .Values.global.debug }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- if .Values.global.store_dumps.enabled }}
             - name: ERL_CRASH_DUMP
-              value: "/dev/stderr"
+              value: "/var/dumps/$(POD_NAME)-erl.dump"
             {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
@@ -170,6 +179,10 @@ spec:
               subPath: usercode.config
             - name: corezoid-license
               mountPath: /ebsmnt/certs
+            {{- if .Values.global.store_dumps.enabled }}
+            - name: dumps-volume
+              mountPath: /var/dumps
+            {{- end }}
           resources:
             {{ .Values.global.usercode.resources | toYaml | indent 12 | trim }}
           livenessProbe:
@@ -201,3 +214,8 @@ spec:
         - name: corezoid-license
           secret:
             secretName: license-share-new
+        {{- if .Values.global.store_dumps.enabled }}
+        - name: dumps-volume
+          hostPath:
+            path: /var/dumps
+        {{- end }}

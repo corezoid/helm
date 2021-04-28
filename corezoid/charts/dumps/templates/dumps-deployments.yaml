@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}-deployment
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}-ui
+spec:
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}-ui
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/dumps-configmap.yaml") . | sha256sum }}
+      labels:
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}-ui
+    spec:
+      containers:
+        - name: {{ .Values.appName }}-node
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+          image: clubdevops/node-file-uploader:0.0.5
+          env:
+            - name: TELEGRAM_TOKEN
+              value: {{ .Values.global.store_dumps.telegram_token | quote }}
+            - name: TELEGRAM_GROUP
+              value: {{ .Values.global.store_dumps.telegram_group | quote  }}
+            {{ if .Values.global.store_dumps.subdomain }}
+            - name: DUMPS_URL
+              value: {{ .Values.global.store_dumps.subdomain }}.{{ .Values.global.domain }}
+            {{- end }}
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: dumps-volume
+              mountPath: /usr/src/app/uploads
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              memory: 200Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+        - name: {{ .Values.appName }}-rotate
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+          image: clubdevops/logrotate:0.0.1
+          env:
+            - name: LOGROTATE_COMPRESSION
+              value: compress
+            - name: LOGS_DIRECTORIES
+              value: /var/www/dumps
+            - name: LOGROTATE_INTERVAL
+              value: {{ .Values.global.store_dumps.rotate.interval }}
+            - name: LOGROTATE_COPIES
+              value: {{ .Values.global.store_dumps.rotate.copies | quote}}
+            - name: LOGROTATE_MODE
+              value: create 0644 root logrotate
+            - name: LOG_FILE_ENDINGS
+              value: dump
+          volumeMounts:
+            - name: dumps-volume
+              mountPath: /var/www/dumps
+        - name: {{ .Values.appName }}-nginx
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+          image: nginx
+
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: {{ .Values.appName }}config
+              mountPath: /etc/nginx/conf.d/
+            - name: dumps-volume
+              mountPath: /var/www/dumps
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              memory: 200Mi
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+      {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: corezoid-secret
+      {{- end }}
+      volumes:
+        - name: {{ .Values.appName }}config
+          configMap:
+            name: {{ .Values.appName }}-config
+            items:
+            - key: .htpasswd
+              path: .htpasswd
+            - key: default.conf
+              path: default.conf
+        - name: dumps-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.appName }}-pvc

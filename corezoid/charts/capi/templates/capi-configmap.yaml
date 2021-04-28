@@ -451,9 +451,9 @@ data:
             %% memory redis for cache task
             {redis2, [
                 [   {{- if eq .Values.global.redis.internal false }}
-                    {host, "${REDIS_HOST}"},
-                    {port, ${REDIS_PORT}},
-                    {password,"${REDIS_PASSWORD}"},
+                    {host, "${REDIS_HOST_CACHE}"},
+                    {port, ${REDIS_PORT_CACHE}},
+                    {password,"${REDIS_PASSWORD_CACHE}"},
                     {{- else }}
                     {host, "redis-master"},
                     {port, 6379},
@@ -507,9 +507,9 @@ data:
                 {password, <<"${MQ_PASSWORD}">>},
           {{- end }}
                 {vhost, <<"${MQ_VHOST}">>},
-                {min_size, 5},
-                {max_size, 5},
-                {start_size, 5}
+                {min_size, 25},
+                {max_size, 25},
+                {start_size, 25}
             ]},
 
             % api copy queue (support multiply consumers)
@@ -859,7 +859,7 @@ data:
 
             %% example {allowed_domains, ["gmail.com", "corezoid.com", "github.com"]},
             {{- if .Values.global.capi.registration_restriction.enable }}
-            {allowed_domains, [{{- range .Values.global.capi.registration_restriction.allowed_domains  }} {{. | quote}},{{- end }} "{{ .Values.global.domain }}" ]},
+            {allowed_domains, [{{- range .Values.global.capi.registration_restriction.allowed_domains  }} {{ . | quote }},{{- end }} "{{ .Values.global.domain }}" ]},
             {{- end }}
 
             %%    % group for super_users

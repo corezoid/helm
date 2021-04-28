@@ -27,11 +27,20 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.webadm.affinity }}
+      affinity:
+        {{ .Values.global.webadm.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
       containers:
         - name: {{ .Values.appName }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
           ports:
-          - containerPort: 80
+            - containerPort: 80
+          lifecycle:
+            preStop:
+              exec:
+                #waiting for the pod to be removed from the service
+                command: ["/bin/sleep","3"]
           volumeMounts:
             - name: web-config-nginx
               mountPath: /etc/nginx/nginx.conf
@@ -66,15 +75,8 @@ spec:
             successThreshold: 1
             failureThreshold: 3
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          lifecycle:
-            preStop:
-              exec:
-                command: [
-                  # Gracefully shutdown nginx
-                  "/usr/sbin/nginx", "-s", "quit"
-                ]
         - name: nginx-exporter
-          image: nginx/nginx-prometheus-exporter
+          image: docker-hub.middleware.biz/public/nginx-prometheus-exporter:latest
           resources:
             requests:
               cpu: 10m
@@ -83,7 +85,10 @@ spec:
             - name: nginx-exp-port
               containerPort: 9113
           args:
+            #A URI or unix domain socket path for scraping NGINX
             - -nginx.scrape-uri=http://localhost/nginx_status
+            #A number of retries the exporter will make on start to connect to the NGINX stub_status page
+            - -nginx.retries=2
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret

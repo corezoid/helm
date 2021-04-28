@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-config-vm
+data:
+  vm.args: |
+    ## Name of the node
+    -name corezoid_api_sync@${IPNODEDOMAIN}
+
+    ## Cookie for distributed erlang
+    -setcookie ${NODE_COOKIE}
+    +sbwt none
+
+    +S ${SCHEDULERS}

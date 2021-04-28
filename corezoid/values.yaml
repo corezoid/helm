@@ -29,7 +29,7 @@ global:
   ###########################################
   ######## Settings for filesystems #########
   # Define global storage class: efs / nfs / manual
-  storage: nfs
+  storage: efs
   # Define global storageClass name
   storageClassName: "corezoid-storage-class-default"
   ######## Settings AWS EFS filesystem   ########
@@ -37,11 +37,11 @@ global:
     awsRegion: "eu-west-1"
     efsFileSystemId: "fs-1388e9d9"
     ## set true if you choose storage: efs
-    enabled: false
+    enabled: true
   ######## Settings NFS filesystem   ########
   nfs:
     ## set true if you choose storage: nfs
-    enabled: true
+    enabled: false
 
   ########  Settings for stateful services  ########
 
@@ -51,7 +51,7 @@ global:
   db:
     # if internal true - create and use internal postgres container
     # if internal false - enable external db, like aws rds
-    internal: true
+    internal: false
     ## secret configuration for postgresql
 
     ## pvc name
@@ -65,9 +65,9 @@ global:
       ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
       dbsuperuser: "postgres"
       ## password - for dbsuperuser
-      dbsuperuserpwd: "ygyegyg8"
+      dbsuperuserpwd: "Corezoid1234!"
       data:
-        dbhost: "pg-postgresql"
+        dbhost: "corezoid-public-pg11.c9ko8blcgiqi.eu-west-1.rds.amazonaws.com"
         dbport: "5432"
         dbuser: "internal_user"
         dbpwd: "8hhgasdgiuf"
@@ -81,8 +81,15 @@ global:
 
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
-    bouncer_minReplicas: "2"
+    bouncer_minReplicas: "4"
     bouncer_maxReplicas: "4"
+    bouncer_resources:
+      limits:
+        cpu: "500m"
+        memory: "500Mi"
+      requests:
+        cpu: "500m"
+        memory: "500Mi"
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
@@ -93,7 +100,7 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.6.0"
+      version: "5.6.1"
 
     rotation:
       ## enabled: true or false
@@ -109,7 +116,7 @@ global:
   redis:
     # if internal true - create and use internal k8s redis container
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
-    internal: true
+    internal: false
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
@@ -118,10 +125,21 @@ global:
       ## false - secret should be created manually
       create: true
       name: "redis-secret"
+      # you can specify different servers for redis for counters, cache and timers  - or specify the same server in variables
       data:
-        host: "redis-master"
+        # default redis for counters
+        host: "k8s-mambu-dev.h2avrs.0001.euw1.cache.amazonaws.com"
         port: "6379"
         password: ""
+        # default redis for cache
+        host_cache: "k8s-mambu-dev-cache.h2avrs.ng.0001.euw1.cache.amazonaws.com"
+        port_cache: "6379"
+        password_cache: ""
+        # default redis for timers
+        host_timers: "k8s-mambu-dev-timers.h2avrs.ng.0001.euw1.cache.amazonaws.com"
+        port_timers: "6379"
+        password_timers: ""
+
 
 
   #######  Elasticsearch  ########
@@ -130,7 +148,7 @@ global:
     tag: "6.7.1"
     # if internal true - create and use internal elasticsearch container
     # if internal false - enable external elasticsearch, like aws elasticsearch service
-    internal: true
+    internal: false
     ## secret configuration for elasticsearch
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -138,16 +156,17 @@ global:
       create: true
       name: "elasticsearch-secret"
       data:
-        host: "elasticsearch-elasticsearch-master"
+        #host: "elasticsearch-elasticsearch-master"
+        host: "https://search-k8s-mambu-dev-k2fbtgrdi2lhe5exy5nana423a.eu-west-1.es.amazonaws.com"
         ## be careful with port - in internal install used 9200, in aws uses 443
-        port: "9200"
+        port: "443"
 
   #######  RabbitMQ  ########
   ## Supported version  3.8.*
   mq:
     # if internal true - create and use internal rmq container
     # if internal false - enable external rmq (on aws ec2 instances as example)
-    internal: true
+    internal: false
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values
@@ -155,7 +174,7 @@ global:
       create: true
       name: "rabbitmq-secret"
       data:
-        host: "rabbit-service"
+        host: "rmq.devopsdev.corezoid.com"
         port: "5672"
         vhost: "/conveyor"
         username: "app-user"
@@ -167,16 +186,17 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "7.6.1.0"
-    minReplicas: 2
-    maxReplicas: 20
+    #tag: "7.6.1.0-without-tini"
+    tag: "7.6.1.1"
+    minReplicas: 4
+    maxReplicas: 4
     resources:
       limits:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 4
+        memory: 4000Mi
       requests:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 4
+        memory: 4000Mi
     ## restricting user registration only within the domains specified below if enabled
     registration_restriction:
       enable: false
@@ -244,69 +264,158 @@ global:
     # enigma private_key_id
     enigma_pk_id: ""
 
+    affinity: {}
+  #    # hard AZ-based affinity
+  #      podAntiAffinity:
+  #        requiredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #              - key: tier
+  #                operator: In
+  #                values:
+  #                  - capi
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+  #    # soft AZ-based affinity
+  #      podAntiAffinity:
+  #        preferredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #                - key: tier
+  #                  operator: In
+  #                  values:
+  #                    - capi
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+
+
   ########  Settings for services  ########
 
   # http-worker
   http:
-    tag: "3.5.0.2"
-    minReplicas: 2
-    maxReplicas: 20
+    tag: "master-kub"
+#    tag: "3.5.0.2-without-tini"
+    minReplicas: 4
+    maxReplicas: 4
     resources:
       limits:
-        cpu: 2
-        memory: 1000Mi
+        cpu: 4
+        memory: 4000Mi
       requests:
-        cpu: 2
-        memory: 1000Mi
+        cpu: 4
+        memory: 4000Mi
     max_http_resp_size: "5242880"
     blocked_domains:
       - "169.254.169.254"
       - "mail.ru"
     tune:
       http_consumer_queues_count: 8
-      http_consumer_connections_per_queue: 1
-      http_consumer_channels_per_connection: 1
-      http_consumer_messages_prefetch_size_per_channel: 20
+      http_consumer_connections_per_queue: 3
+      http_consumer_channels_per_connection: 3
+      http_consumer_messages_prefetch_size_per_channel: 3
       consumer_settings_messages_prefetch_size_per_channel: 50
       consumer_response_prefetch_size_per_channel: 50
+
+    affinity: {}
+  #    # hard AZ-based affinity
+  #      podAntiAffinity:
+  #        requiredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #              - key: tier
+  #                operator: In
+  #                values:
+  #                  - http-worker
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+  #    # soft AZ-based affinity
+  #      podAntiAffinity:
+  #        preferredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #                - key: tier
+  #                  operator: In
+  #                  values:
+  #                    - http-worker
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
 
   # usercode
   usercode:
     tag: "7.2.1"
-    minReplicas: 2
-    maxReplicas: 8
+    minReplicas: 1
+    maxReplicas: 1
     # application resources limits and requests
     resources:
       limits:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 1
+        memory: 1000Mi
       requests:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 1
+        memory: 1000Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
+    affinity: {}
+  #    # hard AZ-based affinity
+  #      podAntiAffinity:
+  #        requiredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #              - key: tier
+  #                operator: In
+  #                values:
+  #                  - usercode
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+  #    # soft AZ-based affinity
+  #      podAntiAffinity:
+  #        preferredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #                - key: tier
+  #                  operator: In
+  #                  values:
+  #                    - usercode
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+
   # conveyor-worker
   worker:
-    tag: "4.6.1.0"
-    minReplicas: 2
-    maxReplicas: 20
+    tag: "4.6.1.0-without-tini"
+    minReplicas: 4
+    maxReplicas: 4
     # application resources limits and requests
     resources:
       limits:
-        cpu: 2
-        memory: 2000M
+        cpu: 4
+        memory: 4000M
       requests:
-        cpu: 2
-        memory: 2000M
+        cpu: 4
+        memory: 4000M
     # enigma private_key_id
     enigma_pk_id: ""
+    affinity: {}
+  #    # hard AZ-based affinity
+  #      podAntiAffinity:
+  #        requiredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #              - key: tier
+  #                operator: In
+  #                values:
+  #                  - worker
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+  #    # soft AZ-based affinity
+  #      podAntiAffinity:
+  #        preferredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #                - key: tier
+  #                  operator: In
+  #                  values:
+  #                    - worker
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
 
   # mult
   mult:
     tag: "2.5.1.0"
-    minReplicas: 2
-    maxReplicas: 15
+    minReplicas: 1
+    maxReplicas: 1
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "mult-pvc"
     ## true if pvc for mult should be created automaticaly
@@ -315,16 +424,39 @@ global:
     # application resources limits and requests
     resources:
       limits:
-        cpu: 1600m
-        memory: 2000Mi
+        cpu: 1
+        memory: 1000Mi
       requests:
-        cpu: 500m
-        memory: 800Mi
+        cpu: 1
+        memory: 1000Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
+    affinity: {}
+  #    # hard AZ-based affinity
+  #      podAntiAffinity:
+  #        requiredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #              - key: tier
+  #                operator: In
+  #                values:
+  #                  - mult
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+  #    # soft AZ-based affinity
+  #      podAntiAffinity:
+  #        preferredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #                - key: tier
+  #                  operator: In
+  #                  values:
+  #                    - mult
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+
   # webadm
   webadm:
+    #    tag: "develop"
     tag: "5.6.1"
     minReplicas: 2
     resources:
@@ -334,6 +466,27 @@ global:
       requests:
         cpu: 200m
         memory: 500Mi
+    affinity: {}
+  #    # hard AZ-based affinity
+  #      podAntiAffinity:
+  #        requiredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #              - key: tier
+  #                operator: In
+  #                values:
+  #                  - corezoid-web-adm
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+  #    # soft AZ-based affinity
+  #      podAntiAffinity:
+  #        preferredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #                - key: tier
+  #                  operator: In
+  #                  values:
+  #                    - corezoid-web-adm
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
 
   # web-superadm
   web_superadm:
@@ -344,16 +497,38 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "2.0.3"
-    minReplicas: 2
-    maxReplicas: 20
+    tag: "2.0.4"
+    minReplicas: 4
+    maxReplicas: 4
     resources:
       limits:
-        cpu: 2
-        memory: 1000Mi
+        cpu: 4
+        memory: 4000Mi
       requests:
-        cpu: 2
-        memory: 1000Mi
+        cpu: 4
+        memory: 4000Mi
+
+    affinity: {}
+  #    # hard AZ-based affinity
+  #      podAntiAffinity:
+  #        requiredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #              - key: tier
+  #                operator: In
+  #                values:
+  #                  - syncapi
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+  #    # soft AZ-based affinity
+  #      podAntiAffinity:
+  #        preferredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #                - key: tier
+  #                  operator: In
+  #                  values:
+  #                    - syncapi
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
 
   # merchant
   merchant:
@@ -397,6 +572,8 @@ global:
   sa:
     # true or false
     enabled: false
+    google_client_id: "1324123412341234-gtkf93avg23vfhtgg9ood8hfpfitf95.apps.googleusercontent.com"
+    google_client_secret: "QW4s20Vobe7_QuqzKViGC"
   sa_web:
     subdomain: ""
 
@@ -410,23 +587,47 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "1.5.2"
-    minReplicas: 1
-    maxReplicas: 1
+    tag: "1.5.2-without-tini"
+    minReplicas: 2
+    maxReplicas: 2
     resources:
       limits:
-        cpu: 1200m
-        memory: 1500Mi
+        cpu: 1000m
+        memory: 1000Mi
       requests:
-        cpu: 1200m
-        memory: 1500Mi
+        cpu: 1000m
+        memory: 1000Mi
 
   limits:
-    tag: "1.2.2"
+    tag: "1.2.2-without-tini"
     minReplicas: 1
 
 
   # debug options
   # allows write crushdumps to the stderr output for capturing by logging system
   debug: false
-
+  store_dumps:
+    enabled: false
+    dumps_dir: /var/dumps/
+    http_endpoint: http://dump-service:3000/upload
+    pvc_size: 10Gi
+    notification_url: http://dump-service:3000/telegram
+    # domain name for dumps web ui
+    subdomain: "dump-k8s-public"
+    # how to create login and password
+    # https://www.web2generators.com/apache-tools/htpasswd-generator
+    base_auth:
+      - admin:$apr1$kdvn7ybj$Wp1TO4qCvlTpUu1x248Nb0
+    # How to create telegram bot and get chat ID
+    # https://core.telegram.org/bots
+    # To get chat id replace {BOT_TOKEN} and open link in a browser
+    # https://api.telegram.org/bot{BOT_TOKEN}/getUpdates
+    # telegram token
+    telegram_token: ""
+    # telegram chat id
+    telegram_group: ""
+    rotate:
+      # dumps rotate interval (hourly|daily|weekly|monthly|yearly)
+      interval: daily
+      # number of rotation
+      copies: 7
