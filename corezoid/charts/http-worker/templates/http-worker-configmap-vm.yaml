@@ -14,8 +14,8 @@ data:
     -setcookie ${NODE_COOKIE}
 
     ## Determine ssl session lifetime for HTTP processes
-{{/*    -ssl session_lifetime 10*/}}
-{{/*    -ssl session_cb dummy_session_cache*/}}
+    -ssl session_lifetime 10
+    -ssl session_cb dummy_session_cache
 
     ## Mode without input and shell starting
     #-noinput
