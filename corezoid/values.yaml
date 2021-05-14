@@ -602,10 +602,10 @@ global:
     tag: "1.2.2-without-tini"
     minReplicas: 1
 
-
-  # debug options
-  # allows write crushdumps to the stderr output for capturing by logging system
-  debug: false
+  # global error_log level, info - default
+  # available value info | warning | error | debug
+  error_log_level: debug
+  # allows store crushdumps and send to Telegram chat
   store_dumps:
     enabled: false
     dumps_dir: /var/dumps/

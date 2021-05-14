@@ -315,10 +315,16 @@ data:
           {channels_per_connection, 1},       %% Virtual connections for one connections_per_queue
           {messages_prefetch_size_per_channel, {{ .Values.global.http.tune.consumer_settings_messages_prefetch_size_per_channel | default 50 }} }      %% The number of queues within the channel
         ]},
-
+        %% if loglevel = debug - all on / else off
+    {{ $loglevel := .Values.global.error_log_level }}
         {logs, [
-          {info, off},
+    {{- if eq $loglevel "debug" }}
+          {info, on},
           {error, on}
+    {{- else }}
+          {info, off},
+          {error, off}
+    {{- end }}
         ]},
         %% Statistics of http logging to elastic
         {statistics, [
@@ -330,13 +336,7 @@ data:
       {lager,
         [
           {log_root, "/ebsmnt/erlang/http_worker/log"},
-          {handlers, [
-            {lager_console_backend, info},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
-{{/*    ,*/}}
-{{/*            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]},*/}}
-{{/*            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 50000000}, {date, "$D0"}, {count, 1}]}*/}}
-          ]},
+          {handlers, [ {lager_console_backend, {{ .Values.global.error_log_level | default "info" }} } ]},
 
           %% What colors to use with what log levels
           {colored, true},
