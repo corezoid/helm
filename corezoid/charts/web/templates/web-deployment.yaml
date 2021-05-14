@@ -19,7 +19,7 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/web-configmap-nginx.yaml") . | sha256sum }}
-        checksum/config: {{ include (print $.Template.BasePath "/web-configmap-site.yaml") . | sha256sum }}
+        checksum/config_site: {{ include (print $.Template.BasePath "/web-configmap-site.yaml") . | sha256sum }}
         prometheus.io/path: /metrics
         prometheus.io/port: "9113"
         prometheus.io/scrape: "true"

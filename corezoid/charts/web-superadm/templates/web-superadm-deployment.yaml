@@ -19,7 +19,7 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/web-superadm-configmap-nginx.yaml") . | sha256sum }}
-        checksum/config: {{ include (print $.Template.BasePath "/web-superadm-configmap-site.yaml") . | sha256sum }}
+        checksum/config_site: {{ include (print $.Template.BasePath "/web-superadm-configmap-site.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
