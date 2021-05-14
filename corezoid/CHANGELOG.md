@@ -1,4 +1,9 @@
 ## Changelog
+### Chart 0.18.1 [ Corezoid 5.6.1 ]
+Improvements:
+- Fix duplicate checksum/config in deployments
+- COR-8773 (MAM-872) - Add a single parameter to HELM CHART config for managing logging levels
+
 ### Chart 0.18 [ Corezoid 5.6.1 ]
 Improvements:
 - add crashdump saver with telegramm integration

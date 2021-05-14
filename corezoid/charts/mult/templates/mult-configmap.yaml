@@ -350,14 +350,8 @@ data:
       {lager,
         [
           %% What handlers to install with what arguments (wrapped by middleman)
-
           {log_root, "/ebsmnt/erlang/conveyor_api_multipart/log"},
-
-          {handlers, [
-            {lager_console_backend, info},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
-          ]},
+          {handlers, [ {lager_console_backend, {{ .Values.global.error_log_level | default "info" }} } ]},
 
           %% What colors to use with what log levels
           {colored, true},
@@ -396,26 +390,6 @@ data:
           {async_threshold_window, 5}
         ]
       },
-
-      %% Client for healthcheck server
-      {hcheck_sender, [
-        {host, <<"hcs-service">>}, %% host of the remote healthcheck server
-        {port, 5011}, %% port of the remote healthcheck server
-        {node_name,  <<"mult-{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">> }, %% different for each node
-        {node_type,  <<"multipart">> }, %% api | worker | multipart | http_worker | usercode | deepmemo ...
-        {disabled, true}, %% true by default
-        {send_interval_sec, 30}, %% by default 10 sec
-        {send_system_counters, true} %% memory processes etc, false by default
-      ]},
-
-      %% SASL config
-      {sasl, [
-        {sasl_error_logger, {file, "log/sasl-error.log"}},
-        {errlog_type, error},
-        {error_logger_mf_dir, "log/sasl"},      % Log directory
-        {error_logger_mf_maxbytes, 10485760},   % 10 MB max file size
-        {error_logger_mf_maxfiles, 1}           % 5 files max
-      ]},
 
       {corezoid_sdk, [
         {host, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"}

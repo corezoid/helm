@@ -14,12 +14,12 @@ spec:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-  replicas: {{ .Values.global.syncapi.replicas }}
+  replicas: {{ .Values.global.syncapi.minReplicas }}
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/syncapi-configmap.yaml") . | sha256sum }}
-        checksum/config: {{ include (print $.Template.BasePath "/syncapi-configmap-vm.yaml") . | sha256sum }}
+        checksum/config_vm: {{ include (print $.Template.BasePath "/syncapi-configmap-vm.yaml") . | sha256sum }}
         prometheus.io/path: /metrics
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"

@@ -1412,17 +1412,8 @@ data:
         %% Or create conv and put id to new_billing_conv_id section
         {billing, []},
         {lager, [
-          %% What handlers to install with what arguments (wrapped by middleman)
-
           {log_root, "/ebsmnt/erlang/worker/log"},
-
-          {handlers, [
-            {lager_console_backend, debug},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 15000000}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 15000000}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 15000000}, {date, "$D0"}, {count, 1}]}
-
-          ]},
+          {handlers, [ {lager_console_backend, {{ .Values.global.error_log_level | default "info" }} } ]},
 
           %% What colors to use with what log levels
           {colored, true},
@@ -1461,20 +1452,7 @@ data:
           %% to async_threshold - async_threshold_window
           {async_threshold_window, 5}
         ]
-      },
-
-      %% Client for healthcheck server
-      {hcheck_sender, [
-        {host, <<"hcs-service">>}, %% host of the remote healthcheck server
-        {port, 5011}, %% port of the remote healthcheck server
-        {node_name,  <<"worker-{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">> }, %% different for each node
-        {node_type,  <<"worker">> }, %% api | worker | multipart | http_worker | usercode | deepmemo ...
-        {disabled, true}, %% true by default
-        {send_interval_sec, 30}, %% by default 10 sec
-        {send_system_counters, true} %% memory processes etc, false by default
-      ]},
-
-      {sasl, [{sasl_error_logger, false}]}
+      }
     ].
 
 
