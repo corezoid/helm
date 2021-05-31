@@ -14,6 +14,7 @@ global:
   product: "corezoid"
   # Ingress annotations
   ingress:
+    name: "cz-ingress"
     annotations:
       kubernetes.io/ingress.class: alb
       alb.ingress.kubernetes.io/scheme: internet-facing
@@ -34,9 +35,7 @@ global:
   # Define global storageClass name
   storageClassName: "corezoid-storage-class-default"
 
-  limits:
-    tag: "1.2.2-without-tini"
-    minReplicas: 1
+
 
   # global error_log level, info - default
   # available value info | warning | error | debug
@@ -152,11 +151,24 @@ capi:
 #                    - capi
 #            topologyKey: failure-domain.beta.kubernetes.io/zone
 
+########  Settings for services corezoid limits ########
+limits:
+  appName: limits
+  image:
+    registry: docker-hub.middleware.biz
+    repository: /corezoid_limits
+  tag: "1.2.2-without-tini"
+  minReplicas: 1
+  port: 8585
 
 ########  Settings for services  ########
 
 # http-worker
 http:
+  appName: http-worker
+  image:
+    registry: docker-hub.middleware.biz
+    repository: /http-worker
   tag: "master-kub"
   minReplicas: 1
   maxReplicas: 4
@@ -202,6 +214,10 @@ http:
 
 # usercode
 usercode:
+  appName: usercode
+  image:
+    registry: docker-hub.middleware.biz
+    repository: /usercode
   tag: "7.2.1"
   minReplicas: 1
   maxReplicas: 1
@@ -239,8 +255,12 @@ usercode:
 
 # conveyor-worker
 worker:
+  appName: worker
+  image:
+    registry: docker-hub.middleware.biz
+    repository: /conveyor-worker
   tag: "4.6.1.0-without-tini"
-  minReplicas: 4
+  minReplicas: 1
   maxReplicas: 4
   # application resources limits and requests
   resources:
@@ -248,8 +268,8 @@ worker:
       cpu: 4
       memory: 4000M
     requests:
-      cpu: 4
-      memory: 4000M
+      cpu: 1
+      memory: 500M
   # enigma private_key_id
   enigma_pk_id: ""
   affinity: {}
@@ -276,6 +296,10 @@ worker:
 
 # mult
 mult:
+  appName: mult
+  image:
+    registry: docker-hub.middleware.biz
+    repository: /conveyor_api_multipart
   tag: "2.5.1.0"
   minReplicas: 1
   maxReplicas: 1
@@ -318,7 +342,10 @@ mult:
 
 # webadm
 webadm:
-  #    tag: "develop"
+  appName: corezoid-web-adm
+  image:
+    registry: docker-hub.middleware.biz
+    repository: /conveyor_adm_web
   tag: "5.6.1"
   minReplicas: 2
   resources:
@@ -352,12 +379,20 @@ webadm:
 
 # web-superadm
 web_superadm:
+  appName: corezoid-web-superadm
+  image:
+    registry: docker-hub.middleware.biz
+    repository: /conf_agent_admin
   tag: "1.5.1"
   subdomain: "superadm-k8s-public"
   minReplicas: 1
 
 # syncapi
 syncapi:
+  appName: syncapi
+  image:
+    registry: docker-hub.middleware.biz
+    repository: /corezoid_api_sync
   subdomain: "syncapi-k8s-public"
   tag: "2.0.4"
   minReplicas: 4
@@ -393,6 +428,10 @@ syncapi:
 
 # merchant
 merchant:
+  appName: merchant
+  image:
+    registry: docker-hub.middleware.biz
+    repository: /merchant
   tag: "v0.0.27.2"
   secret:
     ## true - secret will be created automaticaly with provided values
@@ -404,6 +443,8 @@ merchant:
       merchant_login: apiLogin1
       merchant_secret: I9EmB170XUbe
   # application resources limits and requests
+  port: 8080
+  targetPort: 8080
   resources:
     limits:
       cpu: 500m
@@ -414,6 +455,10 @@ merchant:
 
 # enigma global settings
 enigma:
+  appName: enigma-key-manager
+  image:
+    registry: docker-hub.middleware.biz
+    repository: /enigma-key-manager
   enabled: false
   encryption: false
   key_manager:
@@ -468,6 +513,7 @@ confAgentServer:
 
 
 store_dumps:
+  appName: dump
   enabled: false
   dumps_dir: /var/dumps/
   http_endpoint: http://dump-service:3000/upload

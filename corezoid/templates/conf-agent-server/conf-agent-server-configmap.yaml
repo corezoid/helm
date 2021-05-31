@@ -166,4 +166,4 @@ data:
 
 kind: ConfigMap
 metadata:
-  name: {{ .Values.confAgentServer.appNameappName }}-config
+  name: {{ .Values.confAgentServer.appName }}-config

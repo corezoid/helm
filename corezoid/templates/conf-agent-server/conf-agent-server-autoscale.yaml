@@ -1,15 +1,15 @@
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ .Values.confAgentServer.appNameappName }}-autoscale
+  name: {{ .Values.confAgentServer.appName }}-autoscale
   labels:
     app: {{ .Values.global.product }}
-    tier: {{ .Values.confAgentServer.appNameappName }}
+    tier: {{ .Values.confAgentServer.appName }}
 spec:
   minReplicas: {{ .Values.confAgentServer.minReplicas }}
   maxReplicas: {{ .Values.confAgentServer.maxReplicas }}
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ .Values.confAgentServer.appNameappName }}-deployment
+    name: {{ .Values.confAgentServer.appName }}-deployment
   targetCPUUtilizationPercentage: {{ .Values.capi.targetCPUUtilizationPercentage | default "65" }}
