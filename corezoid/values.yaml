@@ -481,7 +481,7 @@ sa:
   google_client_id: "1324123412341234-gtkf93avg23vfhtgg9ood8hfpfitf95.apps.googleusercontent.com"
   google_client_secret: "QW4s20Vobe7_QuqzKViGC"
 sa_web:
-  subdomain: ""
+  subdomain: "sa"
 
 # gitcall | worker and rabbit settings
 gitcall:
