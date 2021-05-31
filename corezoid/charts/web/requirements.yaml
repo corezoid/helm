@@ -1,3 +1,0 @@
-dependencies:
-  - name: ingress
-    repository: "stable/nginx-ingress"

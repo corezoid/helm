@@ -1,0 +1,15 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.capi.appName | default "capi" }}-autoscale
+  labels:
+    app: {{ .Values.product }}
+    tier: {{ .Values.capi.appName | default "capi" }}
+spec:
+  minReplicas: {{ .Values.capi.minReplicas | default "1" }}
+  maxReplicas: {{ .Values.capi.maxReplicas | default "4" }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.capi.appName | default "capi" }}-deployment
+  targetCPUUtilizationPercentage: {{ .Values.capi.targetCPUUtilizationPercentage | default "65" }}

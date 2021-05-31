@@ -1,4 +1,0 @@
-appName: usercode
-image:
-  registry: docker-hub.middleware.biz
-  repository: /usercode

@@ -1,7 +1,0 @@
-appName: limits
-image:
-  registry: docker-hub.middleware.biz
-  repository: /corezoid_limits
-
-containers:
-  containerPort: 8585

@@ -1,6 +1,0 @@
-appName: capi
-image:
-  registry: docker-hub.middleware.biz
-  repository: /conveyor_api
-containers:
-  containerPort: 9080
