@@ -81,15 +81,15 @@ global:
 
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
-    bouncer_minReplicas: "4"
+    bouncer_minReplicas: "1"
     bouncer_maxReplicas: "4"
     bouncer_resources:
       limits:
         cpu: "500m"
         memory: "500Mi"
       requests:
-        cpu: "500m"
-        memory: "500Mi"
+        cpu: "100m"
+        memory: "100Mi"
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
@@ -195,8 +195,8 @@ global:
         cpu: 4
         memory: 4000Mi
       requests:
-        cpu: 4
-        memory: 4000Mi
+        cpu: 1
+        memory: 500Mi
     ## restricting user registration only within the domains specified below if enabled
     registration_restriction:
       enable: false
@@ -293,15 +293,15 @@ global:
   http:
     tag: "master-kub"
 #    tag: "3.5.0.2-without-tini"
-    minReplicas: 4
+    minReplicas: 1
     maxReplicas: 4
     resources:
       limits:
         cpu: 4
         memory: 4000Mi
       requests:
-        cpu: 4
-        memory: 4000Mi
+        cpu: 1
+        memory: 500Mi
     max_http_resp_size: "5242880"
     blocked_domains:
       - "169.254.169.254"
@@ -348,7 +348,7 @@ global:
         memory: 1000Mi
       requests:
         cpu: 1
-        memory: 1000Mi
+        memory: 100Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
@@ -377,7 +377,7 @@ global:
   # conveyor-worker
   worker:
     tag: "4.6.1.0-without-tini"
-    minReplicas: 4
+    minReplicas: 1
     maxReplicas: 4
     # application resources limits and requests
     resources:
@@ -385,8 +385,8 @@ global:
         cpu: 4
         memory: 4000M
       requests:
-        cpu: 4
-        memory: 4000M
+        cpu: 1
+        memory: 500M
     # enigma private_key_id
     enigma_pk_id: ""
     affinity: {}
@@ -428,7 +428,7 @@ global:
         memory: 1000Mi
       requests:
         cpu: 1
-        memory: 1000Mi
+        memory: 100Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
@@ -498,15 +498,15 @@ global:
   syncapi:
     subdomain: "syncapi-k8s-public"
     tag: "2.0.4"
-    minReplicas: 4
+    minReplicas: 1
     maxReplicas: 4
     resources:
       limits:
         cpu: 4
         memory: 4000Mi
       requests:
-        cpu: 4
-        memory: 4000Mi
+        cpu: 1
+        memory: 500Mi
 
     affinity: {}
   #    # hard AZ-based affinity
