@@ -1,4 +1,7 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.worker.appName }}-config
 data:
   worker.config: |
     [
@@ -1456,6 +1459,3 @@ data:
     ].
 
 
-kind: ConfigMap
-metadata:
-  name: {{ .Values.worker.appName }}-config

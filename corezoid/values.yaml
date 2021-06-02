@@ -161,7 +161,7 @@ limits:
 
 # http-worker
 http:
-  appName: http-worker
+  appName: app-http-worker
   image:
     registry: docker-hub.middleware.biz
     repository: /http-worker
@@ -437,7 +437,7 @@ merchant:
     data:
       # login/secret for corezoid-merchant communications
       merchant_login: apiLogin1
-      merchant_secret: I9EmB170XUbe
+      merchant_secret: I9EmB170XUbe88
   # application resources limits and requests
   port: 8080
   targetPort: 8080
@@ -549,15 +549,15 @@ redis:
     # you can specify different servers for redis for counters, cache and timers  - or specify the same server in variables
     data:
       # default redis for counters
-      host: "k8s-mambu-dev.h2avrs.0001.euw1.cache.amazonaws.com"
+      host: "k8s-m888ambu-dev.h2avrs.0001.euw1.cache.amazonaws.com"
       port: 6379
       password: ""
       # default redis for cache
-      host_cache: "k8s-mambu-dev-cache.h2avrs.ng.0001.euw1.cache.amazonaws.com"
+      host_cache: "k8s-ma8888mbu-dev-cache.h2avrs.ng.0001.euw1.cache.amazonaws.com"
       port_cache: 6379
       password_cache: ""
       # default redis for timers
-      host_timers: "k8s-mambu-dev-timers.h2avrs.ng.0001.euw1.cache.amazonaws.com"
+      host_timers: "k8s-ma8888mbu-dev-timers.h2avrs.ng.0001.euw1.cache.amazonaws.com"
       port_timers: 6379
       password_timers: ""
 
@@ -571,10 +571,10 @@ rabbitmq:
   secret:
     ## true - secret will be created automatically with provided values
     ## false - secret should be created manually
-    create: true
+    create: false
     name: "rabbitmq-secret"
     data:
-      host: "rmq.devopsdev.corezoid.com"
+      host: "rmq.de8888vopsdev.corezoid.com"
       port: 5672
       vhost: "/conveyor"
       username: "app-user"
@@ -589,7 +589,7 @@ rabbitmq:
 postgres:
   image:
     registry: docker-hub.middleware.biz
-    repository: /pg_schema
+    repository: "/pg_schema"
 
   # if internal true - create and use internal postgres container
   # if internal false - enable external db, like aws rds
@@ -600,7 +600,7 @@ postgres:
   secret:
     ## true - secret will be created automaticaly with provided values
     ## false - secret should be created manualy
-    create: true
+    create: false
     ## secret name
     name: "postgresql-secret"
     ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
@@ -608,7 +608,7 @@ postgres:
     ## password - for dbsuperuser
     dbsuperuserpwd: "Corezoid1234!"
     data:
-      dbhost: "corezoid-public-pg11.c9ko8blcgiqi.eu-west-1.rds.amazonaws.com"
+      dbhost: "888corezoid-public-pg11.c9ko8blcgiqi.eu-west-1.rds.amazonaws.com"
       dbport: 5432
       dbuser: "internal_user"
       dbpwd: "8hhgasdgiuf"
@@ -657,10 +657,9 @@ elasticsearch:
   secret:
     ## true - secret will be created automaticaly with provided values
     ## false - secret should be created manualy
-    create: true
+    create: false
     name: "elasticsearch-secret"
     data:
-      #host: "elasticsearch-elasticsearch-master"
-      host: "https://search-k8s-mambu-dev-k2fbtgrdi2lhe5exy5nana423a.eu-west-1.es.amazonaws.com"
+      host: "elasticsearch-elasticsearch-master"
       ## be careful with port - in internal install used 9200, in aws uses 443
       port: 443

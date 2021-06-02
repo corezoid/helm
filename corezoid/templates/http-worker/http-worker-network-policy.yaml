@@ -8,7 +8,7 @@ metadata:
 spec:
   podSelector:
       matchLabels:
-        tier: {{ .Values.worker.appName}}
+        tier: {{ .Values.http.appName}}
   egress:
     - to:
       - ipBlock:

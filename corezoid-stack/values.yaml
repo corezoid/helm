@@ -555,7 +555,7 @@ postgres:
   enable: true
   image:
     registry: "docker-hub.middleware.biz"
-    repository: "/pg_schema"
+    repository: "pg_schema"
   # if internal true - create and use internal postgres container
   # if internal false - enable external db, like aws rds
   internal: false

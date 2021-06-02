@@ -1,4 +1,10 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.http.appName }}-config
+  labels:
+    app: {{ .Values.global.product }}
+    service: {{ .Values.http.appName}}
 data:
   http_worker.config: |
     %% -*- mode: erlang;  -*-
@@ -392,9 +398,4 @@ data:
 
     ].
 
-kind: ConfigMap
-metadata:
-  name: {{ .Values.worker.appName }}-config
-  labels:
-    app: {{ .Values.global.product }}
-    service: {{ .Values.worker.appName}}
+

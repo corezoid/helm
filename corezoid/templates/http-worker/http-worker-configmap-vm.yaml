@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.worker.appName }}-config-vm
+  name: {{ .Values.http.appName }}-config-vm
   labels:
     app: {{ .Values.global.product }}
-    service: {{ .Values.worker.appName}}
+    service: {{ .Values.http.appName}}
 data:
   vm.args: |
     ## Name of the node

@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.worker.appName}}-deployment
+  name: {{ .Values.http.appName}}-deployment
   labels:
     app: {{ .Values.global.product }}
-    tier: {{ .Values.worker.appName}}
+    tier: {{ .Values.http.appName}}
 spec:
   selector:
     matchLabels:
-      tier: {{ .Values.worker.appName }}
+      tier: {{ .Values.http.appName }}
   replicas: 1
   strategy:
     type: RollingUpdate
@@ -20,13 +20,12 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/http-worker/http-worker-configmap.yaml") . | sha256sum }}
         checksum/config_vm: {{ include (print $.Template.BasePath "/http-worker/http-worker-configmap-vm.yaml") . | sha256sum }}
-
         prometheus.io/path: /metrics
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"
       labels:
         app: {{ .Values.global.product}}
-        tier: {{ .Values.worker.appName}}
+        tier: {{ .Values.http.appName}}
     spec:
       {{ if .Values.http.affinity }}
       affinity:
@@ -87,7 +86,7 @@ spec:
                   key: password
       shareProcessNamespace: true
       containers:
-        - name: {{ .Values.worker.appName}}
+        - name: {{ .Values.http.appName}}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.http.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           env:
@@ -98,7 +97,7 @@ spec:
             - name: SCHEDULERS
               value: "4"
             - name: NODE_COOKIE
-              value: {{ .Values.worker.appName }}-{{ .Release.Namespace }}
+              value: {{ .Values.http.appName }}-{{ .Release.Namespace }}
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -196,10 +195,10 @@ spec:
               exec:
                 command: ["/ebsmnt/erlang/http_worker/bin/http_worker","stop"]
           volumeMounts:
-            - name: {{ .Values.worker.appName}}-config
+            - name: {{ .Values.http.appName}}-config
               mountPath: /ebsmnt/conf/http_worker.config
               subPath: http_worker.config
-            - name: {{ .Values.worker.appName }}-config-vm
+            - name: {{ .Values.http.appName }}-config-vm
               mountPath: /ebsmnt/erlang/http_worker/releases/1/vm.args
               subPath: vm.args
             - name: corezoid-license
@@ -215,12 +214,12 @@ spec:
         - name: corezoid-secret
       {{- end }}
       volumes:
-        - name: {{ .Values.worker.appName}}-config
+        - name: {{ .Values.http.appName}}-config
           configMap:
-            name: {{ .Values.worker.appName}}-config
-        - name: {{ .Values.worker.appName }}-config-vm
+            name: {{ .Values.http.appName}}-config
+        - name: {{ .Values.http.appName }}-config-vm
           configMap:
-            name: {{ .Values.worker.appName }}-config-vm
+            name: {{ .Values.http.appName }}-config-vm
         - name: corezoid-license
           secret:
             secretName: license-share-new
