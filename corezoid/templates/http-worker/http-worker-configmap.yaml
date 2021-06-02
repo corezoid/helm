@@ -25,7 +25,7 @@ data:
             {{- if eq .Values.rabbitmq.internal false }}
               [
                 {host, "${MQ_HOST}"},
-                {port, ${MQ_PORT}},
+                {port, "${MQ_PORT}"},
                 {username, <<"${MQ_USERNAME}">>},
                 {password, <<"${MQ_PASSWORD}">>},
                 {vhost, <<"${MQ_VHOST}">>}
@@ -51,7 +51,7 @@ data:
     {{- if eq .Values.rabbitmq.internal false }}
                   [
                     {host, "${MQ_HOST}"},
-                    {port, ${MQ_PORT}},
+                    {port, "${MQ_PORT}"},
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
@@ -98,7 +98,7 @@ data:
           {redis, [
         {{- if eq .Values.redis.internal false }}
               {host, "${REDIS_HOST}"},
-              {port, ${REDIS_PORT}},
+              {port, "${REDIS_PORT}"},
               {password,"${REDIS_PASSWORD}"},
         {{- else }}
               {host, "redis-master"},

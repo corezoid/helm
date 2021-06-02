@@ -344,7 +344,7 @@ data:
                 %% Elastic helps us to find these objects for name, It's as like in DB
             {elastic_search, [
                 {host, <<"${ELASTICSEARCH_HOST}">>},
-                {port, ${ELASTICSEARCH_PORT} },
+                {port, ${ELASTICSEARCH_PORT}},
                 {timeout, 50000}
             ]},
 

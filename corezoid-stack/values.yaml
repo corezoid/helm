@@ -41,16 +41,16 @@ global:
 ########  Settings for Corezoid services  ########
 ## Settings for API Corezoid
 capi:
-  appName: "capi" # default - capi
+  appName:  # default - capi
   image:
     registry: docker-hub.middleware.biz
     rsepository: /conveyor_api
   tag: "7.6.1.1"
   minReplicas: 1
   maxReplicas: 4
-  port: 9080
-  targetPort: 9080
-  targetCPUUtilizationPercentage: 65
+  port: "9080"
+  targetPort: "9080"
+  targetCPUUtilizationPercentage: "65"
   resources:
     limits:
       cpu: 4
@@ -109,7 +109,7 @@ capi:
       color_logo: "#0791e5"
       color_logo_hover: "#056cab"
   ldap_server: "ldap.middleware.loc"
-  ldap_port: 389
+  ldap_port: "389"
   ldap_base: "ou=people,o=middleware"
   ldap_filter: "uid"
   # then this param is true, bind_user_name, bind_user_pass should be filled. if it's false it is not necessary
@@ -495,8 +495,8 @@ confAgentServer:
   tag: "1.5.2-without-tini"
   minReplicas: 1
   maxReplicas: 2
-  port: 8585
-  targetPort: 8585
+  port: "8585"
+  targetPort: "8585"
   targetCPUUtilizationPercentage: 65
   resources:
     limits:
@@ -534,63 +534,28 @@ store_dumps:
     # number of rotation
     copies: 7
 
-redis:
-  # if internal true - create and use internal k8s redis container
-  # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
-  internal: false
-  ## pvc name if it already exist or was created manualy
-  persistantVolumeClaimName: "redis-pvc"
-  ## secret configuration for redis
-  secret:
-    ## true - secret will be created automatically with provided values
-    ## false - secret should be created manually
-    create: false
-    name: "redis-secret"
-    # you can specify different servers for redis for counters, cache and timers  - or specify the same server in variables
-    data:
-      # default redis for counters
-      host: "k8s-mambu-dev.h2avrs.0001.euw1.cache.amazonaws.com"
-      port: 6379
-      password: ""
-      # default redis for cache
-      host_cache: "k8s-mambu-dev-cache.h2avrs.ng.0001.euw1.cache.amazonaws.com"
-      port_cache: 6379
-      password_cache: ""
-      # default redis for timers
-      host_timers: "k8s-mambu-dev-timers.h2avrs.ng.0001.euw1.cache.amazonaws.com"
-      port_timers: 6379
-      password_timers: ""
+######## Settings AWS EFS filesystem   ########
+efs:
+  awsRegion: "eu-west-1"
+  efsFileSystemId: "fs-1388e9d9"
+  ## set true if you choose storage: efs
+  enabled: true
 
-#######  RabbitMQ  ########
-## Supported version  3.8.*
-rabbitmq:
-  # if internal true - create and use internal rmq container
-  # if internal false - enable external rmq (on aws ec2 instances as example)
-  internal: false
-  ## secret configuration for rabbitmq
-  secret:
-    ## true - secret will be created automatically with provided values
-    ## false - secret should be created manually
-    create: true
-    name: "rabbitmq-secret"
-    data:
-      host: "rmq.devopsdev.corezoid.com"
-      port: 5672
-      vhost: "/conveyor"
-      username: "app-user"
-      password: "passwertws"
-      rabbitmqErlangCookie: ""
-  # vm_memory_high_watermark.relative
-  memoryHighWatermark: 0.3
+######## Settings NFS filesystem   ########
+nfs:
+  ## set true if you choose storage: nfs
+  enabled: false
+
+########  Settings for stateful services  ########
 
 #######  PostgreSQL  ########
 ## Supported version  from 9.6.* <
 ## for RDS minimum instance - db.t2.medium / master user set "postgres"
 postgres:
+  enable: true
   image:
-    registry: docker-hub.middleware.biz
-    repository: /pg_schema
-
+    registry: "docker-hub.middleware.biz"
+    repository: "/pg_schema"
   # if internal true - create and use internal postgres container
   # if internal false - enable external db, like aws rds
   internal: false
@@ -609,7 +574,7 @@ postgres:
     dbsuperuserpwd: "Corezoid1234!"
     data:
       dbhost: "corezoid-public-pg11.c9ko8blcgiqi.eu-west-1.rds.amazonaws.com"
-      dbport: 5432
+      dbport: "5432"
       dbuser: "internal_user"
       dbpwd: "8hhgasdgiuf"
   ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
@@ -646,6 +611,54 @@ postgres:
     # minute hour day month dayofweek
     schedule: "0 0 1 * *"
 
+#######  Redis  ########
+## Supported version  from > 3.2.4 - 3.2.12
+## NO CLUSTER Mode!
+redis:
+  # default redis for counters
+  host: "k8s-mambu-dev.h2avrs.0001.euw1.cache.amazonaws.com"
+  port: "6379"
+  password: ""
+  # default redis for cache
+  host_cache: "k8s-mambu-dev-cache.h2avrs.ng.0001.euw1.cache.amazonaws.com"
+  port_cache: "6379"
+  password_cache: ""
+  # default redis for timers
+  host_timers: "k8s-mambu-dev-timers.h2avrs.ng.0001.euw1.cache.amazonaws.com"
+  port_timers: "6379"
+  password_timers: ""
+
+  #existingSecret:
+  #  name: "redis-secretqq"
+
+  # if internal true - create and use internal k8s redis container
+  # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
+  internal: false
+  ## pvc name if it already exist or was created manualy
+  persistantVolumeClaimName: "redis-pvc"
+  ## secret configuration for redis
+  secret:
+    ## true - secret will be created automatically with provided values
+    ## false - secret should be created manually
+    create: true
+    name: "redis-secret"
+    # you can specify different servers for redis for counters, cache and timers  - or specify the same server in variables
+    data:
+      # default redis for counters
+      host: "k8s-mambu-dev.h2avrs.0001.euw1.cache.amazonaws.com"
+      port: "6379"
+      password: ""
+      # default redis for cache
+      host_cache: "k8s-mambu-dev-cache.h2avrs.ng.0001.euw1.cache.amazonaws.com"
+      port_cache: "6379"
+      password_cache: ""
+      # default redis for timers
+      host_timers: "k8s-mambu-dev-timers.h2avrs.ng.0001.euw1.cache.amazonaws.com"
+      port_timers: "6379"
+      password_timers: ""
+
+
+
 #######  Elasticsearch  ########
 ## Supported version 6.7.*
 elasticsearch:
@@ -663,4 +676,26 @@ elasticsearch:
       #host: "elasticsearch-elasticsearch-master"
       host: "https://search-k8s-mambu-dev-k2fbtgrdi2lhe5exy5nana423a.eu-west-1.es.amazonaws.com"
       ## be careful with port - in internal install used 9200, in aws uses 443
-      port: 443
+      port: "443"
+
+#######  RabbitMQ  ########
+## Supported version  3.8.*
+rabbitmq:
+  # if internal true - create and use internal rmq container
+  # if internal false - enable external rmq (on aws ec2 instances as example)
+  internal: false
+  ## secret configuration for rabbitmq
+  secret:
+    ## true - secret will be created automatically with provided values
+    ## false - secret should be created manually
+    create: true
+    name: "rabbitmq-secret"
+    data:
+      host: "rmq.devopsdev.corezoid.com"
+      port: "5672"
+      vhost: "/conveyor"
+      username: "app-user"
+      password: "passwertws"
+      rabbitmqErlangCookie: ""
+  # vm_memory_high_watermark.relative
+  memoryHighWatermark: 0.3

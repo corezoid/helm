@@ -20,7 +20,4 @@ Upgrade:    helm upgrade {{ .Release.Name }} .
 
 *****************************************************************************************************
 
-Helpers:
-  name: {{ include "corezoid.chart" . }}
-
 

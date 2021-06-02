@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ .Values.capi.appName | default "capi" }}-deployment
   labels:
-    app: {{ .Values.product }}
+    app: {{ .Values.global.product }}
     tier: {{ .Values.capi.appName | default "capi" }}
 spec:
   selector:
@@ -24,7 +24,7 @@ spec:
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"
       labels:
-        app: {{ .Values.product }}
+        app: {{ .Values.global.product }}
         tier: {{ .Values.capi.appName | default "capi" }}
     spec:
       {{ if .Values.capi.affinity }}
@@ -222,8 +222,8 @@ spec:
                 name: {{ .Values.postgres.secret.name }}
                 key: dbport
           ports:
-          - containerPort: {{ .Values.capi.port | default "9080" | quote }}
-          - containerPort: {{ .Values.confAgentServer.port | default "8585" | quote }}
+          - containerPort: {{ .Values.capi.port }}
+          - containerPort: {{ .Values.confAgentServer.port }}
           lifecycle:
             preStop:
               exec:
