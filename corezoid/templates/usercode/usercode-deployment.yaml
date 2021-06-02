@@ -86,7 +86,7 @@ spec:
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.usercode.appName }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.usercode.tag }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.usercode.image.repository }}:{{ .Values.usercode.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           env:
             - name: IPNODEDOMAIN

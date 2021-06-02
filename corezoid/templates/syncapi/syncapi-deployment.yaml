@@ -59,7 +59,7 @@ spec:
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.syncapi.appName }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.syncapi.tag }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.syncapi.image.repository }}:{{ .Values.syncapi.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           env:
             - name: NODE_COOKIE

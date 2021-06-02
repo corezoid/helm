@@ -1,0 +1,90 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Values.global.ingress.name | default "cz-ingress" }}-{{ .Release.Namespace }}
+  {{- if .Values.global.ingress.annotations }}
+  annotations:
+    {{- toYaml .Values.global.ingress.annotations | nindent 4 }}
+  {{- end }}
+  labels:
+    app: {{ .Values.global.product | default "corezoid" }}
+    tier: {{ .Values.global.ingress.name | default "cz-ingress" }}
+spec:
+  rules:
+    - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - path: /api/?/upload*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /api/?/copy*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /user_downloads*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /api/?/download*
+            backend:
+              serviceName: mult-service-node
+              servicePort: 9082
+          - path: /api/*
+            backend:
+              serviceName: capi-service-node
+              servicePort: 9080
+          - path: /auth/*
+            backend:
+              serviceName: capi-service-node
+              servicePort: 9080
+          - path: /system
+            backend:
+              serviceName: capi-service-node
+              servicePort: 9080
+          - backend:
+              serviceName: corezoid-web-adm
+              servicePort: 80
+
+    - host: {{ .Values.web_superadm.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - backend:
+              serviceName: corezoid-web-superadm
+              servicePort: 80
+    - host: {{ .Values.syncapi.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - backend:
+              serviceName: syncapi-main
+              servicePort: 8090
+    {{- if .Values.sa.enabled }}
+    - host: {{ .Values.sa_web.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - backend:
+              serviceName: single-account-web
+              servicePort: 80
+    {{- end }}
+    {{- if .Values.store_dumps.subdomain }}
+    - host: {{ .Values.store_dumps.subdomain }}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - backend:
+              serviceName: dump-service-node
+              servicePort: 80
+  {{- end }}
+  {{- if .Values.global.ingress_tls }}
+  tls:
+    - hosts:
+        {{- if .Values.store_dumps.subdomain }}
+        - {{ .Values.store_dumps.subdomain }}.{{ .Values.global.domain }}
+        {{- end }}
+        - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+        - {{ .Values.web_superadm.subdomain}}.{{ .Values.global.domain }}
+        - {{ .Values.syncapi.subdomain}}.{{ .Values.global.domain }}
+        {{- if .Values.sa.enabled }}
+        - {{ .Values.sa_web.subdomain}}.{{ .Values.global.domain }}
+        {{- end }}
+      secretName: tls-{{ .Values.global.ingress.name }}-{{ .Release.Namespace }}
+{{- end }}

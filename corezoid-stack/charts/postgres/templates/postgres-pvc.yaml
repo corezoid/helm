@@ -1,0 +1,19 @@
+{{- if .Values.postgres.persistantVolumeClaimName }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Values.postgres.persistantVolumeClaimName }}
+  {{- if eq .Values.global.storage "efs" }}
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{ .Values.global.storageClassName }}
+  {{- end }}
+  labels:
+    tier: {{ .Values.appName }}
+spec:
+  storageClassName: {{ .Values.global.storageClassName }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+{{- end }}

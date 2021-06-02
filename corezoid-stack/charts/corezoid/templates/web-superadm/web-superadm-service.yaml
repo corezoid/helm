@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.web_superadm.appName }}
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.web_superadm.appName }}
+spec:
+  selector:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.web_superadm.appName }}
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: NodePort

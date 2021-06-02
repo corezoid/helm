@@ -87,7 +87,7 @@ spec:
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.http.appName}}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.http.tag }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.http.image.repository }}:{{ .Values.http.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           env:
             - name: IPNODEDOMAIN
@@ -195,7 +195,7 @@ spec:
               exec:
                 command: ["/ebsmnt/erlang/http_worker/bin/http_worker","stop"]
           volumeMounts:
-            - name: {{ .Values.http.appName}}-config
+            - name: {{ .Values.http.appName }}-config
               mountPath: /ebsmnt/conf/http_worker.config
               subPath: http_worker.config
             - name: {{ .Values.http.appName }}-config-vm
@@ -214,9 +214,9 @@ spec:
         - name: corezoid-secret
       {{- end }}
       volumes:
-        - name: {{ .Values.http.appName}}-config
+        - name: {{ .Values.http.appName }}-config
           configMap:
-            name: {{ .Values.http.appName}}-config
+            name: {{ .Values.http.appName }}-config
         - name: {{ .Values.http.appName }}-config-vm
           configMap:
             name: {{ .Values.http.appName }}-config-vm

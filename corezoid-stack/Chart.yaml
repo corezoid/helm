@@ -10,10 +10,10 @@ maintainers:
 engine: gotpl
 icon: https://corezoid.com/static/ce1da2c78726bb5ce1cf53b002dac519/62341/CorezoidProduct.png
 
-#dependencies:
-#  - name: redis
-#    version: "0.1.0"
-#    condition: global.redis.internal
+dependencies:
+  - name: redis
+    version: "0.1.0"
+    condition: redis.internal
 #  - name: elasticsearch
 #    version: "0.1.0"
 #    condition: global.elasticsearch.internal

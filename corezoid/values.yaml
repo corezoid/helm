@@ -7,7 +7,7 @@ image:
 
 global:
   # second level domain only! / core domain (example: corezoid.com)
-  domain: "devopsdev.corezoid.com"
+  domain: "devopswwwdev.corezoid.com"
   # subdomain / sitename - dev.mpo.corezoid.com (example: dev.mpo)
   subdomain: "corezoid-k8s-public"
   repotype: "public"
@@ -33,7 +33,7 @@ global:
   # Define global storage class: efs / nfs / manual
   storage: efs
   # Define global storageClass name
-  storageClassName: "corezoid-storage-class-default"
+  storageClassName: "corezoid-storage-class-defaultwwww"
   # global error_log level, info - default
   # available value info | warning | error | debug
   error_log_level: debug
@@ -391,15 +391,15 @@ syncapi:
     repository: /corezoid_api_sync
   subdomain: "syncapi-k8s-public"
   tag: "2.0.4"
-  minReplicas: 4
+  minReplicas: 1
   maxReplicas: 4
   resources:
     limits:
       cpu: 4
       memory: 4000Mi
     requests:
-      cpu: 4
-      memory: 4000Mi
+      cpu: 1
+      memory: 500Mi
   affinity: {}
 #    # hard AZ-based affinity
 #      podAntiAffinity:
@@ -537,14 +537,14 @@ store_dumps:
 redis:
   # if internal true - create and use internal k8s redis container
   # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
-  internal: false
+  internal: true
   ## pvc name if it already exist or was created manualy
   persistantVolumeClaimName: "redis-pvc"
   ## secret configuration for redis
   secret:
     ## true - secret will be created automatically with provided values
     ## false - secret should be created manually
-    create: false
+    create: true
     name: "redis-secret"
     # you can specify different servers for redis for counters, cache and timers  - or specify the same server in variables
     data:
@@ -566,12 +566,12 @@ redis:
 rabbitmq:
   # if internal true - create and use internal rmq container
   # if internal false - enable external rmq (on aws ec2 instances as example)
-  internal: false
+  internal: true
   ## secret configuration for rabbitmq
   secret:
     ## true - secret will be created automatically with provided values
     ## false - secret should be created manually
-    create: false
+    create: true
     name: "rabbitmq-secret"
     data:
       host: "rmq.de8888vopsdev.corezoid.com"
@@ -593,14 +593,14 @@ postgres:
 
   # if internal true - create and use internal postgres container
   # if internal false - enable external db, like aws rds
-  internal: false
+  internal: true
   ## secret configuration for postgresql
   ## pvc name
   persistantVolumeClaimName: "postgresql-pvc"
   secret:
     ## true - secret will be created automaticaly with provided values
     ## false - secret should be created manualy
-    create: false
+    create: true
     ## secret name
     name: "postgresql-secret"
     ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
@@ -608,7 +608,7 @@ postgres:
     ## password - for dbsuperuser
     dbsuperuserpwd: "Corezoid1234!"
     data:
-      dbhost: "888corezoid-public-pg11.c9ko8blcgiqi.eu-west-1.rds.amazonaws.com"
+      dbhost: "postgresql-service"
       dbport: 5432
       dbuser: "internal_user"
       dbpwd: "8hhgasdgiuf"
@@ -652,14 +652,14 @@ elasticsearch:
   tag: "6.7.1"
   # if internal true - create and use internal elasticsearch container
   # if internal false - enable external elasticsearch, like aws elasticsearch service
-  internal: false
+  internal: true
   ## secret configuration for elasticsearch
   secret:
     ## true - secret will be created automaticaly with provided values
     ## false - secret should be created manualy
-    create: false
+    create: true
     name: "elasticsearch-secret"
     data:
-      host: "elasticsearch-elasticsearch-master"
+      host: "elasticsearch-master"
       ## be careful with port - in internal install used 9200, in aws uses 443
       port: 443

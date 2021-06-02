@@ -1,0 +1,26 @@
+*****************************************************************************************************
+*************** Please be patient while the chart is being deployed ***************
+
+Corezoid url    https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}
+Superadmin url  https://{{ .Values.web_superadm.subdomain}}.{{ .Values.global.domain }}
+Syncapi url     https://{{ .Values.syncapi.subdomain}}.{{ .Values.global.domain }}
+{{- if .Values.sa.enabled }}
+SingleAccount:  https://{{ .Values.sa_web.subdomain}}.{{ .Values.global.domain }}
+{{- end }}
+{{- if .Values.store_dumps.enabled }}
+Dumps url:      https://{{ .Values.store_dumps.subdomain}}.{{ .Values.global.domain }}
+{{- end }}
+Default login : admin@corezoid.loc
+     password : admin111
+
+
+Uninstall:  helm delete  {{ .Release.Name }}
+Upgrade:    helm upgrade {{ .Release.Name }} .
+
+
+*****************************************************************************************************
+
+Helpers:
+  name: {{ include "corezoid.chart" . }}
+
+

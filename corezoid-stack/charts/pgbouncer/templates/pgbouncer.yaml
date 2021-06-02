@@ -1,0 +1,161 @@
+{{- if .Values.postgres.bouncer }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.appName }}-service
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName}}
+spec:
+  selector:
+    service: {{ .Values.appName }}
+    app: {{ .Values.global.product }}
+  ports:
+  - name: pgbouncer
+    protocol: TCP
+    port: 5432
+    targetPort: 5432
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.appName }}-autoscale
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  minReplicas: {{ .Values.postgres.bouncer_minReplicas }}
+  maxReplicas: {{ .Values.postgres.bouncer_maxReplicas }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.appName }}-deployment
+  targetCPUUtilizationPercentage: 70
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}-deployment
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName}}
+    service: {{ .Values.appName }}
+spec:
+  replicas: {{ .Values.postgres.bouncer_minReplicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.postgres.bouncer_minReplicas }}
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9127"
+        prometheus.io/scrape: "true"
+      labels:
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName}}
+        service: {{ .Values.appName }}
+    spec:
+      containers:
+        - name: {{ .Values.appName }}
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secret.name }}
+                  key: dbuser
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secret.name }}
+                  key: dbpwd
+            - name: STATS_USERS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secret.name }}
+                  key: dbuser
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secret.name }}
+                  key: dbhost
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secret.name }}
+                  key: dbport
+            - name: IGNORE_STARTUP_PARAMETERS
+              value: "extra_float_digits"
+            - name: DB_NAME
+              value: "*"
+            - name: MAX_CLIENT_CONN
+              value: {{ .Values.postgres.maxclientconn | quote }}
+            - name: DEFAULT_POOL_SIZE
+              value: {{ .Values.postgres.default_pool_size | quote }}
+            - name: RESERVE_POOL_SIZE
+              value: "400"
+            - name: POOL_MODE
+              value: {{ .Values.postgres.default_pool_mode }}
+            - name: RESERVE_POOL_TIMEOUT
+              value: "2"
+            - name: SERVER_IDLE_TIMEOUT
+              value: "15"
+          ports:
+          - containerPort: 5432
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1500Mi
+            requests:
+              cpu: 1000m
+              memory: 1000Mi
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+        - name: pgbouncer-exporter
+          image: spreaker/prometheus-pgbouncer-exporter
+          env:
+            - name: PGBOUNCER_EXPORTER_HOST
+              value: 0.0.0.0
+            - name: PGBOUNCER_EXPORTER_PORT
+              value: "9127"
+            - name: PGBOUNCER_HOST
+              value: localhost
+            - name: PGBOUNCER_PORT
+              value: "5432"
+            - name: PGBOUNCER_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secret.name }}
+                  key: dbuser
+            - name: PGBOUNCER_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secret.name }}
+                  key: dbpwd
+      {{- if not  (eq .Values.global.repotype "public") }}
+      imagePullSecrets:
+        - name: corezoid-secret
+      {{- end }}
+{{- end }}

@@ -90,7 +90,7 @@ spec:
       containers:
         - name: {{ .Values.limits.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.limits.tag }}"
+          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.limits.image.repository }}:{{ .Values.limits.tag }}"
           env:
             {{- if .Values.store_dumps.enabled }}
             - name: ERL_CRASH_DUMP
