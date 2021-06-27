@@ -5,10 +5,17 @@ kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
   name: deny-metadata
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.http" . }}
+    app.kubernetes.io/component: {{ .Values.http.name }}
+    app: {{ .Values.global.product }}
 spec:
   podSelector:
-      matchLabels:
-        tier: {{ .Values.http.appName}}
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.http.name }}
+      app.kubernetes.io/name: {{ include "corezoid.http" . }}
+      app: {{ .Values.global.product }}
   egress:
     - to:
       - ipBlock:
@@ -22,6 +29,11 @@ kind: NetworkPolicy
 apiVersion: networking.k8s.io/v1
 metadata:
   name: deny-dashboard
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.http" . }}
+    app.kubernetes.io/component: {{ .Values.http.name }}
+    app: {{ .Values.global.product }}
 spec:
   podSelector:
     matchLabels:

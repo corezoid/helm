@@ -1,7 +1,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: corezoid-web-adm-config-logo
+  name: webadm-config-logo
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
 data:
   logo.svg: |-
 {{- .Files.Get "files/logo.svg" | nindent 4 }}

@@ -1,10 +1,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.http.appName }}-config
-  labels:
+  name: {{ .Values.http.name }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.http" . }}
+    app.kubernetes.io/component: {{ .Values.http.name }}
     app: {{ .Values.global.product }}
-    service: {{ .Values.http.appName}}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
 data:
   http_worker.config: |
     %% -*- mode: erlang;  -*-
@@ -22,29 +26,19 @@ data:
 
       {erlprometheus, [
         {host, {0,0,0,0}},
-        {port, 9100}
+        {port, {{ .Values.prometheus.port | default 9100 }}}
       ]},
 
     {ermql, [
         {publish_request, [
           {servers, [
-            {{- if eq .Values.rabbitmq.internal false }}
               [
                 {host, "${MQ_HOST}"},
-                {port, "${MQ_PORT}"},
+                {port, ${MQ_PORT}},
                 {username, <<"${MQ_USERNAME}">>},
                 {password, <<"${MQ_PASSWORD}">>},
                 {vhost, <<"${MQ_VHOST}">>}
               ]
-    {{- else }}
-              [
-                {host, "rabbit-service"},
-                {port, 5672},
-                {username, <<"${MQ_USERNAME}">>},
-                {password, <<"${MQ_PASSWORD}">>},
-                {vhost, <<"${MQ_VHOST}">>}
-              ]
-    {{- end }}
             ]},
         {queues_count, 1},
         {min_size, 1},
@@ -54,23 +48,13 @@ data:
 
         {consumer_response, [
             {servers, [
-    {{- if eq .Values.rabbitmq.internal false }}
                   [
                     {host, "${MQ_HOST}"},
-                    {port, "${MQ_PORT}"},
+                    {port, ${MQ_PORT}},
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
                 ]
-    {{- else }}
-                  [
-                    {host, "rabbit-service"},
-                    {port, 5672},
-                    {username, <<"${MQ_USERNAME}">>},
-                    {password, <<"${MQ_PASSWORD}">>},
-                    {vhost, <<"${MQ_VHOST}">>}
-                ]
-    {{- end }}
             ]},
         {connections_per_queue, 1},
         {channels_per_connection, 1},
@@ -86,7 +70,7 @@ data:
     {kernel, [
       {gethost_poolsize, 10},
       {inet_cache_refresh, 60000}, % default 1h
-{{/*      {inet_lookup, [file, dns]},  % default native*/}}
+      {{/*      {inet_lookup, [file, dns]},  % default native*/}}
       {inet_cache_size, 100}       % default 100
 
     ]},
@@ -102,15 +86,9 @@ data:
       {corezoid_cluster, [
           {backend, redis}, %% maybe if future list will increase
           {redis, [
-        {{- if eq .Values.redis.internal false }}
               {host, "${REDIS_HOST}"},
-              {port, "${REDIS_PORT}"},
+              {port, ${REDIS_PORT}},
               {password,"${REDIS_PASSWORD}"},
-        {{- else }}
-              {host, "redis-master"},
-              {port, 6379},
-              {password,""},
-        {{- end }}
               {database, 10}
           ]}
       ]},
@@ -128,17 +106,10 @@ data:
 
         {corezoid_queues_gc, [
           {disabled, false},
-          {{- if eq .Values.rabbitmq.internal false }}
-           {host, "${MQ_HOST}"},
+          {host, "${MQ_HOST}"},
           {port, 15672},
           {login, "${MQ_USERNAME}"},
           {password, "${MQ_PASSWORD}"},
-          {{- else }}
-          {host, "rabbit-service"},
-          {port, 15672},
-          {login, "${MQ_USERNAME}"},
-          {password, "${MQ_PASSWORD}"},
-          {{- end }}
           {vhost, "${MQ_VHOST}"},
           {gc_queues_regexp, ["api.ctrl", "settings.http_worker"]}
         ]},
@@ -148,19 +119,19 @@ data:
         {worker_id, <<"">>},
 
         {blocked_domains, [
-        {{- range .Values.http.blocked_domains  }}
-        {{ . | quote }},{{- end }}
+    {{- range .Values.http.blocked_domains  }}
+    {{ . | quote }},{{- end }}
         "ifconfig.me"
         ]},
 
-        {{- if .Values.enigma.encryption }}
+    {{- if .Values.enigma.encryption }}
         %% for ENCRYPT/DECRYPT data
         {encrypt_decrypt, [
             queue, %% now it's encode-decode RabbitMQ
             cache, %% Redis
             db     %% PostgreSQL
         ]},
-        {{- end }}
+    {{- end }}
 
         %% maximum response size
         {max_http_resp_size, {{ .Values.http.max_http_resp_size | default 5242880  }} },
@@ -175,19 +146,19 @@ data:
         %% PgSQL settings
         { pgsql,
           [
-          {{- if .Values.postgres.bouncer }}
+    {{- if .Values.postgres.bouncer }}
                 {host, "pgbouncer-service"},
                 { hosts, [
               { [{{- $lastIndex := sub (len .Values.postgres.shards) 1}}
-          {{- range $i, $e := .Values.postgres.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
-          {{- else }}
+    {{- range $i, $e := .Values.postgres.shards }}
+    {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "pgbouncer-service" }
+    {{- else }}
               {host, "${POSTGRES_DBHOST}"},
                 { hosts, [
               { [{{- $lastIndex := sub (len .Values.postgres.shards) 1}}
-          {{- range $i, $e := .Values.postgres.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
-          {{- end }}
+    {{- range $i, $e := .Values.postgres.shards }}
+    {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "${POSTGRES_DBHOST}" }
+    {{- end }}
             ]},
             { user, "${POSTGRES_DBUSER}" },
             { dbname, "conveyor" },
@@ -200,15 +171,10 @@ data:
         {pgsql2, []},
         %% memory redis for cache task list
         {redis, [
-          [ {{- if eq .Values.redis.internal false }}
+            [
             {host, "${REDIS_HOST_CACHE}"},
-            {port, ${REDIS_PORT_CACHE} },
+            {port, ${REDIS_PORT_CACHE}},
             {password,"${REDIS_PASSWORD_CACHE}"},
-          {{- else }}
-            {host, "redis-master"},
-            {port, 6379},
-            {password,""},
-          {{- end }}
             {database,3},
             {start_size, 20},
             {min_size, 20},
@@ -220,23 +186,14 @@ data:
         {publish_http_request, [
           {servers, [
             { [{{- $lastIndex := sub (len .Values.postgres.shards) 1}}
-          {{- range $i, $e := .Values.postgres.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], [[
-          {{- if eq .Values.rabbitmq.internal false }}
+    {{- range $i, $e := .Values.postgres.shards }}
+    {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], [[
     	    {host, "${MQ_HOST}"}
             ]]}
           ]},
-          {port, ${MQ_PORT} },
+          {port, ${MQ_PORT}},
           {username, <<"${MQ_USERNAME}">>},
           {password, <<"${MQ_PASSWORD}">>},
-          {{- else }}
-    	    {host, "rabbit-service"}
-            ]]}
-          ]},
-          {port, 5672},
-          {username, <<"${MQ_USERNAME}">>},
-          {password, <<"${MQ_PASSWORD}">>},
-          {{- end }}
           {vhost, <<"${MQ_VHOST}">>},
           {min_size, 15},
           {max_size, 15},
@@ -246,7 +203,6 @@ data:
         %% consumer http
         {http_consumer, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -254,15 +210,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {queues_count, {{ .Values.http.tune.http_consumer_queues_count | default 8 }} },
           {connections_per_queue, {{ .Values.http.tune.http_consumer_connections_per_queue | default 1 }} },        %% The specified number of tcp connections will be created for each queue
@@ -273,7 +220,6 @@ data:
         %% producer of settings
         {publish_settings, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -281,15 +227,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {min_size, 2},
           {max_size, 2},
@@ -299,7 +236,6 @@ data:
         %% consumer settings
         {consumer_settings, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -307,15 +243,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 1},        %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},       %% Virtual connections for one connections_per_queue
@@ -397,5 +324,4 @@ data:
       {sasl, [{sasl_error_logger, false}]}
 
     ].
-
 

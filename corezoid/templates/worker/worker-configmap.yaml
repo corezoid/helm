@@ -1,22 +1,23 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.worker.appName }}-config
+  name: {{ .Values.worker.name }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.worker" . }}
+    app.kubernetes.io/component: {{ .Values.worker.name }}
+    app: {{ .Values.global.product }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
 data:
   worker.config: |
     [
         {limits_client, [
             {redis, [
                 [
-                    {{- if eq .Values.redis.internal false }}
                     {host, "${REDIS_HOST}"},
                     {port, ${REDIS_PORT}},
                     {password,"${REDIS_PASSWORD}"},
-                    {{- else }}
-                    {host, "redis-master"},
-                    {port, 6379},
-                    {password,""},
-                    {{- end }}
                     {database, 9},
                     {start_size, 1},
                     {min_size, 1},
@@ -36,7 +37,7 @@ data:
 
         {erlprometheus, [
           {host, {0,0,0,0}},
-          {port, 9100}
+          {port, {{ .Values.prometheus.port | default 9100 }}}
         ]},
 
        {corezoid_license_client, [
@@ -51,26 +52,18 @@ data:
       {corezoid_cluster, [
           {backend, redis}, %% maybe if future list will increase
           {redis, [
-        {{- if eq .Values.redis.internal false }}
               {host, "${REDIS_HOST}"},
               {port, ${REDIS_PORT}},
               {password,"${REDIS_PASSWORD}"},
-        {{- else }}
-              {host, "redis-master"},
-              {port, 6379},
-              {password,""},
-        {{- end }}
               {database, 10}
           ]}
       ]},
-
         {ermql, [
 
           {disabled, false},
 
           {publish_request, [
                     {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                   [
                     {host, "${MQ_HOST}"},
                     {port, ${MQ_PORT}},
@@ -78,15 +71,6 @@ data:
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
                 ]
-          {{- else }}
-                  [
-                    {host, "rabbit-service"},
-                    {port, 5672},
-                    {username, <<"${MQ_USERNAME}">>},
-                    {password, <<"${MQ_PASSWORD}">>},
-                    {vhost, <<"${MQ_VHOST}">>}
-                ]
-          {{- end }}
             ]},
             {queues_count, 1},
             {min_size, 1},
@@ -96,7 +80,6 @@ data:
 
           {consumer_response, [
                     {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                   [
                     {host, "${MQ_HOST}"},
                     {port, ${MQ_PORT}},
@@ -104,15 +87,6 @@ data:
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
                 ]
-          {{- else }}
-                  [
-                    {host, "rabbit-service"},
-                    {port, 5672},
-                    {username, <<"${MQ_USERNAME}">>},
-                    {password, <<"${MQ_PASSWORD}">>},
-                    {vhost, <<"${MQ_VHOST}">>}
-                ]
-          {{- end }}
             ]},
             {connections_per_queue, 1},
             {channels_per_connection, 1},
@@ -131,20 +105,12 @@ data:
           {servers, [
           [
             {name, main},
-          {{- if eq .Values.rabbitmq.internal false }}
             {dns, "${MQ_HOST}"},
-          {{- else }}
-            {dns, "rabbit-service"},
-          {{- end }}
             {ttl, 60}
           ],
           [
             {name, name5},
-          {{- if eq .Values.rabbitmq.internal false }}
             {dns, "${MQ_HOST}"},
-          {{- else }}
-            {dns, "rabbit-service"},
-          {{- end }}
             {ttl, 60}
           ]
           ]}
@@ -152,17 +118,10 @@ data:
 
         {corezoid_queues_gc, [
           {disabled, false},
-          {{- if eq .Values.rabbitmq.internal false }}
           {host, "${MQ_HOST}"},
           {port, 15672},
           {login, "${MQ_USERNAME}"},
           {password, "${MQ_PASSWORD}"},
-          {{- else }}
-          {host, "rabbit-service"},
-          {port, 15672},
-          {login, "${MQ_USERNAME}"},
-          {password, "${MQ_PASSWORD}"},
-          {{- end }}
           {vhost, "${MQ_VHOST}"},
           {gc_queues_regexp, ["worker.ctrl", "to_worker_.*.cce.*","to_worker_.*.es_call.*","to_worker_.*.git_call.*","settings.worker"]}
         ]},
@@ -179,7 +138,7 @@ data:
               {host, "${POSTGRES_DBHOST}"},
               {dbname, "conveyor"},
               {user, "${POSTGRES_DBUSER}"},
-              {port, 5432},
+              {port, "${POSTGRES_DBPORT}"},
               {password, "${POSTGRES_DBPWD}"},
               %% pool size
               {start_size,  1},
@@ -226,10 +185,10 @@ data:
         { max_task_size, 512000 },
 
         %% max task size for process conv
-        {max_task_size_for_process_conv, 512000},
+        {max_task_size_for_process_conv, {{ .Values.capi.max_task_size_for_process_conv | default 264000 }} }, %% max task size for process conv
 
         %% max task size for state diagramm conv
-        {max_task_size_for_st_diagramm_conv, 512000},
+        {max_task_size_for_st_diagramm_conv, {{ .Values.capi.max_task_size_for_st_diagramm_conv | default 264000 }} }, %% max task size for state diagramm conv
 
         %% sequence of shard numbers
         %% if you want to distribute the workload
@@ -329,15 +288,9 @@ data:
         %% please don't forget about backup of this data
         { redis, [
           [
-          {{- if eq .Values.redis.internal false }}
             {host, "${REDIS_HOST}"},
             {port, ${REDIS_PORT}},
             {password,"${REDIS_PASSWORD}"},
-          {{- else }}
-            {host, "redis-master"},
-            {port, 6379},
-            {password,""},
-          {{- end }}
             {database,1},
             {start_size, 5},
             {min_size, 5},
@@ -349,16 +302,9 @@ data:
         %% please don't forget about backup of this data
         { redis_api_sum, [
           [
-          {{- if eq .Values.redis.internal false }}
             {host, "${REDIS_HOST}"},
             {port, ${REDIS_PORT}},
             {password,"${REDIS_PASSWORD}"},
-          {{- else }}
-            {host, "redis-master"},
-            {port, 6379},
-            {password,""},
-          {{- end }}
-
             {database,2},
             {start_size, 5},
             {min_size, 5},
@@ -369,16 +315,9 @@ data:
         %% cache, nonpersistent storage, keys will expire after N hours
         { redis2, [
           [
-          {{- if eq .Values.redis.internal false }}
             {host, "${REDIS_HOST_CACHE}"},
             {port, ${REDIS_PORT_CACHE}},
             {password,"${REDIS_PASSWORD_CACHE}"},
-          {{- else }}
-            {host, "redis-master"},
-            {port, 6379},
-            {password,""},
-          {{- end }}
-
             {database,3},
             {start_size, 5},
             {min_size, 5},
@@ -390,16 +329,9 @@ data:
         %% these servers store timers in whole system
         {redis_timers, [
           [
-          {{- if eq .Values.redis.internal false }}
             {host, "${REDIS_HOST_TIMERS}"},
             {port, ${REDIS_PORT_TIMERS}},
             {password,"${REDIS_PASSWORD_TIMERS}"},
-          {{- else }}
-            {host, "redis-master"},
-            {port, 6379},
-            {password,""},
-          {{- end }}
-
             {database,4},
             {start_size, 5},
             {min_size, 5},
@@ -414,7 +346,6 @@ data:
         %%These section to publish tasks in rabbitmq
         {publish_unload_archive_task, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -422,15 +353,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {min_size, 5},
           {max_size, 5},
@@ -444,7 +366,6 @@ data:
         %% 500 / 15 - bad.
         {consumer_unload_archive_task, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -452,15 +373,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
@@ -473,7 +385,6 @@ data:
         %% deprecated, producer of copy_task requests
         {publish_copy_task_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -481,15 +392,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {queues_count, 1},
           {min_size, 1},
@@ -501,7 +403,6 @@ data:
         %% deprecated, consumer for responses of copy_tasks
         {consumer_copy_task_response, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -509,15 +410,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
@@ -527,7 +419,6 @@ data:
         %% producer of timer requests
         {publish_timer_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -535,15 +426,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {min_size, 1},
           {max_size, 1},
@@ -553,7 +435,6 @@ data:
         %% consumer for timer responses
         {consumer_timer_response, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -561,15 +442,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
@@ -579,7 +451,6 @@ data:
         %% producer of http reqeuests, API logic
         {publish_http_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -587,26 +458,16 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {queues_count, 8},
-          {min_size, 30},
-          {max_size, 30},
-          {start_size, 30}
+          {min_size, 15},
+          {max_size, 15},
+          {start_size, 15}
         ]},
 
         %% consumer for http responses, API logic
         {consumer_http_response, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -614,26 +475,16 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 40}    %% The number of queues within the channel
+          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
         ]},
 
         %% Logic call process
         %% producer of rpc requests, RPC logic
         {publish_rpc_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -641,15 +492,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {queues_count, 1},
           {min_size, 5},
@@ -661,7 +503,6 @@ data:
         %% consumer for rpc responses, RPC logic
         {consumer_rpc_response, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -669,15 +510,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
@@ -688,7 +520,6 @@ data:
         %% producer of usercode requests, CODE logic
         {publish_cce_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -696,15 +527,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {queues_count, 5},
           {min_size, 5},
@@ -715,7 +537,6 @@ data:
         %% consumer for usercode responses, CODE logic
         {consumer_cce_response, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -723,15 +544,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
@@ -742,7 +554,6 @@ data:
         %% producer
         {publish_git_call_request, [
           {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -750,15 +561,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {build_dep_queues_count, 1},
           {remove_dep_queues_count, 1},
@@ -776,7 +578,6 @@ data:
         %% consumer
         {consumer_git_call_response, [
           {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -784,15 +585,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {queues_count, 1},
           {connections_per_queue, 1},
@@ -834,20 +626,12 @@ data:
             %% producer
             {publish_git_call_v2_request, [
                 {servers, [[
-          {{- if eq .Values.rabbitmq.internal false }}
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_GITCALL_VHOST}">>}
-          {{- else }}
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
 
-          {{- end }}
                 ]]},
 
                 %% Optional. BinaryString. Default: ?GITCALL_EXCHANGE <<"gitcall-v2">>.
@@ -929,19 +713,11 @@ data:
             %% consumer processes replies on worker requests
             {consumer_git_call_v2_response, [
                 {servers, [[
-            {{- if eq .Values.rabbitmq.internal false }}
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_GITCALL_VHOST}">>}
-            {{- else }}
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
-            {{- end }}
                 ]]},
                 {connections_per_queue, 1},
                 {channels_per_connection, 1},
@@ -952,19 +728,11 @@ data:
             %% consumer processes status updates from gitcall
             {consumer_git_call_v2_status, [
                 {servers, [[
-            {{- if eq .Values.rabbitmq.internal false }}
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_GITCALL_VHOST}">>}
-            {{- else }}
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
-            {{- end }}
                 ]]},
                 {connections_per_queue, 1},
                 {channels_per_connection, 1},
@@ -976,19 +744,11 @@ data:
             %% producer
             {publish_dunder_git_call_v2_request, [
                 {servers, [[
-            {{- if eq .Values.rabbitmq.internal false }}
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
-            {{- else }}
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
-            {{- end }}
                 ]]},
                 {min_size, 5},
                 {max_size, 5},
@@ -999,19 +759,11 @@ data:
             %% consumer
             {consumer_dunder_git_call_v2_response, [
                 {servers, [[
-            {{- if eq .Values.rabbitmq.internal false }}
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
-            {{- else }}
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
-            {{- end }}
                 ]]},
             {connections_per_queue, 1},
             {channels_per_connection, 1},
@@ -1023,7 +775,6 @@ data:
         %% producer
         {publish_db_call_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1031,15 +782,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {min_size, 3},
           {max_size, 3},
@@ -1050,7 +792,6 @@ data:
         %% consumer
         {consumer_db_call_response, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1058,15 +799,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {queues_count, 10},
           {connections_per_queue, 1},
@@ -1078,7 +810,6 @@ data:
         %% producer
         {publish_es_call_request, [
           {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1086,15 +817,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {min_size, 3},
           {max_size, 3},
@@ -1104,7 +826,6 @@ data:
         %% consumer
         {consumer_es_call_response, [
           {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1112,15 +833,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           %{queues_count, 10},
           {connections_per_queue, 1},
@@ -1132,7 +844,6 @@ data:
         %% producer of get_task requests, QUEUE logic
         {publish_get_task_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1140,15 +851,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {queues_count, 1},
           {min_size, 3},
@@ -1159,7 +861,6 @@ data:
         %% consumer for get_task requests, QUEUE logic
         {consumer_get_task_response, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1167,15 +868,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
@@ -1186,7 +878,6 @@ data:
         %% producer of modify requests, QUEUE logic
         {publish_modify_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1194,15 +885,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {min_size, 5},
           {max_size, 5},
@@ -1215,7 +897,6 @@ data:
         %% through settings queue
         {publish_settings, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1223,15 +904,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {min_size, 2},
           {max_size, 2},
@@ -1243,7 +915,6 @@ data:
         %% users, rights etc...
         {consumer_settings, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1251,15 +922,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
@@ -1292,7 +954,6 @@ data:
         %% user's requests on API, requests from user's interface
         {publish_to_worker_request, [
           {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
             { [{{- $lastIndex := sub (len .Values.postgres.shards) 1}}
           {{- range $i, $e := .Values.postgres.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}] , [[
@@ -1302,17 +963,6 @@ data:
           {port, ${MQ_PORT}},
           {username, <<"${MQ_USERNAME}">>},
           {password, <<"${MQ_PASSWORD}">>},
-          {{- else }}
-                { [{{- $lastIndex := sub (len .Values.postgres.shards) 1}}
-          {{- range $i, $e := .Values.postgres.shards }}
-          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}] , [[
-              {host, "rabbit-service"}
-            ]]}
-          ]},
-          {port, 5672},
-          {username, <<"${MQ_USERNAME}">>},
-          {password, <<"${MQ_PASSWORD}">>},
-          {{- end }}
           {vhost, <<"${MQ_VHOST}">>},
           {min_size, 5},
           {max_size, 5},
@@ -1322,7 +972,6 @@ data:
         %% consumer for to_worker
         {consumer_shard_response, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1330,15 +979,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
@@ -1349,7 +989,6 @@ data:
         %% producer
         {publish_git_call_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1357,15 +996,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
             {build_dep_queues_count, 1},
             {remove_dep_queues_count, 1},
@@ -1383,7 +1013,6 @@ data:
         %% concierge answers git_call
         {consumer_git_call_response, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -1391,15 +1020,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {queues_count, 10},
           {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
@@ -1415,8 +1035,17 @@ data:
         %% Or create conv and put id to new_billing_conv_id section
         {billing, []},
         {lager, [
+          %% What handlers to install with what arguments (wrapped by middleman)
+
           {log_root, "/ebsmnt/erlang/worker/log"},
-          {handlers, [ {lager_console_backend, {{ .Values.global.error_log_level | default "info" }} } ]},
+
+          {handlers, [
+            {lager_console_backend, debug},
+            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 15000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 15000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 15000000}, {date, "$D0"}, {count, 1}]}
+
+          ]},
 
           %% What colors to use with what log levels
           {colored, true},
@@ -1455,7 +1084,20 @@ data:
           %% to async_threshold - async_threshold_window
           {async_threshold_window, 5}
         ]
-      }
+      },
+
+      %% Client for healthcheck server
+      {hcheck_sender, [
+        {host, <<"hcs-service">>}, %% host of the remote healthcheck server
+        {port, 5011}, %% port of the remote healthcheck server
+        {node_name,  <<"worker-{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">> }, %% different for each node
+        {node_type,  <<"worker">> }, %% api | worker | multipart | http_worker | usercode | deepmemo ...
+        {disabled, true}, %% true by default
+        {send_interval_sec, 30}, %% by default 10 sec
+        {send_system_counters, true} %% memory processes etc, false by default
+      ]},
+
+      {sasl, [{sasl_error_logger, false}]}
     ].
 
 

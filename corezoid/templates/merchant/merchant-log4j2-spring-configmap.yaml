@@ -1,4 +1,14 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.merchant.name }}-log4j2-spring
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.merchant" . }}
+    app.kubernetes.io/component: {{ .Values.merchant.name }}
+    app: {{ .Values.global.product }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
 data:
   log4j2-spring.xml: |
     <?xml version="1.0" encoding="UTF-8"?>
@@ -41,8 +51,3 @@ data:
         </root>
 
     </configuration>
-
-
-kind: ConfigMap
-metadata:
-  name: {{ .Values.merchant.appName }}-log4j2-spring

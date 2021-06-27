@@ -1,295 +1,226 @@
-apiVersion: apps/v1
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
-  name: {{ .Values.capi.appName | default "capi" }}-deployment
-  labels:
+  name: {{ template "corezoid.capi" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.capi" . }}
+    app.kubernetes.io/component: {{ .Values.capi.name }}
     app: {{ .Values.global.product }}
-    tier: {{ .Values.capi.appName | default "capi" }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
 spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  {{- if not .Values.capi.autoscaling.enabled }}
+  replicas: {{ .Values.capi.replicaCount | default 1 }}
+  {{- end }}
+  {{- if .Values.capi.updateStrategy }}
+  strategy: {{- toYaml .Values.capi.updateStrategy | nindent 4 }}
+  {{- end }}
   selector:
-    matchLabels:
-      tier: {{ .Values.capi.appName | default "capi" }}
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  replicas: {{ .Values.capi.minReplicas }}
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.capi.name }}
+      app.kubernetes.io/name: {{ include "corezoid.capi" . }}
+      app: {{ .Values.global.product }}
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/capi/capi-configmap.yaml") . | sha256sum }}
-        checksum/config_vm: {{ include (print $.Template.BasePath "/capi/capi-configmap-vm.yaml") . | sha256sum }}
-        prometheus.io/path: /metrics
-        prometheus.io/port: "9100"
-        prometheus.io/scrape: "true"
-      labels:
+        checksum/config-vm: {{ include (print $.Template.BasePath "/capi/capi-configmap-vm.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/capi/capi-secret.yaml") . | sha256sum }}
+        {{- if .Values.capi.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.capi.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.capi.name }}
         app: {{ .Values.global.product }}
-        tier: {{ .Values.capi.appName | default "capi" }}
+        app.kubernetes.io/name: {{ include "corezoid.capi" . }}
+        {{- if .Values.capi.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.capi.podLabels "context" $) | nindent 8 }}
+        {{- end }}
     spec:
-      {{ if .Values.capi.affinity }}
-      affinity:
-        {{ .Values.capi.affinity | toYaml | nindent 8 | trim }}
-      {{- end}}
-
-      terminationGracePeriodSeconds: 300
-
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.capi.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.capi.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.capi.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.capi.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.capi.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.capi.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.capi.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.capi.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.capi.priorityClassName }}
+      priorityClassName: {{ .Values.capi.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.capi.terminationGracePeriodSeconds | default 300 }}
+      shareProcessNamespace: true
       initContainers:
         - name: init-wait
-
           image: docker-hub.middleware.biz/public/alpine
-          command: ["sh", "-c", "until {{- if .Values.postgres.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- end }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}; do echo waiting for deps; sleep 2; done;"]
-          env:
-            - name: MQ_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: host
-            - name: MQ_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: port
-            - name: POSTGRES_DBHOST
-              {{- if .Values.postgres.bouncer }}
-              value: "pgbouncer-service"
-              {{- else }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.postgres.secret.name }}
-                  key: dbhost
-            {{- end }}
-            - name: POSTGRES_DBPORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.postgres.secret.name }}
-                  key: dbport
+          command: ["sh", "-c", "until  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && nc -zvw1  ${MQ_HOST} ${MQ_PORT}; do echo waiting for deps; sleep 2; done;"]
+          envFrom:
+            - secretRef:
+                name: rabbitmq-secret
+            - secretRef:
+                name: postgres-secret
         - name: init-wait-rmq
           image: docker-hub.middleware.biz/public/alpine
           command: ['sh']
           args:
             - "-c"
             - |
-              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://${MQ_HOST}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
-          env:
-            - name: MQ_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: host
-            - name: MQ_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: username
-            - name: MQ_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: password
-      shareProcessNamespace: true
+              until wget -O - -q --header "Authorization: Basic `echo -n \"${MQ_USERNAME}:${MQ_PASSWORD}\" | base64`" http://${MQ_HOST}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+          envFrom:
+            - secretRef:
+                name: rabbitmq-secret
+            - secretRef:
+                name: postgres-secret
+        {{- if .Values.capi.initContainers }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.capi.initContainers "context" $) | nindent 8 }}
+        {{- end }}
       containers:
-        - name: {{ .Values.capi.appName | default "capi" }}
-          imagePullPolicy: {{ .Values.image.imagePullPolicy | default "IfNotPresent" }}
-
-          image: "{{ ( or .Values.capi.image.repository .Values.image.imageRegistry) }}/{{ .Values.global.repotype | default "public" }}{{ .Values.capi.image.repository | default "/conveyor_api" }}:{{ .Values.capi.tag }}"
-          env:
-          - name: POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          {{- if .Values.store_dumps.enabled }}
-          - name: ERL_CRASH_DUMP
-            value: "/var/dumps/$(POD_NAME)-erl.dump"
-          {{- end }}
-          - name: NODE_COOKIE
-            value: {{ .Values.capi.appName | default "capi" }}-{{ .Release.Namespace }}
-          - name: RELX_REPLACE_OS_VARS
-            value: "true"
-          - name: IPNODEDOMAIN
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
-          - name: SCHEDULERS
-            value: "4"
-          - name: capi_front_captcha_key
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.capi.secret.name }}
-                key: capi_front_captcha_key
-          - name: capi_backend_captcha_key
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.capi.secret.name }}
-                key: capi_backend_captcha_key
-          - name: REDIS_HOST
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.redis.secret.name }}
-                key: host
-          - name: REDIS_PORT
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.redis.secret.name }}
-                key: port
-          - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.redis.secret.name }}
-                key: password
-          - name: REDIS_HOST_CACHE
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.redis.secret.name }}
-                key: host_cache
-          - name: REDIS_PORT_CACHE
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.redis.secret.name }}
-                key: port_cache
-          - name: REDIS_PASSWORD_CACHE
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.redis.secret.name }}
-                key: password_cache
-          - name: MQ_HOST
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.rabbitmq.secret.name }}
-                key: host
-          - name: MQ_PORT
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.rabbitmq.secret.name }}
-                key: port
-          - name: MQ_VHOST
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.rabbitmq.secret.name }}
-                key: vhost
-          - name: MQ_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.rabbitmq.secret.name }}
-                key: username
-          - name: MQ_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.rabbitmq.secret.name }}
-                key: password
-          - name: MERCHANT_LOGIN
-            valueFrom:
-              secretKeyRef:
-                name: merchant-secret
-                key: merchant_login
-          - name: MERCHANT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: merchant-secret
-                key: merchant_secret
-          - name: ELASTICSEARCH_HOST
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.elasticsearch.secret.name }}
-                key: host
-          - name: ELASTICSEARCH_PORT
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.elasticsearch.secret.name }}
-                key: port
-          - name: POSTGRES_DBHOST
-            {{- if .Values.postgres.bouncer }}
-            value: "pgbouncer-service"
-            {{- else }}
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.postgres.secret.name }}
-                key: dbhost
-            {{- end }}
-          - name: POSTGRES_DBUSER
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.postgres.secret.name }}
-                key: dbuser
-          - name: POSTGRES_DBPWD
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.postgres.secret.name }}
-                key: dbpwd
-          - name: POSTGRES_DBPORT
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.postgres.secret.name }}
-                key: dbport
-          ports:
-          - containerPort: {{ .Values.capi.port }}
-          - containerPort: {{ .Values.confAgentServer.port }}
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/ebsmnt/erlang/capi/bin/capi","stop"]
-          volumeMounts:
-            - name: {{ .Values.capi.appName | default "capi" }}config
-              mountPath: /ebsmnt/conf/capi.config
-              subPath: capi.config
-            - name: {{ .Values.capi.appName | default "capi" }}-config-vm
-              mountPath: /ebsmnt/erlang/capi/releases/1/vm.args
-              subPath: vm.args
-            - name: corezoid-license
-              mountPath: /ebsmnt/certs
-            {{- if .Values.store_dumps.enabled }}
-            - name: dumps-volume
-              mountPath: /var/dumps
-            {{- end }}
-          resources:
-            {{ .Values.capi.resources | toYaml | indent 12 | trim }}
-          livenessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/capi liveness
-            initialDelaySeconds: 20
-            periodSeconds: 20
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
-          readinessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/capi readiness
-            initialDelaySeconds: 15
-            periodSeconds: 5
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
+        - name: {{ template "corezoid.capi" . }}
+          image: {{ template "corezoid.capi.image" . }}
+          imagePullPolicy: {{ or .Values.global.pullPolicy .Values.capi.image.pullPolicy | default "IfNotPresent" }}
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
             capabilities:
               add: ["IPC_LOCK"]
-      {{- if not  (eq .Values.global.repotype "public") }}
-      imagePullSecrets:
-        - name: corezoid-secret
-      {{- end }}
+          {{- if .Values.capi.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.capi.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.capi.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.capi.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            {{- if .Values.global.debug }}
+            - name: ERL_CRASH_DUMP
+              value: "/dev/stderr"
+            {{- end }}
+            - name: NODE_COOKIE
+              value: "{{ template "corezoid.capi" . }}-{{ .Release.Namespace }}"
+            - name: RELX_REPLACE_OS_VARS
+              value: "true"
+            - name: SCHEDULERS
+              value: "{{ .Values.capi.schedulers }}"
+            {{- if .Values.store_dumps.enabled }}
+            - name: ERL_CRASH_DUMP
+              value: "/var/dumps/$(POD_NAME)-erl.dump"
+            {{- end }}
+            {{- if .Values.capi.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.capi.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.capi.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.capi.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            - secretRef:
+                name: rabbitmq-secret
+            - secretRef:
+                name: postgres-secret
+            - secretRef:
+                name: capi-secret
+            - secretRef:
+                name: redis-secret
+            - secretRef:
+                name: merchant-secret
+            - secretRef:
+                name: elasticsearch-secret
+            {{- if .Values.capi.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.capi.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          ports:
+            - name: capi
+              containerPort: 9080
+            - name: confagent
+              containerPort: 8585
+            - name: metrics
+              containerPort: {{ .Values.prometheus.port | default 9100 }}
+            - name: liveness
+              containerPort: 8383
+          {{- if .Values.capi.resources }}
+          resources: {{- toYaml .Values.capi.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.capi.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.capi.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.capi.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.capi.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            exec:
+              command:
+                - bash
+                - -ec
+                - |
+                  ulimit -n 1024
+                  exec /usr/bin/capi liveness
+            failureThreshold: 6
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          {{- end }}
+          {{- if .Values.capi.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.capi.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -ec
+                - |
+                  ulimit -n 1024
+                  exec /usr/bin/capi readiness
+            failureThreshold: 6
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          {{- end }}
+          volumeMounts:
+            - name: {{ .Values.capi.name }}-config
+              mountPath: /ebsmnt/conf/capi.config
+              subPath: capi.config
+            - name: {{ .Values.capi.name }}-config-vm
+              mountPath: /ebsmnt/erlang/worker/releases/1/vm.args
+              subPath: vm.args
+            - name: corezoid-license
+              mountPath: /ebsmnt/certs
+            {{- if .Values.capi.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.capi.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
       volumes:
-        - name: {{ .Values.capi.appName | default "capi" }}config
+        - name: {{ .Values.capi.name }}-config
           configMap:
-            name: {{ .Values.capi.appName | default "capi" }}-config
-        - name: {{ .Values.capi.appName | default "capi" }}-config-vm
+            name: {{ .Values.capi.name }}-config
+        - name: {{ .Values.capi.name }}-config-vm
           configMap:
-            name: {{ .Values.capi.appName | default "capi" }}-config-vm
+            name: {{ .Values.capi.name }}-config-vm
         - name: corezoid-license
           secret:
             secretName: license-share-new
-        {{- if .Values.store_dumps.enabled }}
-        - name: dumps-volume
-          hostPath:
-            path: /var/dumps
+        {{- if .Values.capi.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.capi.extraVolumes "context" $) | nindent 8 }}
         {{- end }}

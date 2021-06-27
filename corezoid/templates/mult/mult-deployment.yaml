@@ -1,205 +1,191 @@
-apiVersion: apps/v1
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
-  name: {{ .Values.mult.appName }}-deployment
-  labels:
+  name: {{ template "corezoid.mult" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.mult" . }}
+    app.kubernetes.io/component: {{ .Values.mult.name }}
     app: {{ .Values.global.product }}
-    tier: {{ .Values.mult.appName }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
 spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  {{- if not .Values.mult.autoscaling.enabled }}
+  replicas: {{ .Values.mult.replicaCount | default 1 }}
+  {{- end }}
+  {{- if .Values.mult.updateStrategy }}
+  strategy: {{- toYaml .Values.mult.updateStrategy | nindent 4 }}
+  {{- end }}
   selector:
-    matchLabels:
-      tier: {{ .Values.mult.appName }}
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  replicas: {{ .Values.mult.minReplicas }}
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.mult.name }}
+      app.kubernetes.io/name: {{ include "corezoid.mult" . }}
+      app: {{ .Values.global.product }}
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/mult/mult-configmap.yaml") . | sha256sum }}
-        prometheus.io/path: /metrics
-        prometheus.io/port: "9100"
-        prometheus.io/scrape: "true"
-      labels:
+        {{- if .Values.mult.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.mult.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.mult.name }}
         app: {{ .Values.global.product }}
-        tier: {{ .Values.mult.appName }}
+        app.kubernetes.io/name: {{ include "corezoid.mult" . }}
+        {{- if .Values.mult.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.mult.podLabels "context" $) | nindent 8 }}
+    {{- end }}
     spec:
-      {{ if .Values.mult.affinity }}
-      affinity:
-        {{ .Values.mult.affinity | toYaml | nindent 8 | trim }}
-      {{- end}}
-      terminationGracePeriodSeconds: 300
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.mult.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.mult.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.mult.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.mult.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.mult.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.mult.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.mult.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.mult.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.mult.priorityClassName }}
+      priorityClassName: {{ .Values.mult.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.mult.terminationGracePeriodSeconds | default 40 }}
+      shareProcessNamespace: true
       securityContext:
         fsGroup: 1000
       initContainers:
         - name: init-wait
           image: docker-hub.middleware.biz/public/alpine
-          command: ["sh", "-c", "until  {{- if .Values.rabbitmq.internal }} nc -zvw1 rabbit-service 5672 {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }}; do echo waiting for deps; sleep 2; done;"]
-          env:
-            - name: MQ_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: host
-            - name: MQ_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: port
+          command: ["sh", "-c", "until  nc -zvw1  ${MQ_HOST} ${MQ_PORT}; do echo waiting for deps; sleep 2; done;"]
+          envFrom:
+            - secretRef:
+                name: rabbitmq-secret
         - name: init-wait-rmq
           image: docker-hub.middleware.biz/public/alpine
           command: ['sh']
           args:
             - "-c"
             - |
-              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://{{- if .Values.rabbitmq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
-          env:
-            - name: MQ_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: host
-            - name: MQ_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: username
-            - name: MQ_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: password
-      shareProcessNamespace: true
+              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://${MQ_HOST}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+          envFrom:
+            - secretRef:
+                name: rabbitmq-secret
       containers:
-        - name: {{ .Values.mult.appName }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype }}{{ .Values.mult.image.repository }}:{{ .Values.mult.tag }}"
-          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          env:
-            - name: NODE_COOKIE
-              value: {{ .Values.mult.appName }}-{{ .Release.Namespace }}
-            - name: RELX_REPLACE_OS_VARS
-              value: "true"
-            - name: IPNODEDOMAIN
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            {{- if .Values.store_dumps.enabled }}
-            - name: ERL_CRASH_DUMP
-              value: "/var/dumps/$(POD_NAME)-erl.dump"
-            {{- end }}
-            - name: REDIS_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.redis.secret.name }}
-                  key: host
-            - name: REDIS_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.redis.secret.name }}
-                  key: port
-            - name: REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.redis.secret.name }}
-                  key: password
-            - name: MQ_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: host
-            - name: MQ_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: port
-            - name: MQ_VHOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: vhost
-            - name: MQ_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: username
-            - name: MQ_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.rabbitmq.secret.name }}
-                  key: password
-          ports:
-          - containerPort: 9082
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/ebsmnt/erlang/conveyor_api_multipart/bin/conveyor_api_multipart","stop"]
-          volumeMounts:
-            - name: {{ .Values.mult.appName }}-config
-              mountPath: /ebsmnt/conf/conveyor_api_multipart.config
-              subPath: conveyor_api_multipart.config
-            {{- if .Values.mult.persistantVolumeClaimCreate }}
-            - name: {{ .Values.mult.appName }}-claim
-              mountPath: /ebsmnt_share
-            {{- end }}
-            {{- if .Values.store_dumps.enabled }}
-            - name: dumps-volume
-              mountPath: /var/dumps
-            {{- end }}
-          resources:
-            {{ .Values.mult.resources | toYaml | indent 12 | trim }}
-          livenessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/conveyor_api_multipart liveness
-            initialDelaySeconds: 20
-            periodSeconds: 20
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
-          readinessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/conveyor_api_multipart readiness
-            initialDelaySeconds: 15
-            periodSeconds: 5
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
+        - name: {{ template "corezoid.mult" . }}
+          image: {{ template "corezoid.mult.image" . }}
+          imagePullPolicy: {{ .Values.mult.image.pullPolicy | default "IfNotPresent" }}
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
             capabilities:
               add: ["IPC_LOCK"]
-      {{- if not  (eq .Values.global.repotype "public") }}
-      imagePullSecrets:
-        - name: corezoid-secret
-      {{- end }}
+          {{- if .Values.mult.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.mult.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.mult.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.mult.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: NODE_COOKIE
+              value: {{ template "corezoid.mult" . }}-{{ .Release.Namespace }}
+            - name: RELX_REPLACE_OS_VARS
+              value: "true"
+            {{- if .Values.global.debug }}
+            - name: ERL_CRASH_DUMP
+              value: "/dev/stderr"
+            {{- end }}
+          envFrom:
+            {{- if .Values.mult.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.mult.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            - secretRef:
+                name: rabbitmq-secret
+            - secretRef:
+                name: redis-secret
+          ports:
+            - name: mult
+              containerPort: {{ .Values.mult.port | default 9082 }}
+            - name: metrics
+              containerPort: {{ .Values.prometheus.port | default 9100 }}
+          {{- if .Values.mult.resources }}
+          resources: {{- toYaml .Values.mult.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.mult.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.mult.lifecycleHooks "context" $) | nindent 12 }}
+          {{- else }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/ebsmnt/erlang/conveyor_api_multipart/bin/conveyor_api_multipart","stop"]
+          {{- end }}
+          {{- if .Values.mult.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.mult.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            exec:
+              command:
+                - bash
+                - -ec
+                - |
+                  ulimit -n 1024
+                  exec /usr/bin/conveyor_api_multipart liveness
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          {{- if .Values.mult.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.mult.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -ec
+                - |
+                  ulimit -n 1024
+                  exec /usr/bin/conveyor_api_multipart readiness
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          volumeMounts:
+            - name: {{ .Values.mult.name }}-config
+              mountPath: /ebsmnt/conf/conveyor_api_multipart.config
+              subPath: conveyor_api_multipart.config
+            - name: {{ .Values.mult.name }}-claim
+              mountPath: /ebsmnt_share
+            {{- if .Values.mult.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.mult.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
       volumes:
-        - name: {{ .Values.mult.appName }}-config
+        - name: {{ .Values.mult.name }}-config
           configMap:
-            name: {{ .Values.mult.appName }}-config
-        {{- if .Values.mult.persistantVolumeClaimCreate }}
-        - name: {{ .Values.mult.appName }}-claim
+            name: {{ .Values.mult.name }}-config
+        - name: {{ .Values.mult.name }}-claim
           persistentVolumeClaim:
             claimName: {{ .Values.mult.persistantVolumeClaimName }}
             readOnly: false
-        {{- end }}
-        {{- if .Values.store_dumps.enabled }}
-        - name: dumps-volume
-          hostPath:
-            path: /var/dumps
-        {{- end }}

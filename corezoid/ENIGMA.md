@@ -109,7 +109,7 @@ and set your private key(s) id for all Corezoid modules like that:
     tag: v3.3.0.6-e19
     minReplicas: 2
     maxReplicas: 2
-    # enigma private_key_id
+   ## enigma private_key_id
     enigma_pk_id: "2dd73448-36c0-11ea-ab9e-02ba652f967c"
 ```
 After all that you can upgrade your env by helm upgrade or kubectl. All PODs with enigma should be restarted.

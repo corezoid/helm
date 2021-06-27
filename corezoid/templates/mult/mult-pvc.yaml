@@ -3,14 +3,17 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: {{ .Values.mult.persistantVolumeClaimName }}
-{{- if eq .Values.global.storage "efs" }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.mult" . }}
+    app.kubernetes.io/component: {{ .Values.mult.name }}
+    app: {{ .Values.global.product }}
+  {{- if eq .Values.global.storage "efs" }}
   annotations:
-    volume.beta.kubernetes.io/storage-class: {{ .Values.global.storageClassName }}
+    volume.beta.kubernetes.io/storage-class: {{ .Values.global.storageClass }}
 {{- end }}
-  labels:
-    tier: {{ .Values.mult.appName }}
 spec:
-  storageClassName: {{ .Values.global.storageClassName }}
+  storageClassName: {{ .Values.global.storageClass }}
   accessModes:
     - ReadWriteMany
   resources:

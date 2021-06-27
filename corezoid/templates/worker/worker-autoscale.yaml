@@ -1,15 +1,51 @@
-apiVersion: autoscaling/v1
+{{- if .Values.worker.autoscaling -}}
+{{- if .Values.worker.autoscaling.enabled -}}
+apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ .Values.worker.appName }}-autoscale
-  labels:
+  name: {{ template "corezoid.worker" . }}-hpa
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.worker.name }}
     app: {{ .Values.global.product }}
-    tier: {{ .Values.worker.appName }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
 spec:
-  minReplicas: {{ .Values.worker.minReplicas }}
-  maxReplicas: {{ .Values.worker.maxReplicas }}
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ .Values.worker.appName }}-deployment
-  targetCPUUtilizationPercentage: 75
+    name: {{ template "corezoid.worker" . }}
+  minReplicas: {{ .Values.worker.autoscaling.minReplicas | default 1 }}
+  maxReplicas: {{ .Values.worker.autoscaling.maxReplicas | default 4 }}
+  metrics:
+    {{- if .Values.worker.autoscaling.targetMemory }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageValue: {{ .Values.worker.autoscaling.targetMemory }}
+    {{- end }}
+    {{- if .Values.worker.autoscaling.targetCPU }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.worker.autoscaling.targetCPU }}
+    {{- end }}
+    {{- if .Values.worker.autoscaling.requests }}
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests
+        target:
+          type: AverageValue
+          averageValue: {{ .Values.worker.autoscaling.requests }}
+  {{- end }}
+{{- end }}
+{{- end }}

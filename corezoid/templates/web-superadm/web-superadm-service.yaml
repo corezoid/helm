@@ -1,16 +1,20 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.web_superadm.appName }}
-  labels:
+  name: {{ .Values.websuperadm.name }}-service
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.websuperadm" . }}
+    app.kubernetes.io/component: {{ .Values.websuperadm.name }}
     app: {{ .Values.global.product }}
-    tier: {{ .Values.web_superadm.appName }}
 spec:
   selector:
+    app.kubernetes.io/component: {{ .Values.websuperadm.name }}
+    app.kubernetes.io/name: {{ include "corezoid.websuperadm" . }}
     app: {{ .Values.global.product }}
-    tier: {{ .Values.web_superadm.appName }}
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
+    - name: websuperadm
+      protocol: TCP
+      port: {{ .Values.websuperadm.service.port | default 80 }}
+      targetPort: websuperadm
   type: NodePort

@@ -1,14 +1,19 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.webadm.name }}-main
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.webadm" . }}
+    app.kubernetes.io/component: {{ .Values.webadm.name }}
+    app: {{ .Values.global.product }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
 data:
   nginx.conf: |
     user  nginx;
     worker_processes 1;
-    {{ $loglevel := .Values.global.error_log_level }}
-    {{- if eq $loglevel "debug" }}
-    error_log /dev/stdout debug;
-    {{- else }}
     error_log /dev/stdout;
-    {{- end }}
     pid        /var/run/nginx.pid;
     events {
         worker_connections  512000;
@@ -16,7 +21,6 @@ data:
     }
 
     http {
-
         server_names_hash_bucket_size 128;
         include       /etc/nginx/mime.types;
         default_type  application/octet-stream;
@@ -36,7 +40,7 @@ data:
         tcp_nopush     on;
 
         server_tokens   off;
-       # disable buffering
+      ## disable buffering
        proxy_buffering off;
        proxy_max_temp_file_size 0;
         keepalive_timeout  65;
@@ -46,6 +50,4 @@ data:
         include /etc/nginx/conf.d/*.conf;
     }
 
-kind: ConfigMap
-metadata:
-  name: {{ .Values.webadm.appName }}-main
+

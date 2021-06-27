@@ -119,7 +119,7 @@ Improvements:
 Moving URL for documentation into the values.yaml:
 ```
     front_setting:
-      # documentation (navigate by clicking on DOCS link)
+     ## documentation (navigate by clicking on DOCS link)
       doc_host: "support.mycompany.com"
       doc_index: "/docs"
 ```
@@ -139,7 +139,7 @@ Moving SyncAPI to the single POD, resolve issue with 504 error, when back-end wa
 - MAM-574: Make skip_otp configurable per environment, in capi-configmap  
 Allow parameterizing {skip_otp, true} for capi-configmap in values.yaml:
 ```
-    # merchant_api settings
+   ## merchant_api settings
     merchant_api:
       skip_otp: true
 ```

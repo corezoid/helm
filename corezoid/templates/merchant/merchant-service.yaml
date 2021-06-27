@@ -1,20 +1,24 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.merchant.appName }}-service
-  labels:
+  name: {{ .Values.merchant.name }}-service
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.merchant" . }}
+    app.kubernetes.io/component: {{ .Values.merchant.name }}
     app: {{ .Values.global.product }}
-    tier: {{ .Values.merchant.appName }}
 spec:
   selector:
+    app.kubernetes.io/component: {{ .Values.merchant.name }}
+    app.kubernetes.io/name: {{ include "corezoid.merchant" . }}
     app: {{ .Values.global.product }}
-    tier: {{ .Values.merchant.appName }}
   ports:
-  - protocol: TCP
-    name: main
-    port: {{ .Values.merchant.port | default 8080 }}
-    targetPort: {{ .Values.merchant.targetPort | default 8080 }}
-  - protocol: TCP
-    name: managment
-    port: 7980
-    targetPort: 7980
+    - protocol: TCP
+      name: merchant
+      port: {{ .Values.merchant.service.merchantPort | default 80 }}
+      targetPort: merchant
+    - protocol: TCP
+      name: managment
+      port: {{ .Values.merchant.service.managmentPort | default 7980 }}
+      targetPort: managment
+

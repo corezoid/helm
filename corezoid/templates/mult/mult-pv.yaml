@@ -2,11 +2,14 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Values.mult.appName }}-{{ .Values.global.storage}}-{{ .Release.Name }}
-  labels:
-    tier: {{ .Values.mult.appName }}
+  name: {{ .Values.mult.name }}-{{ .Values.global.storage}}-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.mult" . }}
+    app.kubernetes.io/component: {{ .Values.mult.name }}
+    app: {{ .Values.global.product }}
 spec:
-  storageClassName: {{ .Values.global.storageClassName }}
+  storageClassName: {{ .Values.global.storageClass }}
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
@@ -14,5 +17,5 @@ spec:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Delete
   hostPath:
-    path: /ebsmnt/{{ .Release.Name }}/{{ .Values.mult.appName }}
+    path: /ebsmnt/{{ .Release.Name }}/{{ .Values.mult.name }}
 {{- end }}

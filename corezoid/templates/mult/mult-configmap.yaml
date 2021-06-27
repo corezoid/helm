@@ -1,4 +1,14 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.mult.name }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.mult" . }}
+    app.kubernetes.io/component: {{ .Values.mult.name }}
+    app: {{ .Values.global.product }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
 data:
   conveyor_api_multipart.config: |
     [
@@ -15,14 +25,13 @@ data:
 
         {erlprometheus, [
           {host, {0,0,0,0}},
-          {port, 9100}
+          {port, {{ .Values.prometheus.port | default 9100 }}}
         ]},
 
       {ermql, [
 
         {publish_request, [
                     {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                   [
                     {host, "${MQ_HOST}"},
                     {port, ${MQ_PORT}},
@@ -30,15 +39,6 @@ data:
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
                 ]
-          {{- else }}
-                  [
-                    {host, "rabbit-service"},
-                    {port, 5672},
-                    {username, <<"${MQ_USERNAME}">>},
-                    {password, <<"${MQ_PASSWORD}">>},
-                    {vhost, <<"${MQ_VHOST}">>}
-                ]
-          {{- end }}
             ]},
         {queues_count, 1},
         {min_size, 1},
@@ -48,7 +48,6 @@ data:
 
         {consumer_response, [
             {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                   [
                     {host, "${MQ_HOST}"},
                     {port, ${MQ_PORT}},
@@ -56,15 +55,6 @@ data:
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
                 ]
-          {{- else }}
-                  [
-                    {host, "rabbit-service"},
-                    {port, 5672},
-                    {username, <<"${MQ_USERNAME}">>},
-                    {password, <<"${MQ_PASSWORD}">>},
-                    {vhost, <<"${MQ_VHOST}">>}
-                ]
-          {{- end }}
             ]},
         {connections_per_queue, 1},
         {channels_per_connection, 1},
@@ -76,32 +66,19 @@ data:
       {corezoid_cluster, [
           {backend, redis}, %% maybe if future list will increase
           {redis, [
-        {{- if eq .Values.redis.internal false }}
               {host, "${REDIS_HOST}"},
               {port, ${REDIS_PORT}},
               {password,"${REDIS_PASSWORD}"},
-        {{- else }}
-              {host, "redis-master"},
-              {port, 6379},
-              {password,""},
-        {{- end }}
               {database, 10}
           ]}
       ]},
 
         {corezoid_queues_gc, [
           {disabled, false},
-          {{- if eq .Values.rabbitmq.internal false }}
-           {host, "${MQ_HOST}"},
+          {host, "${MQ_HOST}"},
           {port, 15672},
           {login, "${MQ_USERNAME}"},
           {password, "${MQ_PASSWORD}"},
-          {{- else }}
-          {host, "rabbit-service"},
-          {port, 15672},
-          {login, "${MQ_USERNAME}"},
-          {password, "${MQ_PASSWORD}"},
-          {{- end }}
           {vhost, "${MQ_VHOST}"},
           {gc_queues_regexp, ["mult.ctrl", "settings.conveyor_api_multipart"]}
         ]},
@@ -162,13 +139,12 @@ data:
 
           %% ---- JOINT PARAMETR  WORKER AND CAPI -------
 
-          {main_page, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},              %% NB! this parametr MUST BE equal to the 'main_page'   in capi.config because parametr
+          {main_page, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},              %% NB! this parametr MUST BE equal to the 'main_page'   in mult.config because parametr
           {cookie_name, <<"corezoid-{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},                     %% the same with api
 
 
           {publish_capi_connector_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -176,15 +152,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
               {queues_count, 1},
               {min_size, 2},
@@ -196,7 +163,6 @@ data:
         %%    ******************************
           {publish_user_actions_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -204,15 +170,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
               {queues_count, 1},
               {min_size, 2},
@@ -226,7 +183,6 @@ data:
 
           {publish_settings, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -234,15 +190,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
             {min_size, 1},
             {max_size, 1},
@@ -253,7 +200,6 @@ data:
 
           {consumer_settings, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -261,15 +207,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
             {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
             {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
@@ -280,7 +217,6 @@ data:
           %% through this queue goes tasks with loading statistics to api
           {capi_consumer, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -288,15 +224,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
             {queues_count, 1},
             {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
@@ -350,8 +277,14 @@ data:
       {lager,
         [
           %% What handlers to install with what arguments (wrapped by middleman)
+
           {log_root, "/ebsmnt/erlang/conveyor_api_multipart/log"},
-          {handlers, [ {lager_console_backend, {{ .Values.global.error_log_level | default "info" }} } ]},
+
+          {handlers, [
+            {lager_console_backend, info},
+            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
+          ]},
 
           %% What colors to use with what log levels
           {colored, true},
@@ -391,12 +324,29 @@ data:
         ]
       },
 
+      %% Client for healthcheck server
+      {hcheck_sender, [
+        {host, <<"hcs-service">>}, %% host of the remote healthcheck server
+        {port, 5011}, %% port of the remote healthcheck server
+        {node_name,  <<"mult-{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">> }, %% different for each node
+        {node_type,  <<"multipart">> }, %% api | worker | multipart | http_worker | usercode | deepmemo ...
+        {disabled, true}, %% true by default
+        {send_interval_sec, 30}, %% by default 10 sec
+        {send_system_counters, true} %% memory processes etc, false by default
+      ]},
+
+      %% SASL config
+      {sasl, [
+        {sasl_error_logger, {file, "log/sasl-error.log"}},
+        {errlog_type, error},
+        {error_logger_mf_dir, "log/sasl"},      % Log directory
+        {error_logger_mf_maxbytes, 10485760},   % 10 MB max file size
+        {error_logger_mf_maxfiles, 1}           % 5 files max
+      ]},
+
       {corezoid_sdk, [
         {host, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"}
       ]}
 
     ].
 
-kind: ConfigMap
-metadata:
-  name: {{ .Values.mult.appName }}-config

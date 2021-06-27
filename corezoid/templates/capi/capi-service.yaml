@@ -1,20 +1,42 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.capi.appName | default "capi" }}-service
-  labels:
+  name: {{ .Values.capi.name }}-service
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.capi" . }}
+    app.kubernetes.io/component: {{ .Values.capi.name }}
     app: {{ .Values.global.product }}
-    tier: {{ .Values.capi.appName | default "capi" }}
 spec:
   selector:
+    app.kubernetes.io/component: {{ .Values.capi.name }}
+    app.kubernetes.io/name: {{ include "corezoid.capi" . }}
     app: {{ .Values.global.product }}
-    tier: {{ .Values.capi.appName | default "capi" }}
   ports:
-  - protocol: TCP
-    name: main
-    port: {{ .Values.capi.port | default 9080 }}
-    targetPort: {{ .Values.capi.targetPort | default 9080 }}
-  - protocol: TCP
-    name: confagent
-    port: {{ .Values.confAgentServer.port | default 8585 }}
-    targetPort: {{ .Values.confAgentServer.targetPort | default 8585 }}
+    - name: capi
+      port: {{ .Values.capi.service.capiPort | default 80 }}
+      targetPort: capi
+    - name: confagent
+      port: {{ .Values.capi.service.confAgentPort | default 8585 }}
+      targetPort: confagent
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.capi.name }}-service-node
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.capi" . }}
+    app.kubernetes.io/component: {{ .Values.capi.name }}
+    app: {{ .Values.global.product }}
+spec:
+  selector:
+    app.kubernetes.io/component: {{ .Values.capi.name }}
+    app.kubernetes.io/name: {{ include "corezoid.capi" . }}
+    app: {{ .Values.global.product }}
+  ports:
+    - name: capi
+      port: {{ .Values.capi.service.capiPort | default 80 }}
+      targetPort: capi
+  type: NodePort

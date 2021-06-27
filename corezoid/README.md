@@ -2,7 +2,7 @@
 
 [![N|Corezoid](https://corezoid.com/static/CorezoidProduct-80991adc0bc80fdda3e177ea20d188e1.png)](https://corezoid.com/)
 
-##Corezoid Docs: 
+##Corezoid Docs:
 https://doc.corezoid.com/
 
 ##Corezoid change log
@@ -19,7 +19,7 @@ https://doc.corezoid.com/docs/release-notes
 In version 0.16 of the chart, the rabbitmq version has been updated along with livenes and readynes samples - to update, you need to manually reload the rabbitmq nodes one by one. To check the correct update -
 - run ```kubectl port-forward --namespace public svc/rabbit-service 15672:15672```
 - check from browser  localhost:15672
-    username and password can be taken from values.yaml
+  username and password can be taken from values.yaml
 - go to the queue tab and make sure that idle queues are present
 
 ### Known issues:
@@ -43,7 +43,7 @@ Ensure what all configmaps are updated and necessary components are restarted.
 
 In values.yaml you can choose different storage classes:
 ```sh
- # Define global storage class: efs (preferred) / nfs / manual / ceph | see README.md
+## Define global storage class: efs (preferred) / nfs / manual / ceph | see README.md
  storage: efs
 ```
 - **efs**: In case of using AWS as a cloud provided — efs is preferred: https://aws.amazon.com/efs/
@@ -64,11 +64,10 @@ In values.yaml you can choose different storage classes:
 - See [ENIGMA.md](ENIGMA.md)
 
 #### Dependencies:
-#####Testing on Kubernetes version 1.16 and helm v3
-#####Supported stateful versions:
 - **Postgresql 9.6**
 - **Redis 3.2**
 - **Elasticsearch 6.7**
 - **RabbitMQ 3.8**
----
+#####Testing on Kubernetes version 1.18 and helm v3
+
 

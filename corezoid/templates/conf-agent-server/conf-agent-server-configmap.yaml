@@ -1,4 +1,14 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.confAgentServer.name }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.confAgentServer" . }}
+    app.kubernetes.io/component: {{ .Values.confAgentServer.name }}
+    app: {{ .Values.global.product }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
 data:
   conf_agent_server.config: |
     %% -*- mode: erlang;  -*-
@@ -8,15 +18,9 @@ data:
       {corezoid_cluster, [
           {backend, redis}, %% maybe if future list will increase
           {redis, [
-          {{- if eq .Values.redis.internal false }}
               {host, "${REDIS_HOST}"},
-              {port, "${REDIS_PORT}"},
+              {port, ${REDIS_PORT}},
               {password,"${REDIS_PASSWORD}"},
-          {{- else }}
-              {host, "redis-master"},
-              {port, 6379},
-              {password,""},
-          {{- end }}
               {database, 10}
           ]}
       ]},
@@ -49,11 +53,7 @@ data:
             {encrypt_decrypt, []},                   % for enable encrypt rabbit msgs need set to {encrypt_decrypt, [queue]}
 
          {pgsql, [
-          {{- if .Values.postgres.bouncer }}
-           {host, "pgbouncer-service"},
-          {{- else }}
            {host, "${POSTGRES_DBHOST}"},
-          {{- end }}
            {user, "${POSTGRES_DBUSER}"},
            {dbname, "settings"},
            {password, "${POSTGRES_DBPWD}"},
@@ -69,7 +69,6 @@ data:
 
       {publish_request, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -77,15 +76,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {queues_count, 1},
           {min_size, 1},
@@ -95,7 +85,6 @@ data:
 
       {consumer_response, [
                 {servers, [
-          {{- if eq .Values.rabbitmq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
                         {port, ${MQ_PORT}},
@@ -103,15 +92,6 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
                 ]},
           {connections_per_queue, 1},
           {channels_per_connection, 1},
@@ -163,7 +143,3 @@ data:
         ]
       }
     ].
-
-kind: ConfigMap
-metadata:
-  name: {{ .Values.confAgentServer.appName }}-config

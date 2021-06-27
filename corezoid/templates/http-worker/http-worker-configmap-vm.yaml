@@ -1,10 +1,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.http.appName }}-config-vm
-  labels:
+  name: {{ .Values.http.name }}-config-vm
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "corezoid.http" . }}
+    app.kubernetes.io/component: {{ .Values.http.name }}
     app: {{ .Values.global.product }}
-    service: {{ .Values.http.appName}}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
 data:
   vm.args: |
     ## Name of the node
