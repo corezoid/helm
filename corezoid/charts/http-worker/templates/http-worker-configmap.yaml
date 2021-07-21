@@ -138,6 +138,7 @@ data:
         ]},
 
       {http_worker, [
+        {prometheus_metrics, true},
         %server name
         {worker_id, <<"">>},
 
@@ -316,7 +317,7 @@ data:
           {messages_prefetch_size_per_channel, {{ .Values.global.http.tune.consumer_settings_messages_prefetch_size_per_channel | default 50 }} }      %% The number of queues within the channel
         ]},
         %% if loglevel = debug - all on / else off
-    {{ $loglevel := .Values.global.error_log_level }}
+    {{ $loglevel := .Values.global.log_level }}
         {logs, [
     {{- if eq $loglevel "debug" }}
           {info, on},
@@ -336,7 +337,7 @@ data:
       {lager,
         [
           {log_root, "/ebsmnt/erlang/http_worker/log"},
-          {handlers, [ {lager_console_backend, {{ .Values.global.error_log_level | default "info" }} } ]},
+          {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
 
           %% What colors to use with what log levels
           {colored, true},

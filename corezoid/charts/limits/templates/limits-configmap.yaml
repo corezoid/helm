@@ -83,7 +83,7 @@ data:
         {lager, [
             %% What handlers to install with what arguments
             {log_root, "/ebsmnt/erlang/corezoid_limits/log"},
-            {handlers, [ {lager_console_backend, {{ .Values.global.error_log_level | default "info" }} } ]},
+            {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
 
             %% What colors to use with what log levels
             {colored, true},

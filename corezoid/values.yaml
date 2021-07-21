@@ -1,4 +1,6 @@
 # Global values for subcharts | production
+#helm upgrade corezoid -n corezoid-k8s-public  .
+
 global:
   # second level domain only! / core domain (example: corezoid.com)
   domain: "devopsdev.corezoid.com"
@@ -35,7 +37,7 @@ global:
   ######## Settings AWS EFS filesystem   ########
   efs:
     awsRegion: "eu-west-1"
-    efsFileSystemId: "fs-1388e9d9"
+    efsFileSystemId: "fs-5b5cee6f"
     ## set true if you choose storage: efs
     enabled: true
   ######## Settings NFS filesystem   ########
@@ -51,7 +53,7 @@ global:
   db:
     # if internal true - create and use internal postgres container
     # if internal false - enable external db, like aws rds
-    internal: false
+    internal: true
     ## secret configuration for postgresql
 
     ## pvc name
@@ -67,7 +69,7 @@ global:
       ## password - for dbsuperuser
       dbsuperuserpwd: "Corezoid1234!"
       data:
-        dbhost: "corezoid-public-pg11.c9ko8blcgiqi.eu-west-1.rds.amazonaws.com"
+        dbhost: "pg-postgresql"
         dbport: "5432"
         dbuser: "internal_user"
         dbpwd: "8hhgasdgiuf"
@@ -81,8 +83,8 @@ global:
 
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
-    bouncer_minReplicas: "4"
-    bouncer_maxReplicas: "4"
+    bouncer_minReplicas: "2"
+    bouncer_maxReplicas: "6"
     bouncer_resources:
       limits:
         cpu: "500m"
@@ -100,7 +102,7 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.6.1"
+      version: "5.7.0"
 
     rotation:
       ## enabled: true or false
@@ -116,7 +118,7 @@ global:
   redis:
     # if internal true - create and use internal k8s redis container
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
-    internal: false
+    internal: true
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
@@ -127,16 +129,15 @@ global:
       name: "redis-secret"
       # you can specify different servers for redis for counters, cache and timers  - or specify the same server in variables
       data:
-        # default redis for counters
-        host: "k8s-mambu-dev.h2avrs.0001.euw1.cache.amazonaws.com"
+        host: "redis-master"
         port: "6379"
         password: ""
         # default redis for cache
-        host_cache: "k8s-mambu-dev-cache.h2avrs.ng.0001.euw1.cache.amazonaws.com"
+        host_cache: "redis-master"
         port_cache: "6379"
         password_cache: ""
         # default redis for timers
-        host_timers: "k8s-mambu-dev-timers.h2avrs.ng.0001.euw1.cache.amazonaws.com"
+        host_timers: "redis-master"
         port_timers: "6379"
         password_timers: ""
 
@@ -148,7 +149,7 @@ global:
     tag: "6.7.1"
     # if internal true - create and use internal elasticsearch container
     # if internal false - enable external elasticsearch, like aws elasticsearch service
-    internal: false
+    internal: true
     ## secret configuration for elasticsearch
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -156,17 +157,16 @@ global:
       create: true
       name: "elasticsearch-secret"
       data:
-        #host: "elasticsearch-elasticsearch-master"
-        host: "https://search-k8s-mambu-dev-k2fbtgrdi2lhe5exy5nana423a.eu-west-1.es.amazonaws.com"
+        host: "elasticsearch-elasticsearch-master"
         ## be careful with port - in internal install used 9200, in aws uses 443
-        port: "443"
+        port: "9200"
 
   #######  RabbitMQ  ########
   ## Supported version  3.8.*
   mq:
     # if internal true - create and use internal rmq container
     # if internal false - enable external rmq (on aws ec2 instances as example)
-    internal: false
+    internal: true
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values
@@ -174,7 +174,7 @@ global:
       create: true
       name: "rabbitmq-secret"
       data:
-        host: "rmq.devopsdev.corezoid.com"
+        host: "rabbit-service"
         port: "5672"
         vhost: "/conveyor"
         username: "app-user"
@@ -186,17 +186,16 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    #tag: "7.6.1.0-without-tini"
-    tag: "7.6.1.1"
-    minReplicas: 4
+    tag: "7.7.0.1"
+    minReplicas: 2
     maxReplicas: 4
     resources:
       limits:
         cpu: 4
         memory: 4000Mi
       requests:
-        cpu: 4
-        memory: 4000Mi
+        cpu: 2
+        memory: 2000Mi
     ## restricting user registration only within the domains specified below if enabled
     registration_restriction:
       enable: false
@@ -291,27 +290,30 @@ global:
 
   # http-worker
   http:
-    tag: "master-kub"
-#    tag: "3.5.0.2-without-tini"
-    minReplicas: 4
+    tag: "3.6.0.1"
+    minReplicas: 2
     maxReplicas: 4
     resources:
       limits:
         cpu: 4
         memory: 4000Mi
       requests:
-        cpu: 4
-        memory: 4000Mi
+        cpu: 2
+        memory: 2000Mi
     max_http_resp_size: "5242880"
     blocked_domains:
       - "169.254.169.254"
       - "mail.ru"
     tune:
       http_consumer_queues_count: 8
-      http_consumer_connections_per_queue: 3
-      http_consumer_channels_per_connection: 3
-      http_consumer_messages_prefetch_size_per_channel: 3
+      ## The specified number of tcp connections will be created for each queue
+      http_consumer_connections_per_queue: 4
+      ## Virtual connections for one connections_per_queue
+      http_consumer_channels_per_connection: 4
+      ## The number of queues within the channel
+      http_consumer_messages_prefetch_size_per_channel: 10
       consumer_settings_messages_prefetch_size_per_channel: 50
+      ## The number of queues within the channel
       consumer_response_prefetch_size_per_channel: 50
 
     affinity: {}
@@ -376,8 +378,8 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "4.6.1.0-without-tini"
-    minReplicas: 4
+    tag: "4.7.0.1"
+    minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
     resources:
@@ -413,9 +415,9 @@ global:
 
   # mult
   mult:
-    tag: "2.5.1.0"
-    minReplicas: 1
-    maxReplicas: 1
+    tag: "2.6.0.1"
+    minReplicas: 2
+    maxReplicas: 4
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "mult-pvc"
     ## true if pvc for mult should be created automaticaly
@@ -456,9 +458,8 @@ global:
 
   # webadm
   webadm:
-    #    tag: "develop"
-    tag: "5.6.1"
-    minReplicas: 2
+    tag: "5.7.0"
+    minReplicas: 1
     resources:
       limits:
         cpu: 200m
@@ -497,16 +498,16 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "2.0.4"
-    minReplicas: 4
+    tag: "2.1.0"
+    minReplicas: 2
     maxReplicas: 4
     resources:
       limits:
         cpu: 4
         memory: 4000Mi
       requests:
-        cpu: 4
-        memory: 4000Mi
+        cpu: 2
+        memory: 2000Mi
 
     affinity: {}
   #    # hard AZ-based affinity
@@ -587,9 +588,9 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "1.5.2-without-tini"
-    minReplicas: 2
-    maxReplicas: 2
+    tag: "1.5.1"
+    minReplicas: 1
+    maxReplicas: 3
     resources:
       limits:
         cpu: 1000m
@@ -602,9 +603,9 @@ global:
     tag: "1.2.2-without-tini"
     minReplicas: 1
 
-  # global error_log level, info - default
+  # global log level definition, info - default
   # available value info | warning | error | debug
-  error_log_level: debug
+  log_level: info
   # allows store crushdumps and send to Telegram chat
   store_dumps:
     enabled: false
@@ -613,7 +614,8 @@ global:
     pvc_size: 10Gi
     notification_url: http://dump-service:3000/telegram
     # domain name for dumps web ui
-    subdomain: "dump-k8s-public"
+    subdomain: ""
+#    dump-k8s-public
     # how to create login and password
     # https://www.web2generators.com/apache-tools/htpasswd-generator
     base_auth:

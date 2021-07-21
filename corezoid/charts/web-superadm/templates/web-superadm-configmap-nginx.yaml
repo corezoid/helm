@@ -3,7 +3,7 @@ data:
   nginx.conf: |
     user  nginx;
     worker_processes 1;
-    {{ $loglevel := .Values.global.error_log_level }}
+    {{ $loglevel := .Values.global.log_level }}
     {{- if eq $loglevel "debug" }}
     error_log /dev/stdout debug;
     {{- else }}
