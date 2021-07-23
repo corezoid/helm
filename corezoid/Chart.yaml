@@ -1,11 +1,21 @@
-apiVersion: v1
-name: corezoid
-version: "0.19"
+annotations:
+  category: corezoid
+apiVersion: v2
 appVersion: "5.7.0"
-description: Chart for Corezoid.
-home: https://corezoid.com/
+dependencies:
+  - name: common
+    repository: https://charts.bitnami.com/bitnami
+    tags:
+      - bitnami-common
+    version: 1.x.x
+description: corezoid
+home: https://corezoid.com
 maintainers:
   - name: George Kozlitin
     email: george.kozlitin@corezoid.com
 engine: gotpl
 icon: https://corezoid.com/static/ce1da2c78726bb5ce1cf53b002dac519/62341/CorezoidProduct.png
+name: corezoid
+sources:
+  - https://corezoid.com/
+version: 0.0.5

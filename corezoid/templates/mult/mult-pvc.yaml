@@ -1,0 +1,19 @@
+---
+{{- if .Values.mult.persistantVolumeClaimCreate }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Values.mult.persistantVolumeClaimName }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.mult.name }}
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{ .Values.global.storageClass }}
+spec:
+  storageClassName: {{ .Values.global.storageClass }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+{{- end }}

@@ -1,0 +1,20 @@
+---
+{{- if .Values.global.storageClass2 }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.mult.name }}-{{ .Values.global.storage}}-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.mult.name }}
+spec:
+  storageClassName: {{ .Values.global.storageClass }}
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  hostPath:
+    path: /ebsmnt/{{ .Release.Name }}/{{ .Values.mult.name }}
+{{- end }}

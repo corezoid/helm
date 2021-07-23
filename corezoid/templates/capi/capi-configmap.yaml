@@ -1,0 +1,868 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.capi.name }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.capi.name }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
+data:
+  {{ .Values.capi.name }}.config: |
+    %% -*- mode: erlang;  -*-
+    [
+            {limits_client, [
+                {redis, [
+                    [
+                        {host, "{{ template "corezoid.redis.host" . }}"},
+                        {port, {{ template "corezoid.redis.port" . }}},
+                        {password, "${REDIS_PASSWORD}"},
+                        {database, 9},
+                        {start_size, 1},
+                        {min_size, 1},
+                        {max_size, 50}
+                    ]
+                ]}
+            ]},
+
+        {corezoid_license_client, [
+          {path_to_license, "/ebsmnt/certs/corezoid_license"}
+        ]},
+
+        {corezoid_global_stats, [
+            {disabled, true}
+        ]},
+
+
+        %% for clustering components
+        {corezoid_cluster, [
+            {backend, redis}, %% maybe if future list will increase
+            {redis, [
+                {host, "{{ template "corezoid.redis.host" . }}"},
+                {port, {{ template "corezoid.redis.port" . }}},
+                {password, "${REDIS_PASSWORD}"},
+                {database, 10}
+            ]}
+        ]},
+
+        {is_ready, [
+          {port, 8383},
+          {disabled, false}
+        ]},
+
+      {mw_metrics, [
+        {is_enabled, true},
+        {subsystems, [erlprometheus]}
+      ]},
+
+      {erlprometheus, [
+        {host, {0,0,0,0}},
+        {port, {{ .Values.prometheus.port | default 9100 }}}
+      ]},
+
+
+          %% Envirement Variable
+          {env_var, [
+              %% - psql pool -
+              {psql, [
+                  {host, "{{ template "corezoid.postgres.host" . }}"},
+                  {dbname, "conveyor"},
+                  {user, "{{ template "corezoid.postgres.username" . }}"},
+                  {port, {{ template "corezoid.postgres.port" . }}},
+                  {password, "${POSTGRES_DBPWD}"},
+                  %% pool size
+                  {start_size,  3},
+                  {min_size,    3},
+                  {max_size,    10}
+              ]}
+          ]},
+
+        %% needed for conf_agent
+        {corezoid_sdk, [
+          {host, "{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}"},
+          {scheme, "https://"}
+        ]},
+
+        {ermql, [
+
+            {publish_request, [
+            {servers, [
+              [
+              {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+              {port, {{ template "corezoid.rabbitmq.port" . }}},
+              {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+              {password, <<"${MQ_PASSWORD}">>},
+              {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+            ]
+            ]},
+              {queues_count, 1},
+              {min_size, 1},
+              {max_size, 1},
+              {start_size, 1}
+            ]},
+
+            {consumer_response, [
+            {servers, [
+                  [
+                    {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                    {port, {{ template "corezoid.rabbitmq.port" . }}},
+                    {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                ]
+            ]},
+              {connections_per_queue, 1},
+              {channels_per_connection, 1},
+              {messages_prefetch_size_per_channel, 50}
+            ]}
+
+        ]},
+
+        {corezoid_queues_gc, [
+          {disabled, false},
+          {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+          {port, 15672},
+          {login, "{{ template "corezoid.rabbitmq.username" . }}"},
+          {password, "${MQ_PASSWORD}"},
+          {vhost, "{{ template "corezoid.rabbitmq.vhost" . }}"},
+          {gc_queues_regexp, ["api.ctrl","settings.capi"]}
+        ]},
+
+        {conv_params, [
+            {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid.
+                             %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
+        ]},
+
+        %% DEPS for unloading logs to elastic/kibana systems
+        %% there are 2 handlegjhrs.
+        %% One of them uses for all error messages and crash logs during runtime system works
+        %% Rest uses for put callback from direct url and mandrill to kibana/elastic
+        %% with masked values (it takes from process autoclear params)
+        {corezoid_logs_sender, [
+            {handlers, [
+                %{error_msg, [                                              %% error messages area
+                %{host, ''},                                                %% RabbitMQ host
+                %{port, },                                                  %% RabbitMQ port
+                %{exchange, <<"CorezoidErrLogs">>},                         %% RabbitMQ exchange
+                    %% RabbitMQ queue (param "i" depends on queues_count.
+                    %% For queues_count = 4 will be creating 4 queues -
+                    %% CorezoidErrLogsQueue1, CorezoidErrLogsQueue2,
+                    %% CorezoidErrLogsQueue3, CorezoidErrLogsQueue4
+                %{queue, <<"CorezoidErrLogsQueue{{ "{{" }}=i{{ "}}" }}">>},
+                %{username, <<"">>},                                        %% RabbitMQ username
+                %{password, <<"">>},                                        %% RabbitMQ password
+                %{vhost, <<"">>},                                           %% RabbitMQ virtual host
+                %{queues_count, 4},                                         %% this parameter is described above
+                %{thread_count, 10}                                         %% How many threads will put into queues
+            ]}
+        ]},
+        %% DEPS is used for connect sender and corezoid in one platform.
+        %% It replaces liqpay platform
+        {merchant_api, [
+            %% it uses api for connection and signs all queries using login and secret keys
+            {base_url, "http://{{ .Values.merchant.name }}-service:{{ .Values.merchant.service.merchantPort }}"},         %% url merchant api
+            {login,  "${MERCHANT_LOGIN}"},            %% login
+            {secret, "${MERCHANT_SECRET}"},
+            {skip_otp, {{ .Values.capi.merchant_api.skip_otp }}},
+            {health_url, "http://{{ .Values.merchant.name }}-service:{{ .Values.merchant.service.managmentPort }}/actuator/health"}
+        ]},
+        {enigma, [
+          {is_enabled, {{ .Values.enigma.enabled }}},
+          {private_key_id, "{{ .Values.capi.enigma_pk_id }}"},
+          {key_manager_host, "http://enigma-key-manager-service:8080"},
+          {rotors_pool, [
+            {min_size, 3},
+            {max_size, 50},
+            {start_size, 3}
+          ]}
+        ]},
+
+
+        %% MAIN capi application
+        {capi,
+            [
+        {prometheus_metrics, true},
+
+    {{- if .Values.gitcall.enabled }}
+                {components, [<<"git_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
+    {{- end }}
+                %% It must be changed to unique name for every api node. It's personal
+                %% queue where will come messages from others api nodes.
+                {api_id, <<"">>},
+                {server_port, 9080},  %% listener port
+
+    {{- if .Values.enigma.encryption }}
+                %% for ENCRYPT/DECRYPT data
+                {encrypt_decrypt, [
+                  queue, %% now it's encode-decode RabbitMQ
+                  cache, %% Redis
+                  db     %% PostgreSQL
+                ]},
+    {{- end }}
+
+                {max_task_size_for_process_conv, {{ .Values.capi.max_task_size_for_process_conv | default 264000 }} }, %% max task size for process conv
+                {max_task_size_for_st_diagramm_conv, {{ .Values.capi.max_task_size_for_st_diagramm_conv | default 264000 }} }, %% max task size for state diagramm conv
+                {origin_whitelist, [
+                    "{{ .Values.capi.subdomain}}.{{ .Values.global.domain }}","{{ .Values.websuperadm.subdomain}}.{{ .Values.global.domain }}","{{ .Values.syncapi.subdomain}}.{{ .Values.global.domain }}"
+                ]},
+
+                %% cookie name where cookie string will put
+                {cookie_name, <<"{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">>},
+                {cookie_expr_time, {{ .Values.capi.cookie_expr_time}} },
+                {shards_count, {{ .Values.externalPostgresql.shards_count | default 10 }} },
+
+                %% merchant api module that provides synchronization of the company through the middleware systems (Deepmemo, Corezoid and others)
+                {companies_manager, mapi }, %% mapi
+
+                %% max req/sec of create|modify|delete for conv|folder|dashboard
+                %% It will be logged as ->
+                %% Ops limit is reached. UserId: 1, Obj: conv, Action: create, Limit: 10
+                %% End-user will get the error ->
+                %% Too many requests: limit is reached
+                {max_reqs_limit, {{ .Values.capi.max_reqs_limit | default 5 }} },
+
+                %% Main page for output link on dashboard, process, folders and others
+                {main_page, "https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}"},
+
+                %% it is a domain where cookie is binded
+                {main_domain, "{{ .Values.global.domain }}"},
+
+                %% It is used for create direct url in viber, telegram link
+                %% And for confirm registration
+                {api_host, "https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}/api"},
+
+                %% it is solt for password when we use corezoid auth method(login+password)
+
+                {admin_url1, "https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}"},       %% First version admin
+                {admin_url2, "https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}"},       %% Second version admin
+
+                %% When new user registers in corezoid system under
+                %% login and password it checks this flag
+                %% If it is false => corezoid doesn't send confirmation about registration
+                %% and bind immediately user to system
+                %% If it is true => corezoid send email confirmation and after confirm user
+                %% user is binded to corezoid system
+                {email_confirm, false},
+
+            %% FRONT SETTINGS
+            {front_settings, [
+                {is_single_account, {{- .Values.sa.enabled }}},	%% enable SingleAccount auth
+                {env, <<"prod">>}, %% Available test|pre|prod
+                {host, [
+                    {site, <<"{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">>},   %% main page (navigate by clicking on the corezoid logo)
+                    {doc, <<"{{ .Values.capi.front_setting.doc_host }}">>}, %% documentation (navigate by clicking on DOCS link)
+                    %%{market, <<"...">>}, %% market (market api call)
+                    {ws, <<"{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">>},                    %% websocket
+                    {webhook, <<"{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">>},               %% corezoid domain
+                    {auth, <<"{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">>},                  %% account auth
+                    {single_account, <<"{{ .Values.sa_web.subdomain }}.{{ .Values.global.domain }}">>}          %% for single account
+                ]},
+                {path, [
+                    {api, <<"/api/2/json">>},   %% all apis POST queries
+                    {upload, <<"/api/2/upload">>},  %% upload scheme, json, csv
+                    {download, <<"/api/2/download">>},  %% download scheme, csv
+                    {ws, <<"/api/1/sock_json">>},   %% events in real time
+            	    {doc, [
+                	    {index, <<"{{ .Values.capi.front_setting.doc_index }}">>}
+                	    %%{introduction, <<"/introduction">>},
+                	    %%{bot_platform, <<"/bot-platform-20">>},
+                	    %%{task_export, <<"/tasks-export">>},
+                	    %%{mask_values, <<"/task-parameters#masking-values">>}
+            	    ]},
+
+                    {webhook, <<"/api/1/">>},    %% this one plus host.webhook = (http:https)://host.webhook/path.webhook/(xml|json|nvp)/...
+                    {auth, <<"/auth2/single_account">>}       %% account auth
+                ]},
+                {sender, [
+                    %% Interaction with the sender to create Sender forms, Sender action...
+                    {host, <<"builder.sender.mobi">>},
+                    {path, [
+                        {embed, <<"/embed.js?">>},
+                        {builder, <<"/builder.html">>}
+                    ]}
+                ]},
+                %{captcha_key, <<"">>},
+                {captcha, [
+                    {key, <<"${capi_front_captcha_key}">>}, %% key for works with captcha (page /login if corezoid registration)
+                    {disabled, {{ .Values.capi.capi_front_captcha_disabled }} }
+                ]},
+                {whitelist, [<<"{{ .Values.global.domain }}">>]},
+                {ui, [
+                    {market, {{ .Values.capi.front_setting.ui.market }} },                  %% to Market button
+                    {bot_platform, {{ .Values.capi.front_setting.ui.bot_platform }} },            %% button Create -> Bot platform
+                    {old_editor, false },              %% button Old editor
+                    {company, true},                   %% button Create -> Company
+                    {search, true },                   %% process search
+                    {send_invite, true },              %% send an invite or not
+                    {health, false },                  %% Show health_check menu
+                    {billing, {{ .Values.capi.front_setting.ui.billing }} },                                 %% billing button display
+                    {git_call, {{ .Values.capi.front_setting.ui.git_call }}},                                %% display of the git_call button
+                    {tab_name, <<{{ .Values.capi.front_setting.ui.tab_name | quote }}>>},
+                    {disabled_auth_logo, {{ .Values.capi.front_setting.ui.disabled_auth_logo }}},            %% disable or enable logo on main page
+                    {default_company, << {{ quote .Values.capi.front_setting.ui.default_company }} >> },     %% Set default company name
+                    {color, [
+                              {main, << {{ quote .Values.capi.front_setting.ui.color_main }} >>},            %% main color
+                              {logo, << {{ quote .Values.capi.front_setting.ui.color_logo }} >>},             %% logo color
+                              {logo_hover, << {{ quote .Values.capi.front_setting.ui.color_logo_hover }} >>}  %% logo underline
+                            ]}
+                ]}
+            ]},
+
+                %% Elasticsearch includes info:
+                %% 1. Processes
+                %% 2. Dashboards
+                %% 3. Folders
+                %% Elastic helps us to find these objects for name, It's as like in DB
+            {elastic_search, [
+                {host, <<"{{ template "corezoid.elasticsearch.host" . }}">>},
+                {port, {{ template "corezoid.elasticsearch.port" . }} },
+                {timeout, 50000}
+            ]},
+
+            % PgSQL settings
+            %% main database pool settings ( the main base is company folders, processes, i.e. whole front )
+            {pgsql, [
+                {host, "{{ template "corezoid.postgres.host" . }}"},
+                    %% hosts - tasks, settings of nodes
+                    {hosts, [
+                    { [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+    {{- range $i, $e := .Values.externalPostgresql.shards }}
+    {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "{{ template "corezoid.postgres.host" . }}" }
+                    ]},
+                {user, "{{ template "corezoid.postgres.username" . }}"},
+                {dbname, "conveyor"},
+                {password, "${POSTGRES_DBPWD}"},
+                {min_size, 0},          %% The minimum number of connections after the start and 30 seconds of work.
+                {max_size, 5},            %% The maximum number of connections is the border to which we can raise, within 30 seconds.
+                {start_size, 2}           %% The number of connections that rises to the pool, at the start of this pool. Every 30 seconds check connect and then go to min_size
+            ]},
+
+            {pgsql_task_history, [
+                      {host, "{{ template "corezoid.postgres.host" . }}"},
+                          %% hosts - tasks, settings of nodes
+                          {hosts, [
+                          { [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+    {{- range $i, $e := .Values.externalPostgresql.shards }}
+    {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "{{ template "corezoid.postgres.host" . }}" }
+                    ]},
+                { user, "{{ template "corezoid.postgres.username" . }}" },
+                { password, "${POSTGRES_DBPWD}" },
+                {min_size, 0},
+                {max_size, 50},
+                {start_size, 3}
+            ]},
+
+            {write_data_to_history, false}, %% true|false - write or not tasks data into table
+
+            %% database pool for for usercode sandboxes only
+            {pgsql_cce_temp, [
+                {host, "{{ template "corezoid.postgres.host" . }}"},
+                {user, "{{ template "corezoid.postgres.username" . }}"},
+                {db_name, "cce"},
+                {password, "${POSTGRES_DBPWD}"},
+                {min_size, 0},
+                {max_size, 25},
+                {start_size, 2}
+            ]},
+
+            %% database for git call
+            {pgsql_git_call, [
+                {host, "{{ template "corezoid.postgres.host" . }}"},
+                {user, "{{ template "corezoid.postgres.username" . }}"},
+                {db_name, "gitcall"},
+                {password, "${POSTGRES_DBPWD}"},
+                {min_size, 0},
+                {max_size, 1},
+                {start_size, 1}
+            ]},
+
+          %%  postgresql archive db
+          { pgsql_archive, [
+              { hosts, [
+                { [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+    {{- range $i, $e := .Values.externalPostgresql.shards }}
+    {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "{{ template "corezoid.postgres.host" . }}" }
+              ]},
+              { user, "{{ template "corezoid.postgres.username" . }}" },
+              { password, "${POSTGRES_DBPWD}" },
+              { start_size, 2 },
+              { min_size, 0 },
+              { max_size, 50 }
+            ]},
+
+
+
+            %% database pool for highloads clients (removal of highly loaded processes in a separate database)
+            %% Extended solution
+            {pgsql_extra, []},
+
+            {kernel, [
+                %%{inet_dist_listen_min, 52617},          %% for api cluster the minimum port that can use
+                %%{inet_dist_listen_max, 52617}           %% for api cluster the maximum port that can use
+            ]},
+
+            % redis pool for counters and api-sum-s
+            {redis1, [
+                [
+                    {host, "{{ template "corezoid.redis.host" . }}"},
+                    {port, {{ template "corezoid.redis.port" . }}},
+                    {password, "${REDIS_PASSWORD}"},
+                    {database,1},
+                    {start_size, 5},
+                    {min_size, 5},
+                    {max_size, 50}
+                ]
+            ]},
+
+            %% memory redis for cache task
+            {redis2, [
+                [
+                    {host, "{{ template "corezoid.redisCache.host" . }}"},
+                    {port, {{ template "corezoid.redisCache.port" . }}},
+                    {password, "${REDIS_PASSWORD_CACHE}"},
+                    {database,3},
+                    {start_size, 10},
+                    {min_size, 10},
+                    {max_size, 50}
+                ]
+            ]},
+
+            %% redis pool for api_sum logic
+            {redis_api_sum, [
+                [
+                    {host, "{{ template "corezoid.redis.host" . }}"},
+                    {port, {{ template "corezoid.redis.port" . }}},
+                    {password, "${REDIS_PASSWORD}"},
+                    {database,2},
+                    {start_size, 2},
+                    {min_size, 2},
+                    {max_size, 50}
+                ]
+            ]},
+
+            % to_worker mq
+            %% (For scaling, the workers can communicate with different rabbitmqs (for example, 1 worker serves 1-5 shards, the 2nd worker serves 6-10 shards. They know who serves what among themselves))
+            {publish_to_worker_request, [
+                {servers, [
+                    { [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+    {{- range $i, $e := .Values.externalPostgresql.shards }}
+    {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], [
+                    {host, "{{ template "corezoid.rabbitmq.host" . }}"}
+                    ]}
+                ]},
+                {port, {{ template "corezoid.rabbitmq.port" . }}},
+                {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>},
+                {min_size, 25},
+                {max_size, 25},
+                {start_size, 25}
+            ]},
+
+            % api copy queue (support multiply consumers)
+            {consumer_copy_task_request,[
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+                {queues_count, 1},
+                {connections_per_queue, 1},
+                {channels_per_connection, 1},
+                {messages_prefetch_size_per_channel, 50}
+            ]},
+
+            %% logic get_task. Now on api will soon be on worker
+            % api get_task queue (support multiply consumers)
+            {consumer_get_task_request,[
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+                {order_by, true},
+                {queues_count, 1},
+                {connections_per_queue, 1},
+                {channels_per_connection, 1},
+                {messages_prefetch_size_per_channel, 50}
+            ]},
+
+            %% async events queue between users publisher
+            {publish_user_actions_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+                {queues_count, 1},
+                {min_size, 1},
+                {max_size, 1},
+                {start_size, 1}
+            ]},
+
+            %% async events queue consumer
+            {consumer_user_actions_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+                {queues_count, 1},
+                {connections_per_queue, 1},
+                {channels_per_connection, 1},
+                {messages_prefetch_size_per_channel, 50}
+            ]},
+
+            %% deprecated
+            {consumer_notify_actions_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+                {queues_count, 1},
+                {connections_per_queue, 1},
+                {channels_per_connection, 2},
+                {messages_prefetch_size_per_channel, 50}
+            ]},
+
+            %% consumer for multipart-worker
+            %% work in pair with multipart worker
+            %% through this queue goes tasks with loading scheme from multipart to api
+            {consumer_multipart_connector_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+                {queues_count, 1},
+                {connections_per_queue, 1},
+                {channels_per_connection, 2},
+                {messages_prefetch_size_per_channel, 50}
+            ]},
+
+            %% elasticsearch consumer
+            {consumer_elastic_actions_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+                {queues_count, 1},
+                {connections_per_queue, 1},
+                {channels_per_connection, 2},
+                {messages_prefetch_size_per_channel, 50}
+            ]},
+
+            %% settings publisher
+            {publish_settings, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+                {min_size, 1},
+                {max_size, 1},
+                {start_size, 1}
+            ]},
+
+            %% settings consumer
+            {consumer_settings, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+                {connections_per_queue, 1},
+                {channels_per_connection, 1},
+                {messages_prefetch_size_per_channel, 50}
+            ]},
+
+
+
+            %% Statistics consumer
+            {consumer_statistics, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+                {connections_per_queue, 1},
+                {channels_per_connection, 1},
+                {messages_prefetch_size_per_channel, 1}
+            ]},
+
+            % ldap auth settings
+            {ldap, [
+                {server, "{{ .Values.capi.ldap_server }}"},
+                {port, {{ .Values.capi.ldap_port }} },
+    {{- if and .Values.capi.ldap_tls (eq .Values.capi.ldap_tls true) }}
+                {tls, {{ .Values.capi.ldap_tls }}}, %% true | false
+    {{- end }}
+                {base, "{{ .Values.capi.ldap_base }}"},      %% ou=special users,o=middleware
+                {filter, "{{ .Values.capi.ldap_filter }}"}, %% uid | cn
+                {first_bind_user, {{ .Values.capi.ldap_first_bind_user }} }, %% then this param is true, bind_user_name, bind_user_pass should be filled. if it's false it is not necessary
+                {bind_user_name, "{{ .Values.capi.ldap_bind_user_name }}" }, %% or like this "cn=middleware,ou=DHO,ou=fuib,dc=fuib,dc=com"
+                {bind_user_pass, "{{ .Values.capi.ldap_bind_user_pass }}" },
+                {user_nick_entry, "{{ .Values.capi.ldap_user_nick_entry }}" } %% ldap nick name path
+            ]},
+
+            %% google auth settings
+            {oauth, [
+              %% google auth for {{ .Values.capi.subdomain }}.{{ .Values.global.domain }} (api1)
+              {auth_google, [
+                {client_id, "{{ .Values.sa.google_client_id }}"},
+                {client_secret, "{{ .Values.sa.google_client_secret }}"},
+                {return_url, "https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}/auth/google/return"},
+                {type, auth_google},
+                {oauth_url, "https://accounts.google.com/o/oauth2/auth"},
+                {token_url, "https://accounts.google.com/o/oauth2/token"},
+                {userinfo_url, "https://www.googleapis.com/oauth2/v1/userinfo?access_token="},
+                {status, on}
+              ]},
+
+              %% google auth for {{ .Values.capi.subdomain }}.{{ .Values.global.domain }} (api2)
+              {auth2_google, [
+                {client_id, "{{ .Values.sa.google_client_id }}"},
+                {client_secret, "{{ .Values.sa.google_client_secret }}"},
+                {return_url, "https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}/auth2/google/return"},
+                {type, auth_google},
+                {oauth_url, "https://accounts.google.com/o/oauth2/auth"},
+                {token_url, "https://accounts.google.com/o/oauth2/token"},
+                {userinfo_url, "https://www.googleapis.com/oauth2/v1/userinfo?access_token="},
+                {status, on}
+              ]}
+
+            ]},
+
+
+            %% Setting captcha backend
+            {backend_settings, [
+                {captcha, [
+                    {key, <<"${capi_backend_captcha_key}">>},
+                    {verify_url, "https://www.google.com/recaptcha/api/siteverify"},
+                    {disabled, {{ .Values.capi.capi_front_captcha_disabled }} }
+                ]}
+            ]},
+
+            %% sending metrics to zabbix
+            {zabbix, [
+                {server, "localhost"},
+                {src_host, "corezoid"},
+                {send_interval, 5},
+                {disabled, true}
+            ]},
+
+            {sender, [
+                %% sender communication
+                {sender_build_form_url, ""}, %% for build form url
+                {sender_build_action_url, ""}, %% for action url
+                {sender_call_action_url, ""}, %% for call action url
+                {sender_secret, <<"">>},
+                {sender_plugin_secret, <<"">>},
+                {sender_max_threads, 25 },
+                {sender_env, <<"md">>}
+            ]},
+
+            %% example {allowed_domains, ["gmail.com", "corezoid.com", "github.com"]},
+    {{- if .Values.capi.registration_restriction.enable }}
+            {allowed_domains, [{{- range .Values.capi.registration_restriction.allowed_domains  }} {{. | quote}},{{- end }} "{{ .Values.global.domain }}" ]},
+    {{- end }}
+
+            %%    % group for super_users
+            %%    %% superusers are users who can get extra privs to simple user
+            %%    %% DD move to table
+            {super_admin_id, 1},
+
+            {logic_settings, [
+                {api, [
+                    {max_threads, {{ .Values.capi.logic_settings.api_max_thread | default 200 }}}
+                ]},
+                {sender_api, [
+                    {max_threads, {{ .Values.capi.logic_settings.api_max_thread | default 25 }}}
+                ]},
+                {timer, [
+                    {default, [
+                        {timer_min, {{ .Values.capi.logic_settings.timer_default | default 30 }}}
+                    ]}
+                ]}
+            ]}
+        ]},
+
+        %% sending metrics to zabbix
+        {zabbix_sender, [
+            {zabbix_host, "localhost"},
+            {zabbix_port, 10051},
+            {nodename, "corezoid"},
+            {disabled, true}
+        ]},
+
+          {corezoid_fs, [
+
+            {profiles, [
+
+              %% profile name for maret schemas
+              [
+                {name, schemas}, %% Storage for process schemas, stored in marketplace
+
+                %% switch between storages
+                {default_file_storage, file_f3},
+
+                %% f3 file storage settings
+                {file_f3,[
+                  {allowed_namespaces, ["avatars"]},
+                  {path_to_dir, "/tmp"}, %% todo
+                  {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+                  {ttl_file, 60}                 %% file ttl in seconds
+                ]}
+              ],
+
+              %% profile name for avatars
+              [
+                {name, avatars}, %% Storage for users avatars
+                %% switch between storages
+                {default_file_storage, file_f3},
+
+                %% f3 file storage settings
+                {file_f3,[
+                  {allowed_namespaces, ["avatars"]},
+                  {path_to_dir, "/tmp"}, %% todo
+                  {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+                  {ttl_file, 60}                 %% file ttl in seconds
+                ]}
+
+              ]
+
+              %% maybe more profiles ...
+            ]}
+
+          ]},
+
+
+        {lager, [
+            %% What handlers to install with what arguments
+
+            {log_root, "/ebsmnt/erlang/capi/log"},
+            {handlers, [
+                {lager_console_backend, info},
+                {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 734003200}, {date, "$D0"}, {count, 1}]} %%,
+                %%{lager_file_backend, [{file, "console.log"}, {level, info}, {size, 734003200}, {date, "$D0"}, {count, 1}]}
+            ]},
+            %% What colors to use with what log levels
+            {colored, true},
+            {colors, [
+                {debug,     "\e[0;38m" },
+                {info,      "\e[1;37m" },
+                {notice,    "\e[1;36m" },
+                {warning,   "\e[1;33m" },
+                {error,     "\e[1;31m" },
+                {critical,  "\e[1;35m" },
+                {alert,     "\e[1;44m" },
+                {emergency, "\e[1;41m" }
+            ]},
+            %% Whether to write a crash log, and where. Undefined means no crash logger.
+            {crash_log, "crash.log"},
+            %% Maximum size in bytes of events in the crash log - defaults to 65536
+            {crash_log_msg_size, 65536},
+            %% Maximum size of the crash log in bytes, before its rotated, set
+            %% to 0 to disable rotation - default is 0
+            {crash_log_size, 10485760},
+            %% What time to rotate the crash log - default is no time
+            %% rotation. See the README for a description of this format.
+            {crash_log_date, "$D0"},
+            %% Number of rotated crash logs to keep, 0 means keep only the
+            %% current one - default is 0
+            {crash_log_count, 5},
+            %% Whether to redirect error_logger messages into lager - defaults to true
+            {error_logger_redirect, true},
+            %% How many messages per second to allow from error_logger before we start dropping them
+            {error_logger_hwm, 50},
+            %% How big the gen_event mailbox can get before it is switched into sync mode
+            {async_threshold, 20},
+            %% Switch back to async mode, when gen_event mailbox size decrease from `async_threshold'
+            %% to async_threshold - async_threshold_window
+            {async_threshold_window, 5}
+        ]},
+
+        {hcheck_sender, [
+            {host, <<"hcs-service">>}, %% host of the remote healthcheck server
+            {port, 5011}, %% port of the remote healthcheck server
+            {node_name, <<"capi-{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">> }, %% different for each node
+            {node_type, <<"capi">> }, %% capi | worker | multipart | http_worker | usercode | deepmemo ...
+            {disabled, true}, %% true by default
+            {send_interval_sec, 30}, %% by default 10 sec
+            {send_system_counters, true} %% memory processes etc, false by default
+        ]},
+
+        %% SASL config
+        {sasl, [
+            {sasl_error_logger, {file, "log/sasl-error.log"}},
+            {errlog_type, error},
+            {error_logger_mf_dir, "log/sasl"},      % Log directory
+            {error_logger_mf_maxbytes, 10485760},   % 10 MB max file size
+            {error_logger_mf_maxfiles, 5}           % 5 files max
+        ]},
+
+        {account_sdk, [
+    {{- if not .Values.sa.enabled }}
+            {disabled, true}
+    {{- else }}
+            {pool, [
+                {host, "{{ .Values.sa_web.subdomain }}.{{ .Values.global.domain }}"},
+                {port, 443},
+                {start_size, 10},
+                {min_size, 10},
+                {max_size, 10}
+            ]},
+            {disabled, false},
+            {client_id, "5dca7de57837d70001000006"},
+            {client_secret, "ZY8bwLJDYouuApi2ENxlup6kqShnhk3U"},
+            {return_url, "https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}/auth2/single_account/return/"},
+            {oauth_url, "https://{{ .Values.sa_web.subdomain }}.{{ .Values.global.domain }}/oauth2/authorize"},
+            {token_url, "https://{{ .Values.sa_web.subdomain }}.{{ .Values.global.domain }}/oauth2/token"},
+            {userinfo_url, "https://{{ .Values.sa_web.subdomain }}.{{ .Values.global.domain }}/oauth2/userinfo?access_token="}
+    {{- end }}
+        ]}
+
+        ].
+

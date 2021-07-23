@@ -1,0 +1,115 @@
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "corezoid.websuperadm" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.websuperadm.name }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  replicas: {{ .Values.websuperadm.replicaCount | default 1 }}
+  {{- if .Values.websuperadm.updateStrategy }}
+  strategy: {{- toYaml .Values.websuperadm.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.websuperadm.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/nginx: {{ include (print $.Template.BasePath "/web-superadm/web-superadm-configmap-nginx.yaml") . | sha256sum }}
+        checksum/nginx-site: {{ include (print $.Template.BasePath "/web-superadm/web-superadm-configmap-site.yaml") . | sha256sum }}
+        {{- if .Values.websuperadm.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.websuperadm.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.websuperadm.name }}
+        {{- if .Values.websuperadm.podLabels }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.websuperadm.podLabels "context" $) | nindent 8 }}
+    {{- end }}
+    spec:
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.websuperadm.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.websuperadm.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.websuperadm.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.websuperadm.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.websuperadm.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.websuperadm.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.websuperadm.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.websuperadm.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.websuperadm.priorityClassName }}
+      priorityClassName: {{ .Values.websuperadm.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.websuperadm.terminationGracePeriodSeconds | default 10 }}
+      shareProcessNamespace: true
+      containers:
+        - name: {{ template "corezoid.websuperadm" . }}
+          image: {{ template "corezoid.websuperadm.image" . }}
+          imagePullPolicy: {{ .Values.websuperadm.image.pullPolicy | default "IfNotPresent" }}
+          {{- if .Values.websuperadm.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.websuperadm.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.websuperadm.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.websuperadm.args "context" $) | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: websuperadm
+              containerPort: 80
+          {{- if .Values.websuperadm.resources }}
+          resources: {{- toYaml .Values.websuperadm.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.websuperadm.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.websuperadm.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.websuperadm.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.websuperadm.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          {{- if .Values.websuperadm.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.websuperadm.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          volumeMounts:
+            - name: web-superadm-config-nginx
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: web-superadm-config-site
+              mountPath: /etc/nginx/conf.d/superadm.conf
+              subPath: superadm.conf
+      volumes:
+        - name: web-superadm-config-nginx
+          configMap:
+            name: {{ .Values.websuperadm.name }}-main
+        - name: web-superadm-config-site
+          configMap:
+            name: {{ .Values.websuperadm.name }}-site

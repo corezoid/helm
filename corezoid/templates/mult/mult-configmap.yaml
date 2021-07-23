@@ -1,0 +1,371 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.mult.name }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.mult.name }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
+data:
+  conveyor_api_multipart.config: |
+    [
+
+      {is_ready, [
+        {port, 8383},
+        {disabled, false}
+      ]},
+
+        {mw_metrics, [
+          {is_enabled, true},
+          {subsystems, [erlprometheus]}
+        ]},
+
+        {erlprometheus, [
+          {host, {0,0,0,0}},
+          {port, {{ .Values.prometheus.port | default 9100 }}}
+        ]},
+
+      {ermql, [
+
+        {publish_request, [
+                    {servers, [
+                  [
+                    {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                    {port, {{ template "corezoid.rabbitmq.port" . }}},
+                    {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                ]
+            ]},
+        {queues_count, 1},
+        {min_size, 1},
+        {max_size, 1},
+        {start_size, 1}
+        ]},
+
+        {consumer_response, [
+            {servers, [
+                  [
+                    {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                    {port, {{ template "corezoid.rabbitmq.port" . }}},
+                    {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                ]
+            ]},
+        {connections_per_queue, 1},
+        {channels_per_connection, 1},
+        {messages_prefetch_size_per_channel, 50}
+        ]}
+        ]},
+
+        %% for clustering components
+      {corezoid_cluster, [
+          {backend, redis}, %% maybe if future list will increase
+          {redis, [
+              {host, "{{ template "corezoid.redis.host" . }}"},
+              {port, {{ template "corezoid.redis.port" . }}},
+              {password,"${REDIS_PASSWORD}"},
+              {database, 10}
+          ]}
+      ]},
+
+        {corezoid_queues_gc, [
+          {disabled, false},
+          {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+          {port, 15672},
+          {login, "{{ template "corezoid.rabbitmq.username" . }}"},
+          {password, "${MQ_PASSWORD}"},
+          {vhost, "{{ template "corezoid.rabbitmq.vhost" . }}"},
+          {gc_queues_regexp, ["mult.ctrl", "settings.conveyor_api_multipart"]}
+        ]},
+
+        {enigma, [
+          {is_enabled, {{ .Values.enigma.enabled }}},
+          {private_key_id, "{{ .Values.mult.enigma_pk_id }}"},
+          {key_manager_host, "http://enigma-key-manager-service:8080"},
+          {rotors_pool, [
+          {min_size, 3},
+          {max_size, 50},
+          {start_size, 3}
+          ]}
+        ]},
+
+      %% ---- INDIVIDUAL PARAMETR FOR THIS WORKER -------
+      {conveyor_api_multipart,
+        [
+          {nodes, [
+            ''
+          ]},
+
+          {{- if .Values.enigma.encryption }}
+          %% for ENCRYPT/DECRYPT data
+          {encrypt_decrypt, [
+            queue, %% now it's encode-decode RabbitMQ
+            cache, %% Redis
+            db     %% PostgreSQL
+          ]},
+          {{- end }}
+
+          {mult_id, <<"">>},                          %% personal queue for this node
+          {port, 9082},
+          {garb_timeout,3600000},                                   %% in ms timeout garbage collector
+          {publisher_timeout,1000},                              %% timeout in ms for send packet #csv_info_data{}
+          {api_throughput_tasks,7000000},                              %% limit for download tasks from api
+          {max_filesize, 20000000},                            %% in byte max size to upload .csv file
+          {max_filesize_scheme, 200000000},                            %% in byte max size to upload .json file with scheme
+          {list_fileformat, [<<"all">>]},                %% format of file have bin  alowed to upload
+          {url, "https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}/api/2/json"},%% url capi when http client send requests
+          {too_many_req_wait, 1000},                                  %% time in ms wait after  capi return <<"too many requests">>
+          {api_res_wait, 5000},                                    %% timeout in ms wait responce after  http_client send request
+
+          {download_limit_request,1000},
+
+          %%  config for file storage
+          {file_storage,f3},            %% f3|s3 - f3 use file storage if s3 use amazons3
+
+          %% f3 settings
+          {file_f3,[
+            {path_to_dir, "/ebsmnt_share"},   %% directory where files will be placed
+            %% if true, it will check grep /ebsmnt_share/ proc/mounts, if not mounted, the application will crash.
+            %% if false, there will be no checks
+            {network_partition, false},
+            {ttl_file, 60}             %% the lifetime of files after which they will be deleted (in seconds)
+            ]
+          },
+
+          %% ---- JOINT PARAMETR  WORKER AND CAPI -------
+
+          {main_page, "https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}"},              %% NB! this parametr MUST BE equal to the 'main_page'   in mult.config because parametr
+          {cookie_name, <<"corezoid-{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">>},                     %% the same with api
+
+
+          {publish_capi_connector_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+              {queues_count, 1},
+              {min_size, 2},
+              {max_size, 2},
+            {start_size, 2}
+          ]},
+
+        %%  need for download action
+        %%    ******************************
+          {publish_user_actions_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+              {queues_count, 1},
+              {min_size, 2},
+              {max_size, 2},
+            {start_size, 2}
+          ]},
+
+          %%   ************end block***********
+
+          %%    *********** producer of settings *******************
+
+          {publish_settings, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+            {min_size, 1},
+            {max_size, 1},
+            {start_size, 1}
+          ]},
+
+          %%    *********** consumer settings *******************
+
+          {consumer_settings, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+            {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
+            {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+            {messages_prefetch_size_per_channel, 50}    %% The number of queues within the channel
+          ]},
+
+          %% work in pair with conveyor_api worker
+          %% through this queue goes tasks with loading statistics to api
+          {capi_consumer, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+            {queues_count, 1},
+            {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
+            {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+            {messages_prefetch_size_per_channel, 1}    %% The number of queues within the channel
+          ]}
+
+        ]
+      },
+
+      {corezoid_fs, [
+
+        {profiles, [
+
+            %% profile name for maret schemas
+          [
+            {name, schemas}, %% Storage for process schemas, stored in marketplace
+
+                                                               %% switch between storages
+            {default_file_storage, file_f3},
+
+              %% f3 file storage settings
+            {file_f3,[
+              {allowed_namespaces, ["avatars"]},
+              {path_to_dir, "/ebsmnt_share"}, %% todo
+              {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+              {ttl_file, 600}                 %% file ttl in seconds
+            ]}
+          ],
+
+            [
+            {name, versions}, %% Temp storage for process schemas
+            %% switch between storages
+            {default_file_storage, file_f3},
+            %% s3 settings
+            {amazon_s3, [
+            {s3_profile, versions},
+            {opts, [{acl, public_read}, {meta, [{"Cache-Control", "max-age=86400"}]}]},
+            {type, <<"role">>}, %% <<"credentials">> (by default) | <<"env">> | <<"role">>
+            {bucket, "admin.corezoid.com-version"}
+            ]},
+
+                %% f3 file storage settings
+                {file_f3,[
+                    {path_to_dir, "/ebsmnt_share"},
+                    {network_partition, true},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+                    {ttl_file, 86400}                 %% file ttl in seconds
+                ]}
+            ],
+
+
+            %% profile name for avatars
+          [
+            {name, avatars}, %% Storage for users avatars
+                               %% switch between storages
+            {default_file_storage, file_f3},
+
+              %% f3 file storage settings
+            {file_f3,[
+              {allowed_namespaces, ["avatars"]},
+              {path_to_dir, "/ebsmnt_share"}, %% todo
+              {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+              {ttl_file, 60}                 %% file ttl in seconds
+            ]}
+
+          ]
+        ]}
+
+      ]},
+
+
+      {lager,
+        [
+          %% What handlers to install with what arguments (wrapped by middleman)
+
+          {log_root, "/ebsmnt/erlang/conveyor_api_multipart/log"},
+
+          {handlers, [
+            {lager_console_backend, info},
+            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
+          ]},
+
+          %% What colors to use with what log levels
+          {colored, true},
+          {colors, [
+            {debug,     "\e[0;38m" },
+            {info,      "\e[1;37m" },
+            {notice,    "\e[1;36m" },
+            {warning,   "\e[1;33m" },
+            {error,     "\e[1;31m" },
+            {critical,  "\e[1;35m" },
+            {alert,     "\e[1;44m" },
+            {emergency, "\e[1;41m" }
+          ]},
+
+          %% Whether to write a crash log, and where. Undefined means no crash logger.
+          {crash_log, "crash.log"},
+          %% Maximum size in bytes of events in the crash log - defaults to 65536
+          {crash_log_msg_size, 65536},
+          %% Maximum size of the crash log in bytes, before its rotated, set
+          %% to 0 to disable rotation - default is 0
+          {crash_log_size, 734003200},
+          %% What time to rotate the crash log - default is no time
+          %% rotation. See the README for a description of this format.
+          {crash_log_date, "$D0"},
+          %% Number of rotated crash logs to keep, 0 means keep only the
+          %% current one - default is 0
+          {crash_log_count, 5},
+          %% Whether to redirect error_logger messages into lager - defaults to true
+          {error_logger_redirect, true},
+          %% How many messages per second to allow from error_logger before we start dropping them
+          {error_logger_hwm, 50},
+          %% How big the gen_event mailbox can get before it is switched into sync mode
+          {async_threshold, 20},
+          %% Switch back to async mode, when gen_event mailbox size decrease from 'async_threshold'
+          %% to async_threshold - async_threshold_window
+          {async_threshold_window, 5}
+        ]
+      },
+
+      %% Client for healthcheck server
+      {hcheck_sender, [
+        {host, <<"hcs-service">>}, %% host of the remote healthcheck server
+        {port, 5011}, %% port of the remote healthcheck server
+        {node_name,  <<"mult-{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">> }, %% different for each node
+        {node_type,  <<"multipart">> }, %% api | worker | multipart | http_worker | usercode | deepmemo ...
+        {disabled, true}, %% true by default
+        {send_interval_sec, 30}, %% by default 10 sec
+        {send_system_counters, true} %% memory processes etc, false by default
+      ]},
+
+      %% SASL config
+      {sasl, [
+        {sasl_error_logger, {file, "log/sasl-error.log"}},
+        {errlog_type, error},
+        {error_logger_mf_dir, "log/sasl"},      % Log directory
+        {error_logger_mf_maxbytes, 10485760},   % 10 MB max file size
+        {error_logger_mf_maxfiles, 1}           % 5 files max
+      ]},
+
+      {corezoid_sdk, [
+        {host, "https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}"}
+      ]}
+
+    ].
+

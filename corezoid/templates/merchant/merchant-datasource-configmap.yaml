@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.merchant.name }}-datasource
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.merchant.name }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
+data:
+  data.sql: |
+    INSERT INTO access(id, api_login, api_secret) VALUES (1, '{{ .Values.merchant.merchant_login }}', '{{ .Values.merchant.merchant_secret }}') ON CONFLICT DO NOTHING;
+    INSERT INTO category (id, create_date, modify_date, name, modified_by_access_id) VALUES (1, now(), now(), 'default', 1) ON CONFLICT DO NOTHING;
+

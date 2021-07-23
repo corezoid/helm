@@ -1,0 +1,180 @@
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "corezoid.http" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.http.name }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  {{- if not .Values.http.autoscaling.enabled }}
+  replicas: {{ .Values.http.replicaCount | default 1 }}
+  {{- end }}
+  {{- if .Values.http.updateStrategy }}
+  strategy: {{- toYaml .Values.http.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.http.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/http-worker/http-worker-configmap.yaml") . | sha256sum }}
+        checksum/config-vm: {{ include (print $.Template.BasePath "/http-worker/http-worker-configmap-vm.yaml") . | sha256sum }}
+        {{- if .Values.http.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.http.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.http.name }}
+        {{- if .Values.http.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.http.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.http.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.http.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.http.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.http.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.http.podAffinityPreset "component" .Values.http.name  "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.http.podAntiAffinityPreset "component" .Values.http.name "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.http.nodeAffinityPreset.type "key" .Values.http.nodeAffinityPreset.key "values" .Values.http.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.http.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.http.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.http.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.http.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.http.priorityClassName }}
+      priorityClassName: {{ .Values.http.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.http.terminationGracePeriodSeconds | default 40 }}
+      shareProcessNamespace: true
+      initContainers:
+        - name: init-wait
+          image: docker-hub.middleware.biz/public/alpine
+          command: ["sh", "-c", "until nc -zvw1 {{ template "corezoid.postgres.host" . }} {{ template "corezoid.postgres.port" . }} &&  nc -zvw1  {{ template "corezoid.rabbitmq.host" . }} {{ template "corezoid.rabbitmq.port" . }} ; do echo waiting for deps; sleep 2; done;"]
+          envFrom:
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+        - name: init-wait-rmq
+          image: docker-hub.middleware.biz/public/alpine
+          command: ['sh']
+          args:
+            - "-c"
+            - |
+              until wget -O - -q --header "Authorization: Basic `echo -n \"{{ template "corezoid.rabbitmq.username" . }}:$MQ_PASSWORD\" | base64`" http://{{ template "corezoid.rabbitmq.host" . }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+          env:
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+      containers:
+        - name: {{ template "corezoid.http" . }}
+          imagePullPolicy: {{ .Values.http.image.pullPolicy | default "IfNotPresent" }}
+          image: {{ template "corezoid.http.image" . }}
+          {{- if .Values.http.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.http.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.http.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.http.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: NODE_COOKIE
+              value: {{ template "corezoid.http" . }}-{{ .Release.Namespace }}
+            - name: SCHEDULERS
+              value: "{{ .Values.http.schedulers }}"
+            {{- if .Values.global.debug }}
+            - name: ERL_CRASH_DUMP
+              value: "/dev/stderr"
+            {{- end }}
+            - name: RELX_REPLACE_OS_VARS
+              value: "true"
+            {{- if (include "corezoid.redis.auth.enabled" .) }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.redis.secretName" . }}
+                  key: {{ include "corezoid.redis.secretPasswordKey" . }}
+            {{- end }}
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.http.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.http.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+          ports:
+            - name: httpworker
+              containerPort: 9080
+            - name: metrics
+              containerPort: {{ .Values.prometheus.port | default 9100 }}
+          {{- if .Values.http.resources }}
+          resources: {{- toYaml .Values.http.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.http.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.http.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.http.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.http.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.http.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.http.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: {{ .Values.http.name }}-config
+              mountPath: /ebsmnt/conf/http_worker.config
+              subPath: http_worker.config
+            - name: {{ .Values.http.name }}-config-vm
+              mountPath: /ebsmnt/erlang/http_worker/releases/1/vm.args
+              subPath: vm.args
+            - name: corezoid-license
+              mountPath: /ebsmnt/certs
+              {{- if .Values.http.extraVolumeMounts }}
+              {{- include "common.tplvalues.render" (dict "value" .Values.http.extraVolumeMounts "context" $) | nindent 12 }}
+              {{- end }}
+      volumes:
+        - name: {{ .Values.http.name }}-config
+          configMap:
+            name: {{ .Values.http.name }}-config
+        - name: {{ .Values.http.name }}-config-vm
+          configMap:
+            name: {{ .Values.http.name }}-config-vm
+        - name: corezoid-license
+          secret:
+            secretName: license-share-new
+        {{- if .Values.http.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.http.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}
+

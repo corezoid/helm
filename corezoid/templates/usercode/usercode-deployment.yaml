@@ -1,0 +1,197 @@
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "corezoid.usercode" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.usercode.name }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  {{- if not .Values.usercode.autoscaling.enabled }}
+  replicas: {{ .Values.usercode.replicaCount | default 1 }}
+  {{- end }}
+  {{- if .Values.usercode.updateStrategy }}
+  strategy: {{- toYaml .Values.usercode.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.usercode.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/usercode/usercode-configmap.yaml") . | sha256sum }}
+        {{- if .Values.usercode.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.usercode.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.usercode.name }}
+        {{- if .Values.usercode.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.usercode.podLabels "context" $) | nindent 8 }}
+    {{- end }}
+    spec:
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.usercode.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.usercode.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.usercode.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.usercode.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.usercode.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.usercode.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.usercode.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.usercode.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.usercode.priorityClassName }}
+      priorityClassName: {{ .Values.usercode.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.usercode.terminationGracePeriodSeconds | default 10 }}
+      shareProcessNamespace: true
+      initContainers:
+        - name: init-wait
+          image: docker-hub.middleware.biz/public/alpine
+          command: ["sh", "-c", "until nc -zvw1 {{ template "corezoid.postgres.host" . }} {{ template "corezoid.postgres.port" . }} &&  nc -zvw1  {{ template "corezoid.rabbitmq.host" . }} {{ template "corezoid.rabbitmq.port" . }}; do echo waiting for dependences; sleep 2; done;"]
+          envFrom:
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+        - name: init-wait-rmq
+          image: docker-hub.middleware.biz/public/alpine
+          command: ['sh']
+          args:
+            - "-c"
+            - |
+              until wget -O - -q --header "Authorization: Basic `echo -n \"{{ template "corezoid.rabbitmq.username" . }}:$MQ_PASSWORD\" | base64`" http://{{ template "corezoid.rabbitmq.host" . }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+          env:
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+          {{- if .Values.usercode.initContainers }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.usercode.initContainers "context" $) | nindent 8 }}
+          {{- end }}
+      containers:
+        - name: {{ template "corezoid.usercode" . }}
+          image: {{ template "corezoid.usercode.image" . }}
+          imagePullPolicy: {{ .Values.usercode.image.pullPolicy | default "IfNotPresent" }}
+          {{- if .Values.usercode.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.usercode.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.usercode.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.usercode.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            {{- if .Values.global.debug }}
+            - name: ERL_CRASH_DUMP
+              value: "/dev/stderr"
+            {{- end }}
+            - name: RELX_REPLACE_OS_VARS
+              value: "true"
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+            {{- if (include "corezoid.redis.auth.enabled" .) }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.redis.secretName" . }}
+                  key: {{ include "corezoid.redis.secretPasswordKey" . }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.usercode.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.usercode.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+            {{- if .Values.usercode.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.usercode.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          ports:
+            - name: usercode
+              containerPort: {{ .Values.usercode.port | default 9080 }}
+            - name: metrics
+              containerPort: {{ .Values.prometheus.port | default 9100 }}
+            - name: liveness
+              containerPort: 8383
+          {{- if .Values.usercode.resources }}
+          resources: {{- toYaml .Values.usercode.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.usercode.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.usercode.lifecycleHooks "context" $) | nindent 12 }}
+          {{- else }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/ebsmnt/erlang/usercode/bin/cce","stop"]
+          {{- end }}
+          {{- if .Values.usercode.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.usercode.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            httpGet:
+              path: /is_ready
+              port: 8383
+            initialDelaySeconds: 30
+            periodSeconds: 3
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          {{- if .Values.usercode.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.usercode.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            httpGet:
+              path: /is_ready
+              port: 8383
+            initialDelaySeconds: 30
+            periodSeconds: 3
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          volumeMounts:
+            - name: {{ .Values.usercode.name }}-config
+              mountPath: /ebsmnt/conf/usercode.config
+              subPath: usercode.config
+            - name: corezoid-license
+              mountPath: /ebsmnt/certs
+            {{- if .Values.usercode.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.usercode.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: {{ .Values.usercode.name }}-config
+          configMap:
+            name: {{ .Values.usercode.name }}-config
+        - name: corezoid-license
+          secret:
+            secretName: license-share-new
+        {{- if .Values.usercode.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.usercode.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}

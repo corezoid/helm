@@ -1,0 +1,48 @@
+{{- if .Values.http.autoscaling.enabled -}}
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ template "corezoid.http" . }}-hpa
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.http.name }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+  {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ template "corezoid.http" . }}
+  minReplicas: {{ .Values.http.autoscaling.minReplicas | default 1 }}
+  maxReplicas: {{ .Values.http.autoscaling.maxReplicas | default 4 }}
+  metrics:
+    {{- if .Values.http.autoscaling.targetMemory }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageValue: {{ .Values.http.autoscaling.targetMemory }}
+    {{- end }}
+    {{- if .Values.http.autoscaling.targetCPU }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.http.autoscaling.targetCPU }}
+    {{- end }}
+    {{- if .Values.http.autoscaling.requests }}
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests
+        target:
+          type: AverageValue
+          averageValue: {{ .Values.http.autoscaling.requests }}
+    {{- end }}
+{{- end }}

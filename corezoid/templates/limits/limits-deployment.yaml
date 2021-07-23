@@ -1,0 +1,156 @@
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "corezoid.limits" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.limits.name }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  replicas: {{ .Values.limits.replicaCount | default 1 }}
+  {{- if .Values.limits.updateStrategy }}
+  strategy: {{- toYaml .Values.limits.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.limits.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/limits/limits-configmap.yaml") . | sha256sum }}
+        {{- if .Values.limits.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.limits.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.limits.name }}
+        {{- if .Values.limits.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.limits.podLabels "context" $) | nindent 8 }}
+    {{- end }}
+    spec:
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.limits.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.limits.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.limits.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.limits.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.limits.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.limits.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.limits.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.limits.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.limits.priorityClassName }}
+      priorityClassName: {{ .Values.limits.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.limits.terminationGracePeriodSeconds | default 40 }}
+      shareProcessNamespace: true
+      initContainers:
+        - name: init-wait
+          image: docker-hub.middleware.biz/public/alpine
+          command: ["sh", "-c", "apk add postgresql-client; until PGPASSWORD=${POSTGRES_DBPWD} psql -h {{ template "corezoid.postgres.host" . }} -U {{ template "corezoid.postgres.username" . }} -d settings -c \"select 1\" > /dev/null 2>&1 ;   nc -zvw1  {{ template "corezoid.rabbitmq.host" . }} {{ template "corezoid.rabbitmq.port" . }} ; do echo waiting for dependences; sleep 3; done;"]
+          envFrom:
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+        - name: init-wait-rmq
+          image: docker-hub.middleware.biz/public/alpine
+          command: ['sh']
+          args:
+            - "-c"
+            - |
+              until wget -O - -q --header "Authorization: Basic `echo -n \"{{ template "corezoid.rabbitmq.username" . }}:$MQ_PASSWORD\" | base64`" http://{{ template "corezoid.rabbitmq.host" . }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+          env:
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+      containers:
+        - name: {{ template "corezoid.limits" . }}
+          imagePullPolicy: {{ .Values.limits.image.pullPolicy | default "IfNotPresent" }}
+          image: {{ template "corezoid.limits.image" . }}
+          {{- if .Values.limits.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.limits.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.limits.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.limits.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: RELX_REPLACE_OS_VARS
+              value: "true"
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.limits.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.limits.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+          ports:
+            - name: limits
+              containerPort: 8585
+            - name: metrics
+              containerPort: {{ .Values.prometheus.port | default 9100 }}
+          {{- if .Values.limits.resources }}
+          resources: {{- toYaml .Values.limits.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.limits.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.limits.lifecycleHooks "context" $) | nindent 12 }}
+          {{- else }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/ebsmnt/erlang/corezoid_limits/bin/corezoid_limits","stop"]
+          {{- end }}
+          {{- if .Values.limits.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.limits.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.limits.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.limits.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: {{ .Values.limits.name }}-config
+              mountPath: /ebsmnt/conf/corezoid_limits.config
+              subPath: corezoid_limits.config
+            - name: corezoid-license
+              mountPath: /ebsmnt/certs
+          {{- if .Values.limits.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.limits.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: {{ .Values.limits.name }}-config
+          configMap:
+            name: {{ .Values.limits.name }}-config
+        - name: corezoid-license
+          secret:
+            secretName: license-share-new
+          {{- if .Values.limits.extraVolumes }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.limits.extraVolumes "context" $) | nindent 8 }}
+          {{- end }}
+

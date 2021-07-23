@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.confAgentServer.name }}-service
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.confAgentServer.name | quote }}
+spec:
+  selector: {{- include "corezoid.labels.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.confAgentServer.name | quote }}
+  ports:
+    - name: confagent
+      protocol: TCP
+      port: {{ .Values.confAgentServer.service.confAgenttPort | default 80 }}
+      targetPort: confagent

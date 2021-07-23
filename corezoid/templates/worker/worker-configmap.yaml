@@ -1,0 +1,1101 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.worker.name }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.worker.name }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
+data:
+  worker.config: |
+    [
+        {limits_client, [
+            {redis, [
+                [
+                    {host, "{{ template "corezoid.redis.host" . }}"},
+                    {port, {{ template "corezoid.redis.port" . }}},
+                    {password,"${REDIS_PASSWORD}"},
+                    {database, 9},
+                    {start_size, 1},
+                    {min_size, 1},
+                    {max_size, 50}
+                ]
+            ]}
+        ]},
+      {conv_params, [
+        {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid.
+        %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
+      ]},
+
+        {mw_metrics, [
+          {is_enabled, true},
+          {subsystems, [erlprometheus]}
+        ]},
+
+        {erlprometheus, [
+          {host, {0,0,0,0}},
+          {port, {{ .Values.prometheus.port | default 9100 }}}
+        ]},
+
+       {corezoid_license_client, [
+         {path_to_license, "/ebsmnt/certs/corezoid_license"}
+       ]},
+
+       {corezoid_global_stats, [
+         {disabled, true}
+       ]},
+
+      %% for clustering components
+      {corezoid_cluster, [
+          {backend, redis}, %% maybe if future list will increase
+          {redis, [
+              {host, "{{ template "corezoid.redis.host" . }}"},
+              {port, {{ template "corezoid.redis.port" . }}},
+              {password,"${REDIS_PASSWORD}"},
+              {database, 10}
+          ]}
+      ]},
+        {ermql, [
+
+          {disabled, false},
+
+          {publish_request, [
+                    {servers, [
+                  [
+                    {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                    {port, {{ template "corezoid.rabbitmq.port" . }}},
+                    {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                ]
+            ]},
+            {queues_count, 1},
+            {min_size, 1},
+            {max_size, 1},
+            {start_size, 1}
+          ]},
+
+          {consumer_response, [
+                    {servers, [
+                  [
+                    {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                    {port, {{ template "corezoid.rabbitmq.port" . }}},
+                    {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                ]
+            ]},
+            {connections_per_queue, 1},
+            {channels_per_connection, 1},
+            {messages_prefetch_size_per_channel, 50}
+          ]}
+
+        ]},
+
+        %% dns cache. Support multiply dnses cache
+        %% name - unical name will be able to use in publish/consumer rabbitmq instead of server name
+        %% dns - DNS name
+        %% ns - NS name
+        %% ttl - auto reload info from DNS server (in seconds)
+
+        {dns_cache, [
+          {servers, [
+          [
+            {name, main},
+            {dns, "{{ template "corezoid.rabbitmq.host" . }}"},
+            {ttl, 60}
+          ],
+          [
+            {name, name5},
+            {dns, "{{ template "corezoid.rabbitmq.host" . }}"},
+            {ttl, 60}
+          ]
+          ]}
+        ]},
+
+        {corezoid_queues_gc, [
+          {disabled, false},
+          {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+          {port, 15672},
+          {login, "{{ template "corezoid.rabbitmq.username" . }}"},
+          {password, "${MQ_PASSWORD}"},
+          {vhost, "{{ template "corezoid.rabbitmq.vhost" . }}"},
+          {gc_queues_regexp, ["worker.ctrl", "to_worker_.*.cce.*","to_worker_.*.es_call.*","to_worker_.*.git_call.*","settings.worker"]}
+        ]},
+
+      {conv_params, [
+          {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid
+                           %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
+      ]},
+
+      %% Envirement Variable
+      {env_var, [
+          %% - psql pool -
+          {psql, [
+              {host, "{{ template "corezoid.postgres.host" . }}"},
+              {dbname, "conveyor"},
+              {user, "{{ template "corezoid.postgres.username" . }}"},
+              {port, {{ template "corezoid.postgres.port" . }}},
+              {password, "${POSTGRES_DBPWD}"},
+              %% pool size
+              {start_size,  1},
+              {min_size,    1},
+              {max_size,    10}
+          ]}
+      ]},
+
+      {enigma, [
+        {is_enabled, {{ .Values.enigma.enabled }}},
+        {private_key_id, "{{ .Values.worker.enigma_pk_id }}"},
+        {key_manager_host, "http://enigma-key-manager-service:8080"},
+        {rotors_pool, [
+          {min_size, 3},
+          {max_size, 50},
+          {start_size, 3}
+        ]}
+      ]},
+
+
+      { worker,
+        [
+        %% server id
+        %% It's important to be unique
+        { worker_id, <<"">> },
+
+        {{- if .Values.enigma.encryption }}
+        %% for ENCRYPT/DECRYPT data
+        {encrypt_decrypt, [
+           queue, %% now it's encode-decode RabbitMQ
+           cache, %% Redis
+           db     %% PostgreSQL
+        ]},
+        {{- end }}
+
+        {nodes, [
+          ''
+        ]},
+
+        %% max allowed task_size in bytes
+        %% if you what increase this limit
+        %% be careful, you'll do it at your own risk
+        %% deprecated
+        { max_task_size, 512000 },
+
+        %% max task size for process conv
+        {max_task_size_for_process_conv, {{ .Values.capi.max_task_size_for_process_conv | default 264000 }} }, %% max task size for process conv
+
+        %% max task size for state diagramm conv
+        {max_task_size_for_st_diagramm_conv, {{ .Values.capi.max_task_size_for_st_diagramm_conv | default 264000 }} }, %% max task size for state diagramm conv
+
+        %% sequence of shard numbers
+        %% if you want to distribute the workload
+        %% between several workers
+        %% you can switch any part of this numbers to
+        %% another application
+        { shards, [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+          {{- range $i, $e := .Values.externalPostgresql.shards }}
+          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}] },
+
+        %% shard's number
+        %% it depends on the real shards number in DB
+        %% or DB mappings in pgbouncer
+        { shards_count, {{ .Values.externalPostgresql.shards_count | default 10 }} },
+
+        %% swtich on\off timer logic execution on start worker app
+        %% if "false" timers won't work
+        { timer_auto_init, true },
+
+        {type_storage, persistent}, %% persistent | memory
+
+        %% this param needs to dynamically create public callback url in constructions:
+        %% conv[ID].node[Node].public_callback_corezoid
+        %% conv[ID].node[Node].public_callback_mandrill
+        %% node[Node].public_callback_corezoid
+        %% node[Node].public_callback_corezoid
+        %% It should be in binary format
+        {public_callback_prefix, <<"https://{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">>},
+
+        %% DB settings
+        { pgsql,
+          [
+            { host, "{{ template "corezoid.postgres.host" . }}" },
+            { hosts, [
+              { [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+          {{- range $i, $e := .Values.externalPostgresql.shards }}
+          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "{{ template "corezoid.postgres.host" . }}" }
+            ]},
+            { user, "{{ template "corezoid.postgres.username" . }}" },
+            { password, "${POSTGRES_DBPWD}" },
+            { dbname, "conveyor" },
+            { start_size, 0 },
+            { min_size, 0 },
+            { max_size, 50 }
+          ]
+        },
+
+        % postgresql settings for statistics db
+        {pgsql_statistics, [
+          {host, "{{ template "corezoid.postgres.host" . }}"},
+          {user, "{{ template "corezoid.postgres.username" . }}"},
+          {password, "${POSTGRES_DBPWD}"},
+          {dbname, "conveyor_statistics"},
+          {min_size, 0},
+          {max_size, 25},
+          {start_size, 2}
+        ]},
+
+        {statistics, true},    % true|false for enable or disable statistic workers by default is true
+
+        %%  postgresql archive db
+        { pgsql_archive, [
+            { hosts, [
+              { [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+          {{- range $i, $e := .Values.externalPostgresql.shards }}
+          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "{{ template "corezoid.postgres.host" . }}" }
+            ]},
+            { user, "{{ template "corezoid.postgres.username" . }}" },
+            { password, "${POSTGRES_DBPWD}" },
+            { start_size, 1 },
+            { min_size, 0 },
+            { max_size, 25 }
+          ]},
+
+        %% for custom db-s
+        { pgsql2, [] },
+
+           {pgsql_task_history, [
+                          {host, "{{ template "corezoid.postgres.host" . }}"},
+                              %% hosts - tasks, settings of nodes
+                              {hosts, [
+                              { [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+        {{- range $i, $e := .Values.externalPostgresql.shards }}
+        {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "{{ template "corezoid.postgres.host" . }}" }
+                    ]},
+                { user, "{{ template "corezoid.postgres.username" . }}" },
+                { password, "${POSTGRES_DBPWD}" },
+                {min_size, 0},
+                {max_size, 50},
+                {start_size, 3}
+            ]},
+
+        %% redis sentinel quorum hosts
+        {sentinels, []},
+
+        %% persistent storage for different counters
+        %% please don't forget about backup of this data
+        { redis, [
+          [
+            {host, "{{ template "corezoid.redis.host" . }}"},
+            {port, {{ template "corezoid.redis.port" . }}},
+            {password,"${REDIS_PASSWORD}"},
+            {database,1},
+            {start_size, 5},
+            {min_size, 5},
+            {max_size, 50}
+          ]
+        ]},
+
+        %% persistent storage for api_sum counters
+        %% please don't forget about backup of this data
+        { redis_api_sum, [
+          [
+            {host, "{{ template "corezoid.redis.host" . }}"},
+            {port, {{ template "corezoid.redis.port" . }}},
+            {password,"${REDIS_PASSWORD}"},
+            {database,2},
+            {start_size, 5},
+            {min_size, 5},
+            {max_size, 50}
+          ]
+        ]},
+
+        %% cache, nonpersistent storage, keys will expire after N hours
+        { redis2, [
+          [
+            {host, "{{ template "corezoid.redisCache.host" . }}"},
+            {port, {{ template "corezoid.redisCache.port" . }}},
+            {password,"${REDIS_PASSWORD_CACHE}"},
+            {database,3},
+            {start_size, 5},
+            {min_size, 5},
+            {max_size, 100}
+          ]
+        ]},
+
+        %% memory redis for timer calls
+        %% these servers store timers in whole system
+        {redis_timers, [
+          [
+            {host, "{{ template "corezoid.redisTimers.host" . }}"},
+            {port, {{ template "corezoid.redisTimers.port" . }}},
+            {password,"${REDIS_PASSWORD_TIMERS}"},
+            {database,4},
+            {start_size, 5},
+            {min_size, 5},
+            {max_size, 50}
+          ]
+        ]},
+
+        %% cache size in redis2
+        {redis2_ttl, 43200},
+
+
+        %%These section to publish tasks in rabbitmq
+        {publish_unload_archive_task, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {min_size, 5},
+          {max_size, 5},
+          {start_size, 5}
+        ]},
+
+        %% These section to consume tasks in rabbitmq
+        %% It's important to divide messages_prefetch_size_per_channel / workers without
+        %% without a floating point.
+        %% Examples: 500 / 10 - good
+        %% 500 / 15 - bad.
+        {consumer_unload_archive_task, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 1000},    %% The number of queues within the channel
+          {workers, 20}
+          %% connections_per_queue * channels_per_connection * messages_prefetch_size_per_channel % workers = batch size per worker
+        ]},
+
+        %% Logic copy task producer
+        %% deprecated, producer of copy_task requests
+        {publish_copy_task_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {queues_count, 1},
+          {min_size, 1},
+          {max_size, 5},
+          {start_size, 1}
+          %%{is_sharded, true} %% Legacy: will be removed
+        ]},
+
+        %% deprecated, consumer for responses of copy_tasks
+        {consumer_copy_task_response, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+        ]},
+
+        %% producer of timer requests
+        {publish_timer_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {min_size, 1},
+          {max_size, 1},
+          {start_size, 1}
+        ]},
+
+        %% consumer for timer responses
+        {consumer_timer_response, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+        ]},
+
+        %% producer of http reqeuests, API logic
+        {publish_http_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {queues_count, 8},
+          {min_size, 15},
+          {max_size, 15},
+          {start_size, 15}
+        ]},
+
+        %% consumer for http responses, API logic
+        {consumer_http_response, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+        ]},
+
+        %% Logic call process
+        %% producer of rpc requests, RPC logic
+        {publish_rpc_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {queues_count, 1},
+          {min_size, 5},
+          {max_size, 5},
+          {start_size, 5},
+          {is_sharded, true}   %% Legacy: will be removed
+        ]},
+
+        %% consumer for rpc responses, RPC logic
+        {consumer_rpc_response, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+        ]},
+
+        %% logic usercode
+        %% producer of usercode requests, CODE logic
+        {publish_cce_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {queues_count, 5},
+          {min_size, 5},
+          {max_size, 5},
+          {start_size, 5}
+        ]},
+
+        %% consumer for usercode responses, CODE logic
+        {consumer_cce_response, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+        ]},
+
+        %% logic git call
+        %% producer
+        {publish_git_call_request, [
+          {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {build_dep_queues_count, 1},
+          {remove_dep_queues_count, 1},
+          {get_script_queues_count, 1},
+          {remove_script_queues_count, 1},
+          {validate_script_queues_count, 1},
+          {compile_script_queues_count, 1},
+          {run_script_queues_count, 10},
+          {min_size, 2},
+          {max_size, 2},
+          {start_size, 2}
+        ]},
+
+
+        %% consumer
+        {consumer_git_call_response, [
+          {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {queues_count, 1},
+          {connections_per_queue, 1},
+          {channels_per_connection, 1},
+          {messages_prefetch_size_per_channel, 50}
+        ]},
+
+
+    {{- if .Values.gitcall.enabled }}
+        {git_call_v2, [
+            %% Optional. Boolean. Default: false.
+            %% Enable\Disable GitCallV2 feature.
+            %% Config sections
+            %%   publish_git_call_v2_request
+            %%   consumer_git_call_v2_response
+            %%   consumer_git_call_v2_status
+            %%   publish_dunder_git_call_v2_request
+            %%   consumer_dunder_git_call_v2_request
+            %% must be configured if enabled, otherwise it is safe to completely remove them.
+            %% If disabled, worker packet returns {error, git_calL_disabled} on all related commands.
+            {enabled, true},
+
+            %% Optional. Number. Milliseconds. Default: ?RUN_TASK_TIME_TO_WAIT_CONSUMER 100.
+            %% The maximum time the code is allowed to work.
+            {run_task_time_to_wait_consumer, 10000},
+
+            %% Optional. Boolean. Default: ?USE_ENIGMA true.
+            %% Controls whether the commutation with Gitcall has to be encrypted by Enigma or not.
+            {use_enigma, false},
+
+            %% Optional. Boolean. Default: false.
+            %% Set to true to get debug output from Gitcall module(s).
+            {debug, true}
+            ]},
+
+
+            %% Required if git_call_v2.enabled true, otherwise could be omitted.
+            %% logic git call v2
+            %% producer
+            {publish_git_call_v2_request, [
+                {servers, [[
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
+
+                ]]},
+
+                %% Optional. BinaryString. Default: ?GITCALL_EXCHANGE <<"gitcall-v2">>.
+                %% The exchange is used to communicate with Gitcall service.
+                %% All calls to Gitcall go through the exchange.
+                %%{exchange, <<"gitcall-v2">>},
+
+                %% Optional. BinaryString. Default: ?BUILD_SERVICE_QUEUE <<"gitcall-v2-buildservice-">>.
+                %% The queue is used to build code an pack it ready-to-run units, most possibly docker images
+                %% The count option controls how many prefixed queues to publish to.
+                %%
+                %%{buildservice_queue, <<"gitcall-v2-buildservice-">>},
+                %%{buildservice_queues_count, 1},
+
+                %% Optional. BinaryString. Default: ?BUILD_ARCHIVE_QUEUE <<"gitcall-v2-buildarchive-">>.
+                %% The queue is used to retrieve build achieve.
+                %% The archive contains build status which could be "done", "error", "internal_error", "not_found", "in_progress"
+                %% The count option controls how many prefixed queues to publish to.
+                %%
+                %%{buildarchive_queue, <<"gitcall-v2-buildarchive-">>},
+                %%{buildarchive_queues_count, 1},
+
+                %% Optional. BinaryString. Default: ?DEPLOY_SERVICE_QUEUE <<"gitcall-v2-deployservice-">>.
+                %% The queue is used to deploy services to production runtime, most possibly k8s
+                %% The count option controls how many prefixed queues to publish to.
+                %%
+                %%{deployservice_queue, <<"gitcall-v2-deployservice-">>},
+                %%{deployservice_queues_count, 1},
+
+                %% Optional. BinaryString. Default: ?GET_SERVICE_QUEUE <<"gitcall-v2-getservice-">>.
+                %% The queue is used to get service details: source, built and deployed versions.
+                %% The count option controls how many prefixed queues to publish to.
+                %%
+                %%{getservice_queue, <<"gitcall-v2-getservice-">>},
+                %%{getservice_queues_count, 1},
+
+                %% Optional. BinaryString. Default: ?REMOVE_SERVICE_QUEUE <<"gitcall-v2-removeservice-">>.
+                %% The queue is used to remove service from production runtime and Gitcall database.
+                %% The count option controls how many prefixed queues to publish to.
+                %%
+                %%{removeservice_queue, <<"gitcall-v2-getservice-">>},
+                %%{removeservice_queues_count, 1},
+
+                %% Optional. BinaryString. Default: ?RUN_SERVICE_QUEUE <<"gitcall-v2-runservice-">>.
+                %% The queue is used to ask Gitcall to start (if not) service in production runtime. Often used together with stopservice
+                %% The count option controls how many prefixed queues to publish to.
+                %%
+                %%{runservice_queue, <<"gitcall-v2-runservice-">>},
+                %%{runservice_queues_count, 1},
+
+                %% Optional. BinaryString. Default: ?SAVE_SERVICE_QUEUE <<"gitcall-v2-saveservice-">>.
+                %% The queue is used to save temporary changes. Used by Corezoid sandbox
+                %% The count option controls how many prefixed queues to publish to.
+                %%
+                %%{saveservice_queue, <<"gitcall-v2-saveservice-">>},
+                %%{saveservice_queues_count, 1},
+
+                %% Optional. BinaryString. Default: ?STOP_SERVICE_QUEUE <<"gitcall-v2-stopservice-">>.
+                %% The queue is used to stop service in production runtime when idle. Could be run later with runservice call
+                %% The count option controls how many prefixed queues to publish to.
+                %%
+                %%{stopservice_queue, <<"gitcall-v2-stopservice-">>},
+                %%{stopservice_queues_count, 1},
+
+                %% Optional. BinaryString. Default: ?VALIDATE_SERVICE_QUEUE <<"gitcall-v2-validateservice-">>.
+                %% The queue is used to validate the source code.
+                %% If API returns done the source is already built and ready for deploy.
+                %% The count option controls how many prefixed queues to publish to.
+                %%
+                %%{validateservice_queue, <<"gitcall-v2-validateservice-">>},
+                %%{validateservice_queues_count, 1},
+
+                {min_size, 2},
+                {max_size, 2},
+                {start_size, 2}
+            ]},
+
+            %% Required if git_call_v2.enabled true, otherwise could be omitted.
+            %% consumer processes replies on worker requests
+            {consumer_git_call_v2_response, [
+                {servers, [[
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
+                ]]},
+                {connections_per_queue, 1},
+                {channels_per_connection, 1},
+                {messages_prefetch_size_per_channel, 50}
+            ]},
+
+            %% Required if git_call_v2.enabled true, otherwise could be omitted.
+            %% consumer processes status updates from gitcall
+            {consumer_git_call_v2_status, [
+                {servers, [[
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_GITCALL_VHOST}">>}
+                ]]},
+                {connections_per_queue, 1},
+                {channels_per_connection, 1},
+                {messages_prefetch_size_per_channel, 50}
+            ]},
+
+            %% Required if git_call_v2.enabled true, otherwise could be omitted.
+            %% logic dunder git call v2
+            %% producer
+            {publish_dunder_git_call_v2_request, [
+                {servers, [[
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
+                ]]},
+                {min_size, 5},
+                {max_size, 5},
+                {start_size, 5}
+            ]},
+
+            %% Required if git_call_v2.enabled true, otherwise could be omitted.
+            %% consumer
+            {consumer_dunder_git_call_v2_response, [
+                {servers, [[
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
+                ]]},
+            {connections_per_queue, 1},
+            {channels_per_connection, 1},
+            {messages_prefetch_size_per_channel, 50}
+        ]},
+      {{- end }}
+
+        %% logic db call
+        %% producer
+        {publish_db_call_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {min_size, 3},
+          {max_size, 3},
+          {start_size, 3}
+        ]},
+
+
+        %% consumer
+        {consumer_db_call_response, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {queues_count, 10},
+          {connections_per_queue, 1},
+          {channels_per_connection, 1},
+          {messages_prefetch_size_per_channel, 50}
+        ]},
+
+        %% logic deep_memo es call
+        %% producer
+        {publish_es_call_request, [
+          {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {min_size, 3},
+          {max_size, 3},
+          {start_size, 3}
+        ]},
+
+        %% consumer
+        {consumer_es_call_response, [
+          {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          %{queues_count, 10},
+          {connections_per_queue, 1},
+          {channels_per_connection, 2},
+          {messages_prefetch_size_per_channel, 50}
+        ]},
+
+        %% logic get task
+        %% producer of get_task requests, QUEUE logic
+        {publish_get_task_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {queues_count, 1},
+          {min_size, 3},
+          {max_size, 3},
+          {start_size, 3}
+        ]},
+
+        %% consumer for get_task requests, QUEUE logic
+        {consumer_get_task_response, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+        ]},
+
+        %% logic modify task
+        %% producer of modify requests, QUEUE logic
+        {publish_modify_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {min_size, 5},
+          {max_size, 5},
+          {start_size, 5}
+        ]},
+
+        %% settings queue
+        %% This queue need to communicate between corezoid
+        %% components. Api, http_worker, worker, cce, ... communicate
+        %% through settings queue
+        {publish_settings, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {min_size, 2},
+          {max_size, 2},
+          {start_size, 2}
+        ]},
+
+        %% consumer for settings
+        %% this messages inform app-s about changes in a structure of processes,
+        %% users, rights etc...
+        {consumer_settings, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+        ]},
+
+        %% interconnect cluster workers
+        %% each node have to be able to connect with another nodes using interconnect.interface and interconnect.listen.port options
+        {interconnect, [
+          {name, workers},
+          {id, <<"worker-{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">>},    %% should be the same as "worker_id"
+          {interface, "eth0"}, %% IP from this interface will be used for sending the first packet in the beginning of communication
+          {password, <<"Igu1poh2eimeChahca">>}, %% should be the same on each node in this cluster that uses the same interconnect.name
+          {listen, [
+            {port, 5555},   %% port for internode communication in cluster
+            {transport, tcp}, %% allowed values "tcp | ssl (need cert file)"
+            %{opts, [{certfile, "/ebsmnt/conf/cp-self-signed.pem"}]}, %% uncomment this option to enable TLS encryption
+            {max_connections, 1024} %% max connections from all nodes to this one -> sender.max_size * nodes count in this cluster
+          ]},
+          %% threads count between workers in the cluster
+          {sender, [
+            {start_size, 1},
+            {min_size, 1},
+            {max_size, 100}
+          ]}
+        ]},
+
+        %% produce messages for all "to_worker" queues
+        %% from requests that are coming through API
+        %% user's requests on API, requests from user's interface
+        {publish_to_worker_request, [
+          {servers, [
+            { [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+          {{- range $i, $e := .Values.externalPostgresql.shards }}
+          {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}] , [[
+              {host, "{{ template "corezoid.rabbitmq.host" . }}"}
+            ]]}
+          ]},
+          {port, {{ template "corezoid.rabbitmq.port" . }}},
+          {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+          {password, <<"${MQ_PASSWORD}">>},
+          {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>},
+          {min_size, 5},
+          {max_size, 5},
+          {start_size, 5}
+        ]},
+
+        %% consumer for to_worker
+        {consumer_shard_response, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 50}    %% The number of queues within the channel
+        ]},
+
+        %% logic git call
+        %% producer
+        {publish_git_call_request, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+            {build_dep_queues_count, 1},
+            {remove_dep_queues_count, 1},
+            {get_script_queues_count, 1},
+            {remove_script_queues_count, 1},
+            {validate_script_queues_count, 1},
+            {compile_script_queues_count, 1},
+            {run_script_queues_count, 10},
+            {min_size, 5},
+            {max_size, 5},
+            {start_size, 5}
+
+        ]},
+
+        %% concierge answers git_call
+        {consumer_git_call_response, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {queues_count, 10},
+          {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, 50}    %% The number of queues within the channel
+        ]}
+
+      ]},
+      %% Billing
+        %% If you don't use billing or don't want to store any information
+        %% about how to consume corezoid by users set up empty
+        %% examples: {billing , []}
+        %% Or create conv and put id to new_billing_conv_id section
+        {billing, []},
+        {lager, [
+          %% What handlers to install with what arguments (wrapped by middleman)
+
+          {log_root, "/ebsmnt/erlang/worker/log"},
+
+          {handlers, [
+            {lager_console_backend, debug},
+            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 15000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 15000000}, {date, "$D0"}, {count, 1}]},
+            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 15000000}, {date, "$D0"}, {count, 1}]}
+
+          ]},
+
+          %% What colors to use with what log levels
+          {colored, true},
+          {colors, [
+            {debug,     "\e[0;38m" },
+            {info,      "\e[1;37m" },
+            {notice,    "\e[1;36m" },
+            {warning,   "\e[1;33m" },
+            {error,     "\e[1;31m" },
+            {critical,  "\e[1;35m" },
+            {alert,     "\e[1;44m" },
+            {emergency, "\e[1;41m" }
+
+          ]},
+
+          %% Whether to write a crash log, and where. Undefined means no crash logger.
+          {crash_log, "crash.log"},
+          %% Maximum size in bytes of events in the crash log - defaults to 65536
+          {crash_log_msg_size, 65536},
+          %% Maximum size of the crash log in bytes, before its rotated, set
+          %% to 0 to disable rotation - default is 0
+          {crash_log_size, 734003200},
+          %% What time to rotate the crash log - default is no time
+          %% rotation. See the README for a description of this format.
+          {crash_log_date, "$D0"},
+          %% Number of rotated crash logs to keep, 0 means keep only the
+          %% current one - default is 0
+          {crash_log_count, 1},
+          %% Whether to redirect error_logger messages into lager - defaults to true
+          {error_logger_redirect, true},
+          %% How many messages per second to allow from error_logger before we start dropping them
+          {error_logger_hwm, 50},
+          %% How big the gen_event mailbox can get before it is switched into sync mode
+          {async_threshold, 20},
+          %% Switch back to async mode, when gen_event mailbox size decrease from 'async_threshold'
+          %% to async_threshold - async_threshold_window
+          {async_threshold_window, 5}
+        ]
+      },
+
+      %% Client for healthcheck server
+      {hcheck_sender, [
+        {host, <<"hcs-service">>}, %% host of the remote healthcheck server
+        {port, 5011}, %% port of the remote healthcheck server
+        {node_name,  <<"worker-{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">> }, %% different for each node
+        {node_type,  <<"worker">> }, %% api | worker | multipart | http_worker | usercode | deepmemo ...
+        {disabled, true}, %% true by default
+        {send_interval_sec, 30}, %% by default 10 sec
+        {send_system_counters, true} %% memory processes etc, false by default
+      ]},
+
+      {sasl, [{sasl_error_logger, false}]}
+    ].
+
+

@@ -1,4 +1,0 @@
-appName: postgresql
-postgresqlDataDir: /var/lib/pgsql/data
-image:
-  registry: docker-hub.middleware.biz

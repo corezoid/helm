@@ -1,0 +1,1449 @@
+## @section Global parameters
+## Global Docker image parameters
+## Please, note that this will override the image parameters, including dependencies, configured to use the global value
+##
+global:
+  ## @param global.imageRegistry Global Docker image registry
+  ##
+  imageRegistry:
+  ## @param global.imagePullSecrets Global Docker registry secret names as an array
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  imagePullSecrets: []
+  ## @param global.pullPolicy Global Docker image Policy
+  ## Specify a imagePullPolicy
+  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  ##
+  pullPolicy: IfNotPresent
+  ## @param global.storageClass Global StorageClass for Persistent Volume(s)
+  ##
+  storageClass: "gp3"
+  ## @param global.domain Global domain
+  ## domain: "corezoid.example.com"
+  ##
+  domain: ""
+  ## @param global.error_log_level Global error log level
+  ## Error log level: debug | info
+  ##
+  error_log_level: debug
+  ## @param global.prometheusScrape Global param for prometheusScrape
+  ##
+  prometheusScrape: true
+  ## @param global.namespaceCreate Global create namespace
+  ##
+  namespaceCreate: true
+
+## @section Common parameters
+## @param prometheus.port port for prometheus metrics
+##
+prometheus:
+  port: 9100
+## @param nameOverride String to partially override common.names.fullname
+##
+nameOverride:
+## @param fullnameOverride String to fully override common.names.fullname
+##
+fullnameOverride:
+## @param commonLabels Labels to add to all deployed objects
+##
+commonLabels: {}
+## @param commonAnnotations Annotations to add to all deployed objects
+##
+commonAnnotations: {}
+## @param extraDeploy Array of extra objects to deploy with the release
+##
+extraDeploy: []
+## @param schedulerName custom schedulerName https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/
+##
+schedulerName: ""
+## @param provisoner  define provisoner, argocd or helm, default - helm
+provisoner: ""
+
+## Configure the ingress for the Corezoid server
+## Ref: http://kubernetes.io/docs/user-guide/ingress/
+ingress:
+  ## @param ingress.enabled Enable the creation of an ingress for the Corezoid
+  ##
+  enabled: true
+  ## @param ingress.hostname Ingress hostname for the Corezoid ingress
+  ##
+  hostname:
+  ## @param ingress.annotations Annotations for the Corezoid ingress
+  ##
+  annotations: {}
+    ## kubernetes.io/ingress.class: alb
+    ## alb.ingress.kubernetes.io/scheme: internet-facing
+    ## alb.ingress.kubernetes.io/certificate-arn: arn:dsvfds
+    ## alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+    ## alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+    ## alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=false"
+    ## access restrictionkgec
+    ## alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32,
+    ## for creating route53 record-set
+  ## external-dns.alpha.kubernetes.io/hostname: {{ .Values.capi.subdomain}}.{{ .Values.global.domain }}
+
+## @section CAPI Parameters
+## CAPI
+##
+capi:
+  ## @param capi.name
+  ##
+  name: capi
+  ## @param capi.subdomain
+  ##
+  subdomain: corezoid
+
+  image:
+    ## @param capi.image.registry
+    ##
+    registry: ""
+    ## @param capi.image.repository
+    ##
+    repository: public/conveyor_api
+    ## @param capi.image.tag
+    ##
+    tag: "7.7.0.1"
+    ## @param capi.image.pullPolicy
+    ##
+    pullPolicy: IfNotPresent
+    ## @param capi.image.pullSecrets
+    ##
+    pullSecrets: []
+  updateStrategy:
+    ## @param capi.updateStrategy.type
+    ##
+    type: RollingUpdate
+  ## @param capi.terminationGracePeriodSeconds duration in seconds the CAPI pod needs to terminate gracefully. Defaults to 300 seconds.
+  ##
+  terminationGracePeriodSeconds: 10
+  ## @param capi.prometheusScrape
+  ##
+  prometheusScrape: false
+  ## @param capi.replicaCount Number of CAPI replicas to deploy
+  ##
+  replicaCount: 2
+  ## capi resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources:
+    limits:
+      ## @param capi.resources.limits.cpu
+      ##
+      cpu: 2
+      ## @param capi.resources.limits.memory
+      ##
+      memory: 2Gi
+    requests:
+      ## @param capi.resources.requests.cpu
+      ##
+      cpu: 100m
+      ## @param capi.resources.requests.memory
+      ##
+      memory: 100Mi
+  ## @param capi.schedulers
+  ##
+  schedulers: 1
+  ## @param capi.customLivenessProbe Custom livenessProbe that overrides the default one
+  ##
+  customLivenessProbe: {}
+  ## @param capi.customReadinessProbe Custom readinessProbe that overrides the default one
+  ##
+  customReadinessProbe: {}
+  ## @param capi.command Override default container command (useful when using custom images)
+  ##
+  command: []
+  ## @param capi.args Override default container args (useful when using custom images)
+  ##
+  args: []
+  ## @param capi.hostAliases https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: []
+  ## @param capi.podLabels  https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: {}
+  ## @param capi.podAnnotations https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param capi.podAffinityPreset Pod affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param capi.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node capi.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param capi.nodeAffinityPreset.type Node affinity preset type. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param capi.nodeAffinityPreset.key Node label key to match. Ignored if `capi.affinity` is set
+    ##
+    key: ""
+    ## @param capi.nodeAffinityPreset.values Node label values to match. Ignored if `capi.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param capi.affinity Affinity for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `capi.podAffinityPreset`, `capi.podAntiAffinityPreset`, and `capi.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param capi.nodeSelector Node labels for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param capi.tolerations Tolerations for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param capi.updateStrategy.type CAPI statefulset strategy type
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  ##
+  ## @param capi.priorityClassName CAPI pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param capi.lifecycleHooks for the CAPI container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: {}
+  ## @param capi.extraEnvVars Array with extra environment variables to add to CAPI nodes
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
+  ## @param capi.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for CAPI nodes
+  ##
+  extraEnvVarsCM:
+  ## @param capi.extraEnvVarsSecret Name of existing Secret containing extra env vars for CAPI nodes
+  ##
+  extraEnvVarsSecret:
+  ## @param capi.extraVolumes Optionally specify extra list of additional volumes for the CAPI pod(s)
+  ##
+  extraVolumes: []
+  ## @param capi.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the CAPI container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param capi.initContainers Add additional initContainers containers to the CAPI pod(s)
+  ## e.g:
+  ## initContainers:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  initContainers: {}
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 2
+    targetCPU: 65
+    targetMemory: 1000Mi
+    requests:
+  service:
+    ## @param capi.service.capiPort CAPI service port number. Default: 80
+    ##
+    capiPort: 80
+    ## @param capi.service.confAgentPort confAgentPort service port number. Default: 8585
+    ##
+    confAgentPort: 8585
+  ## CAPI aplication parameters
+  ##
+  ## @param capi.capi_front_captcha_disabled enable/disable recaptcha on login page
+  capi_front_captcha_disabled: true
+  ## @param capi.capi_front_captcha_key  key for works with google recaptcha (page /login if corezoid registration)
+  ##
+  capi_front_captcha_key: ""
+  ## @param capi.capi_backend_captcha_key secret_key works with google recaptcha
+  ##
+  capi_backend_captcha_key: ""
+  ## @param capi.registration_restriction.enable restricting user registration only within the domains specified below if enabled
+  ##
+  registration_restriction:
+    ## @param capi.registration_restriction.enable enable or disable restrictions
+    ##
+    enable: false
+    ## @param capi.registration_restriction.allowed_domains allowed domains for registration
+    ##
+    allowed_domains: []
+    # - "gmail.com"
+    # - "yahoo.com"
+  ## @param capi.max_task_size_for_process_conv max task size for process conv in kb
+  ##
+  max_task_size_for_process_conv: 264000
+  ## @param capi.max_task_size_for_st_diagramm_conv max task size for state diagramm conv in kb
+  ##
+  max_task_size_for_st_diagramm_conv: 264000
+  ## @param capi.max_reqs_limit max req/sec of create|modify|delete for conv|folder|dashboard in 1 sec
+  ##
+  max_reqs_limit: 50000
+  ## merchant_api settings
+  merchant_api:
+    ## @param capi.merchant_api.skip_otp skip otp when create company
+    ##
+    skip_otp: true
+  ## @param capi.cookie_expr_time session expire time, in sec (default 900)
+  ##
+  cookie_expr_time: 7200
+
+  front_setting:
+    ## @param capi.front_setting.doc_host documentation url (navigate by clicking on DOCS link)
+    ##
+    doc_host: "doc.corezoid.com"
+    ## @param capi.front_setting.doc_index path for documentation url
+    ##
+    doc_index: "/"
+    ui:
+      ## @param capi.front_setting.ui.market enabled Market button
+      ##
+      market: false
+      ## @param capi.front_setting.ui.bot_platform enabled Bot platform  button
+      ##
+      bot_platform: false
+      ## @param capi.front_setting.ui.billing enabled billing  button
+      ##
+      billing: false
+      ## @param capi.front_setting.ui.git_call enabled git_call button
+      ##
+      git_call: false
+      ## @param capi.front_setting.ui.default_company set default company name
+      ##
+      default_company: "My Corezoid"
+      ## @param capi.front_setting.ui.tab_name tab name
+      ##
+      tab_name: "Corezoid"
+      ## @param capi.front_setting.ui.disabled_auth_logo disable or enable logo on main page
+      ##
+      disabled_auth_logo: false
+      ## @param capi.front_setting.ui.color_main main color in HEX
+      ##
+      color_main: "#0791e5"
+      ## @param capi.front_setting.ui.color_logo logo color in HEX
+      ##
+      color_logo: "#0791e5"
+      ## @param capi.front_setting.ui.color_logo_hover logo_hover color in HEX
+      ##
+      color_logo_hover: "#056cab"
+  ## @param capi.ldap_server ldap host
+  ##
+  ldap_server: ""
+  ## @param capi.ldap_port ldap port
+  ##
+  ldap_port: "389"
+  ## @param capi.ldap_base ldap base (o=domain)
+  ##
+  ldap_base: ""
+  ## @param capi.ldap_filter filter for ldap query
+  ##
+  ldap_filter: ""
+  ## @param capi.ldap_first_bind_user if true - bind_user_name, bind_user_pass should be filled. if it's false it is not necessary
+  ##
+  ldap_first_bind_user: true
+  ## @param capi.ldap_bind_user_name
+  ##
+  ldap_bind_user_name: ""
+  ## @param capi.ldap_bind_user_pass
+  ##
+  ldap_bind_user_pass: ""
+  ## @param capi.ldap_user_nick_entry
+  ##
+  ldap_user_nick_entry: ""
+  ## @param capi.ldap_tls
+  ##
+  ldap_tls: false
+  ## @param capi.logic_settings.api_max_thread
+  ##
+  logic_settings:
+    ## @param capi.logic_settings.api_max_thread max allowed threads for api logic
+    ##
+    api_max_thread: 50000
+    ## @param capi.logic_settings.sender_max_threads max allowed threads for sender api logic
+    ##
+    sender_max_threads: 25
+    ## @param capi.logic_settings.timer_default
+    ##
+    timer_default: 5
+  ## @param capi.enigma_pk_id enigma private_key_id
+  ##
+  enigma_pk_id: ""
+
+## @section ConfAgentServer Parameters
+## ConfAgentServer
+##
+confAgentServer:
+  ## @param confAgentServer.name Service name
+  ##
+  name: conf-agent-server
+  image:
+    ## @param confAgentServer.image.registry
+    ##
+    registry: docker-hub.middleware.biz
+    ## @param confAgentServer.image.repository
+    ##
+    repository: public/conf_agent_server
+    ## @param confAgentServer.image.tag
+    ##
+    tag: "1.5.1"
+    ## @param confAgentServer.image.pullPolicy
+    ##
+    pullPolicy: IfNotPresent
+    ## @param confAgentServer.image.pullSecrets
+    ##
+    pullSecrets: []
+  ## @param confAgentServer.replicaCount
+  ##
+  replicaCount: 2
+  ## @param confAgentServer.terminationGracePeriodSeconds
+  ##
+  terminationGracePeriodSeconds: 10
+  resources:
+    limits:
+      ## @param confAgentServer.resources.limits.cpu
+      ##
+      cpu: 2
+      ## @param confAgentServer.resources.limits.memory
+      ##
+      memory: 2Gi
+    requests:
+      ## @param confAgentServer.resources.requests.cpu
+      ##
+      cpu: 100m
+      ## @param confAgentServer.resources.requests.memory
+      ##
+      memory: 100Mi
+  autoscaling:
+    ## @param confAgentServer.autoscaling.enabled
+    ##
+    enabled: true
+    ## @param confAgentServer.autoscaling.minReplicas
+    ##
+    minReplicas: 1
+    ## @param confAgentServer.autoscaling.maxReplicas
+    ##
+    maxReplicas: 2
+    ## @param confAgentServer.autoscaling.targetCPU
+    ##
+    targetCPU: 65
+    ## @param confAgentServer.autoscaling.targetMemory
+    ##
+    targetMemory: 80
+    ## @param confAgentServer.autoscaling.requests
+    ##
+    requests:
+  service:
+    ## @param confAgentServer.service.confAgenttPort confAgentServerPort Port default: 80
+    ##
+    confAgenttPort: 8585
+  ## @param confAgentServer.podAnnotations
+  ##
+  podAnnotations: {}
+  ## @param capi.podAffinityPreset Pod affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param capi.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node capi.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param capi.nodeAffinityPreset.type Node affinity preset type. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param capi.nodeAffinityPreset.key Node label key to match. Ignored if `capi.affinity` is set
+    ##
+    key: ""
+    ## @param capi.nodeAffinityPreset.values Node label values to match. Ignored if `capi.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param capi.affinity Affinity for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `capi.podAffinityPreset`, `capi.podAntiAffinityPreset`, and `capi.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+
+## @section http-worker Parameters
+##
+http:
+  ## @param http.name Service name
+  ##
+  name: http-worker
+  image:
+    ## @param http.image.registry
+    ##
+    registry: docker-hub.middleware.biz
+    ## @param http.image.repository
+    ##
+    repository: public/http-worker
+    ## @param http.image.tag
+    ##
+    tag: "3.6.0.1"
+    ## @param http.image.pullPolicy
+    ##
+    pullPolicy: IfNotPresent
+    ## @param http.image.pullSecrets
+    ##
+    pullSecrets: []
+  ## @param http.replicaCount
+  ##
+  replicaCount: 1
+  ## @param http.terminationGracePeriodSeconds
+  ##
+  terminationGracePeriodSeconds: 40
+  resources:
+    limits:
+      ## @param http.resources.limits.cpu
+      ##
+      cpu: 2
+      ## @param http.resources.limits.memory
+      ##
+      memory: 2Gi
+    requests:
+      ## @param http.resources.requests.cpu
+      ##
+      cpu: 100m
+      ## @param http.resources.requests.memory
+      ##
+      memory: 100Mi
+  autoscaling:
+    ## @param http.autoscaling.enabled
+    ##
+    enabled: true
+    ## @param http.autoscaling.minReplicas
+    ##
+    minReplicas: 1
+    ## @param http.autoscaling.maxReplicas
+    ##
+    maxReplicas: 2
+    ## @param http.autoscaling.targetCPU
+    ##
+    targetCPU: 65
+    ## @param http.autoscaling.targetMemory
+    ##
+    targetMemory:
+    ## @param http.autoscaling.requests
+    ##
+    requests:
+  ## @param http.schedulers
+  ##
+  schedulers: 2
+  ## @param http.max_http_resp_size maximum response size
+  ##
+  max_http_resp_size: "5242880"
+  ## @param http.blocked_domains blacklist for apicall ip or hostname (more - http://erlang.org/doc/man/httpc.html#set_options-2)
+  ##
+  blocked_domains: []
+  # - "169.254.169.254"
+  tune:
+    ## @param http.tune.http_consumer_queues_count queues_count for http_consumer
+    ##
+    http_consumer_queues_count: 8
+    ## @param http.tune.http_consumer_connections_per_queue The specified number of tcp connections will be created for each queue
+    ##
+    http_consumer_connections_per_queue: 1
+    ## @param http.tune.http_consumer_channels_per_connection max opened channels per connection for http_consumer
+    ##
+    http_consumer_channels_per_connection: 1
+    ## @param http.tune.http_consumer_messages_prefetch_size_per_channel messages_prefetch_size per channel for http_consumer
+    ##
+    http_consumer_messages_prefetch_size_per_channel: 20
+    ## @param http.tune.consumer_settings_messages_prefetch_size_per_channel messages_prefetch_size per channel for consumer_settings
+    ##
+    consumer_settings_messages_prefetch_size_per_channel: 50
+    ## @param http.tune.consumer_response_prefetch_size_per_channel prefetch_size_per_channel for consumer_response
+    ##
+    consumer_response_prefetch_size_per_channel: 50
+  podAnnotations: {}
+  ## @param capi.podAffinityPreset Pod affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param capi.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node capi.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param capi.nodeAffinityPreset.type Node affinity preset type. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param capi.nodeAffinityPreset.key Node label key to match. Ignored if `capi.affinity` is set
+    ##
+    key: ""
+    ## @param capi.nodeAffinityPreset.values Node label values to match. Ignored if `capi.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param capi.affinity Affinity for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `capi.podAffinityPreset`, `capi.podAntiAffinityPreset`, and `capi.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+
+## @section Syncapi Parameters
+##
+syncapi:
+  ## @param syncapi.name Service name
+  ##
+  name: "syncapi"
+  ## @param syncapi.subdomain subdomain for syncapi like syncapi would be "syncapi.example.com"
+  ##
+  subdomain: "syncapi"
+  image:
+    ## @param syncapi.image.registry
+    ##
+    registry: docker-hub.middleware.biz
+    ## @param syncapi.image.repository
+    ##
+    repository: public/corezoid_api_sync
+    ## @param syncapi.image.tag
+    ##
+    tag: "2.1.0"
+    ## @param syncapi.image.pullSecrets
+    ##
+    pullSecrets: []
+  ## @param syncapi.replicaCount
+  ##
+  replicaCount: 1
+  autoscaling:
+    ## @param syncapi.autoscaling.enabled
+    ##
+    enabled: false
+  service:
+    ## @param syncapi.service.syncapiPort port default: 80
+    ##
+    syncapiPort: 80
+  ## @param syncapi.schedulers
+  ##
+  schedulers: 2
+  ## @param syncapi.podAnnotations
+  ##
+  podAnnotations: {}
+  ## @param capi.podAffinityPreset Pod affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param capi.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node capi.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param capi.nodeAffinityPreset.type Node affinity preset type. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param capi.nodeAffinityPreset.key Node label key to match. Ignored if `capi.affinity` is set
+    ##
+    key: ""
+    ## @param capi.nodeAffinityPreset.values Node label values to match. Ignored if `capi.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param capi.affinity Affinity for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `capi.podAffinityPreset`, `capi.podAntiAffinityPreset`, and `capi.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+
+## @section Webadm Parameters
+##
+webadm:
+  ## @param webadm.name Service name
+  ##
+  name: webadm
+  image:
+    ## @param webadm.image.registry
+    ##
+    registry: docker-hub.middleware.biz
+    ## @param webadm.image.repository
+    ##
+    repository: public/conveyor_adm_web
+    ## @param webadm.image.tag
+    ##
+    tag: "5.7.0"
+    ## @param webadm.image.pullSecrets
+    ##
+    pullSecrets: []
+  ## @param webadm.replicaCount
+  ##
+  replicaCount: 2
+
+  resources:
+    limits:
+      ## @param webadm.resources.limits.cpu
+      ##
+      cpu: 200m
+      ## @param webadm.resources.limits.memory
+      ##
+      memory: 500Mi
+    requests:
+      ## @param webadm.resources.requests.cpu
+      ##
+      cpu: 50m
+      ## @param webadm.resources.requests.memory
+      ##
+      memory: 50Mi
+  autoscaling:
+    ## @param webadm.autoscaling.enabled
+    ##
+    enabled: false
+  ## @param webadm.podAnnotations
+  ##
+  podAnnotations: {}
+  ## @param capi.podAffinityPreset Pod affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param capi.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node capi.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param capi.nodeAffinityPreset.type Node affinity preset type. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param capi.nodeAffinityPreset.key Node label key to match. Ignored if `capi.affinity` is set
+    ##
+    key: ""
+    ## @param capi.nodeAffinityPreset.values Node label values to match. Ignored if `capi.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param capi.affinity Affinity for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `capi.podAffinityPreset`, `capi.podAntiAffinityPreset`, and `capi.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  service:
+    ## @param webadm.service.port port default: 80
+    ##
+    port: 80
+
+## @section Web Superadm Parameters
+##
+websuperadm:
+  ## @param websuperadm.name Service name
+  ##
+  name: "web-superadm"
+  ## @param websuperadm.subdomain
+  ##
+  subdomain: "superadm"
+  image:
+    ## @param websuperadm.image.registry
+    ##
+    registry: docker-hub.middleware.biz
+    ## @param websuperadm.image.repository
+    ##
+    repository: public/conf_agent_admin
+    ## @param websuperadm.image.tag
+    ##
+    tag: "1.5.1"
+    ## @param websuperadm.image.pullPolicy
+    ##
+    pullPolicy: IfNotPresent
+    ## @param websuperadm.image.pullSecrets
+    ##
+    pullSecrets: []
+  ## @param websuperadm.replicaCount
+  ##
+  replicaCount: 2
+  resources:
+    limits:
+      ## @param websuperadm.resources.limits.cpu
+      ##
+      cpu: 200m
+      ## @param websuperadm.resources.limits.memory
+      ##
+      memory: 500Mi
+    requests:
+      ## @param websuperadm.resources.requests.cpu
+      ##
+      cpu: 50m
+      ## @param websuperadm.resources.requests.memory
+      ##
+      memory: 50Mi
+  autoscaling:
+    ## @param websuperadm.autoscaling.enabled
+    ##
+    enabled: false
+  service:
+    ## @param websuperadm.service.port port default: 80
+    ##
+    port: 80
+
+## @section Worker Parameters
+##
+worker:
+  ## @param worker.name Service name
+  ##
+  name: worker
+  image:
+    ## @param worker.image.registry
+    ##
+    registry: docker-hub.middleware.biz
+    ## @param worker.image.repository
+    ##
+    repository: public/conveyor-worker
+    ## @param worker.image.tag
+    ##
+    tag: "4.7.0.1"
+    ## @param worker.image.pullPolicy
+    ##
+    pullPolicy: IfNotPresent
+    ## @param worker.image.pullSecrets
+    ##
+    pullSecrets: []
+  ## @param worker.replicaCount
+  ##
+  replicaCount: 2
+  resources:
+    limits:
+      ## @param worker.resources.limits.cpu
+      ##
+      cpu: 1000m
+      ## @param worker.resources.limits.memory
+      ##
+      memory: 1500Mi
+    requests:
+      ## @param worker.resources.requests.cpu
+      ##
+      cpu: 150m
+      ## @param worker.resources.requests.memory
+      ##
+      memory: 150Mi
+  autoscaling:
+    ## @param worker.autoscaling.enabled
+    ##
+    enabled: false
+  ## @param worker.schedulers
+  ##
+  schedulers: 2
+  ## @param worker.podAnnotations
+  ##
+  podAnnotations: {}
+  ## @param capi.podAffinityPreset Pod affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param capi.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node capi.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param capi.nodeAffinityPreset.type Node affinity preset type. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param capi.nodeAffinityPreset.key Node label key to match. Ignored if `capi.affinity` is set
+    ##
+    key: ""
+    ## @param capi.nodeAffinityPreset.values Node label values to match. Ignored if `capi.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param capi.affinity Affinity for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `capi.podAffinityPreset`, `capi.podAntiAffinityPreset`, and `capi.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+
+## @section Merchant Parameters
+##
+merchant:
+  ## @param merchant.name Service name
+  ##
+  name: merchant
+  image:
+    ## @param merchant.image.registry
+    ##
+    registry: docker-hub.middleware.biz
+    ## @param merchant.image.repository
+    ##
+    repository: public/merchant
+    ## @param merchant.image.tag
+    ##
+    tag: "v0.0.27.2"
+    ## @param merchant.image.pullPolicy
+    ##
+    pullPolicy: IfNotPresent
+    ## @param merchant.image.pullSecrets
+    ##
+    pullSecrets: []
+  resources:
+    limits:
+      ## @param merchant.resources.limits.cpu
+      ##
+      cpu: 500m
+      ## @param merchant.resources.limits.memory
+      ##
+      memory: 800Mi
+    requests:
+      ## @param merchant.resources.requests.cpu
+      ##
+      cpu: 100m
+      ## @param merchant.resources.requests.memory
+      ##
+      memory: 100Mi
+  autoscaling:
+    ## @param merchant.autoscaling.enabled
+    ##
+    enabled: false
+  service:
+    ## @param merchant.service.merchantPort
+    ##
+    merchantPort: 80
+    ## @param merchant.service.managmentPort
+    ##
+    managmentPort: 7980
+  ## @param merchant.merchant_login
+  ##
+  merchant_login: ""
+  ## @param merchant.merchant_secret
+  ##
+  merchant_secret: ""
+  ## @param merchant.podAnnotations
+  ##
+  podAnnotations: {}
+  ## @param capi.podAffinityPreset Pod affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param capi.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node capi.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param capi.nodeAffinityPreset.type Node affinity preset type. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param capi.nodeAffinityPreset.key Node label key to match. Ignored if `capi.affinity` is set
+    ##
+    key: ""
+    ## @param capi.nodeAffinityPreset.values Node label values to match. Ignored if `capi.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param capi.affinity Affinity for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `capi.podAffinityPreset`, `capi.podAntiAffinityPreset`, and `capi.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+
+## @section Limits Parameters
+##
+limits:
+  ## @param limits.name Service name
+  ##
+  name: limits
+  image:
+    ## @param limits.image.registry
+    ##
+    registry: docker-hub.middleware.biz
+    ## @param limits.image.repository
+    ##
+    repository: public/corezoid_limits
+    ## @param limits.image.tag
+    ##
+    tag: "1.2.1"
+    ## @param limits.image.pullPolicy
+    ##
+    pullPolicy: IfNotPresent
+    ## @param limits.image.pullSecrets
+    ##
+    pullSecrets: []
+  resources:
+    limits:
+      ## @param limits.resources.limits.cpu
+      ##
+      cpu: 500m
+      ## @param limits.resources.limits.memory
+      ##
+      memory: 800Mi
+    requests:
+      ## @param limits.resources.requests.cpu
+      ##
+      cpu: 50m
+      ## @param limits.resources.requests.memory
+      ##
+      memory: 50Mi
+  service:
+    ## @param limits.service.limitsPort port default: 80
+    ##
+    limitsPort: 80
+  ## @param limits.podAnnotations
+  ##
+  podAnnotations: {}
+  ## @param capi.podAffinityPreset Pod affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param capi.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node capi.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param capi.nodeAffinityPreset.type Node affinity preset type. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param capi.nodeAffinityPreset.key Node label key to match. Ignored if `capi.affinity` is set
+    ##
+    key: ""
+    ## @param capi.nodeAffinityPreset.values Node label values to match. Ignored if `capi.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param capi.affinity Affinity for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `capi.podAffinityPreset`, `capi.podAntiAffinityPreset`, and `capi.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+
+## @section Mult Parameters
+##
+mult:
+  ## @param mult.name Service name
+  ##
+  name: mult
+  image:
+    ## @param mult.image.registry
+    ##
+    registry: docker-hub.middleware.biz
+    ## @param mult.image.repository
+    ##
+    repository: public/conveyor_api_multipart
+    ## @param mult.image.tag
+    ##
+    tag: "2.6.0.1"
+    ## @param mult.image.pullPolicy
+    ##
+    pullPolicy: IfNotPresent
+    ## @param mult.image.pullSecrets
+    ##
+    pullSecrets: []
+  resources:
+    limits:
+      ## @param mult.resources.limits.cpu
+      ##
+      cpu: 500m
+      ## @param mult.resources.limits.memory
+      ##
+      memory: 800Mi
+    requests:
+      ## @param mult.resources.requests.cpu
+      ##
+      cpu: 50m
+      ## @param mult.resources.requests.memory
+      ##
+      memory: 50Mi
+  autoscaling:
+    ## @param mult.autoscaling.enabled
+    ##
+    enabled: false
+  service:
+    ## @param mult.service.multPort port default: 80
+    ##
+    multPort: 80
+  ## @param mult.persistantVolumeClaimName pvc name if it already exist or was created manualy
+  ##
+  persistantVolumeClaimName: "mult-pvc"
+  ## @param mult.persistantVolumeClaimCreate true if pvc for mult should be created automaticaly, false if you already have pvc
+  ##
+  persistantVolumeClaimCreate: true
+  ## @param mult.enigma_pk_id enigma private_key_id
+  ##
+  enigma_pk_id: ""
+  ## @param mult.podAnnotations
+  ##
+  podAnnotations: {}
+  ## @param capi.podAffinityPreset Pod affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param capi.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node capi.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param capi.nodeAffinityPreset.type Node affinity preset type. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param capi.nodeAffinityPreset.key Node label key to match. Ignored if `capi.affinity` is set
+    ##
+    key: ""
+    ## @param capi.nodeAffinityPreset.values Node label values to match. Ignored if `capi.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param capi.affinity Affinity for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `capi.podAffinityPreset`, `capi.podAntiAffinityPreset`, and `capi.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+
+## @section Usercode Parameters
+##
+usercode:
+  ## @param usercode.name Service name
+  ##
+  name: usercode
+  image:
+    ## @param usercode.image.registry
+    ##
+    registry: docker-hub.middleware.biz
+    ## @param usercode.image.repository
+    ##
+    repository: public/usercode
+    ## @param usercode.image.tag
+    ##
+    tag: "7.2.1"
+    ## @param usercode.image.pullPolicy
+    ##
+    pullPolicy: IfNotPresent
+    ## @param usercode.image.pullSecrets
+    ##
+    pullSecrets: []
+  resources:
+    limits:
+      ## @param usercode.resources.limits.cpu
+      ##
+      cpu: 1000m
+      ## @param usercode.resources.limits.memory
+      ##
+      memory: 1000Mi
+    requests:
+      ## @param usercode.resources.requests.cpu
+      ##
+      cpu: 50m
+      ## @param usercode.resources.requests.memory
+      ##
+      memory: 50Mi
+  autoscaling:
+    ## @param usercode.autoscaling.enabled
+    ##
+    enabled: false
+  ## @param usercode.enigma_pk_id private_key_id from enigma
+  ##
+  enigma_pk_id: ""
+  ## @param usercode.podAnnotations
+  ##
+  podAnnotations: {}
+  ## @param capi.podAffinityPreset Pod affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param capi.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Node capi.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param capi.nodeAffinityPreset.type Node affinity preset type. Ignored if `capi.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param capi.nodeAffinityPreset.key Node label key to match. Ignored if `capi.affinity` is set
+    ##
+    key: ""
+    ## @param capi.nodeAffinityPreset.values Node label values to match. Ignored if `capi.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param capi.affinity Affinity for CAPI pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `capi.podAffinityPreset`, `capi.podAntiAffinityPreset`, and `capi.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+
+## @section SingleAccount ( under construction )
+##
+sa:
+  ## @param sa.enabled enable or disable SingleAccount (under construction)
+  ##
+  enabled: false
+  ## @param sa.google_client_id
+  ##
+  google_client_id: 8888
+
+## @section SingleAccount Web ( under construction )
+##
+sa_web:
+  ## @param sa_web.subdomain
+  ##
+  subdomain: "sa"
+
+## @section GitCall Parameters
+##
+gitcall:
+  ## @param gitcall.enabled enable or disable gitcall ( installed separately )
+  ##
+  enabled: false
+  ## @param gitcall.mq_vhost
+  mq_vhost: "/gitcall"
+  ## @param gitcall.dunder_mq_vhost
+  dunder_mq_vhost: "/dundergitcall"
+
+## @section Enigma Parameters
+##
+enigma:
+  ## @param enigma.enabled
+  ##
+  enabled: false
+  ## @param enigma.encryption
+  ##
+  encryption: false
+
+## @section Store Dumps Parameters
+##
+store_dumps:
+  ## @param store_dumps.enable - enable store erlang crashdump
+  enable: true
+
+## @section External Redis(TM) Parameters
+##
+externalRedis:
+  ## Redis(TM) host
+  ## @param externalRedis.host External Redis host
+  ##
+  host: ''
+  ## Redis(TM) port
+  ## @param externalRedis.port External Redis port
+  ##
+  port: ""
+  ## Redis(TM) password for authentication
+  ## Ignored if existingSecret is set
+  ## @param externalRedis.password External Redis password
+  ##
+  password: ''
+  ## Name of existing secret object containing the password
+  ## @param externalRedis.existingSecret Existing secret for the external redis
+  ##
+  existingSecret: ''
+  ## Password key to be retrieved from Redis(TM) secret
+  ## @param externalRedis.existingSecretPasswordKey Password key for the existing secret containing the external redis password
+  ##
+  existingSecretPasswordKey: 'redis-password'
+
+## @section External RabbitMQ Configuration
+## All of these values are ignored when rabbitmq.enabled is set to true
+##
+externalRabbitmq:
+  ## @param externalRabbitmq.host Host of the external RabbitMQ
+  ##
+  host: ""
+  ## @param externalRabbitmq.port External RabbitMQ port number
+  ##
+  port: 5672
+  ## @param externalRabbitmq.username External RabbitMQ username
+  ##
+  username: ""
+  ## @param externalRabbitmq.password External RabbitMQ password. It will be saved in a kubernetes secret
+  ##
+  password: ""
+  ## @param externalRabbitmq.vhost External RabbitMQ virtual host. It will be saved in a kubernetes secret
+  ## e.g:
+  ## vhost: /
+  ##
+  vhost: ""
+
+## @section External Elasticsearch Configuration
+##
+externalElasticsearch:
+  ## @param externalElasticsearch.host Host of the external RabbitMQ
+  ##
+  host: ""
+  ## @param externalElasticsearch.port External RabbitMQ port number
+  ##
+  port: 9200
+  ## @param externalElasticsearch.password External RabbitMQ password. It will be saved in a kubernetes secret
+  ##
+  password: ""
+
+## @section External Postgres Configuration
+##
+externalPostgresql:
+  ## @param externalPostgresql.postgresqlHost Host of the external Postgresql
+  ##
+  postgresqlHost: "postgresql.cluster.local"
+  ## @param externalPostgresql.postgresqlPostgresUsername root user for external  Postgresql
+  ##
+  postgresqlPostgresUsername: "postgres"
+  ## @param externalPostgresql.postgresqlPostgresPassword root password for external  Postgresql
+  ##
+  postgresqlPostgresPassword: ""
+  ## @param externalPostgresql.postgresqlUsername PostgreSQL user (has superuser privileges if username is `postgres`)
+  ## ref: https://github.com/bitnami/bitnami-docker-postgresql/blob/master/README.md#setting-the-root-password-on-first-run
+  ##
+  postgresqlUsername: ""
+  ## @param externalPostgresql.postgresqlPassword  PostgreSQL password
+  ## ref: https://github.com/bitnami/bitnami-docker-postgresql/blob/master/README.md#setting-the-root-password-on-first-run
+  ##
+  postgresqlPassword: ""
+  ## externalPostgresql.existingSecret PostgreSQL password using existing secret
+  ## existingSecret: secret
+  ##
+  ## Mount PostgreSQL secret as a file instead of passing environment variable
+  # usePasswordFile: false
+  ## Create a database
+  ## ref: https://github.com/bitnami/bitnami-docker-postgresql/blob/master/README.md#creating-a-database-on-first-run
+  ##
+  # postgresqlDatabase:
+  ## @param externalPostgresql.postgresqlPort postgresql Port
+  ##
+  postgresqlPort: 5432
+  ## @param externalPostgresql.postgresqlMaxConnections Maximum total connections
+  ##
+  postgresqlMaxConnections: 1000
+  ## @param externalPostgresql.postgresqlPostgresConnectionLimit Maximum connections for the postgres user
+  ##
+  postgresqlPostgresConnectionLimit: 1000
+  ## @param externalPostgresql.postgresqlDbUserConnectionLimit Maximum connections for the created user
+  ##
+  postgresqlDbUserConnectionLimit: 1000
+  ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
+  ## be careful in defining this variable
+  ## @param externalPostgresql.shards_count count of shards created in postgresql, if unset, default - 10
+  ##
+  shards_count: 10
+  ## @param externalPostgresql.shards count of shards created in psql, if unset, default - 10 - in array format
+  ##
+  shards: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+  ## @param externalPostgresql.maxclientconn  Maximum number of client connections allowed.
+  ##
+  maxclientconn: "100000"
+  ## @param externalPostgresql.default_pool_size  How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
+  ##
+  default_pool_size: "5000"
+  ## see more https://wiki.postgresql.org/wiki/PgBouncer
+  ## @param externalPostgresql.default_pool_mode Server is released back to pool after transaction finishes. default: session (transaction | session)
+  ##
+  default_pool_mode: transaction
+  ## @param externalPostgresql.postgres_schema.version Corezoid postgres schema version
+  ##
+  postgres_schema:
+    version: "5.7.0"
+  rotation:
+    ## @param externalPostgresql.rotation.enabled cronjob for truncate tasks_archive table
+    enabled: true
+    ## @param externalPostgresql.rotation.schedule cleanup period in crontab format  minute hour day month dayofweek
+    ##
+    schedule: "0 0 1 * *"
+  ## @skip capi.autoscaling.enabled
+  ## @skip capi.autoscaling.minReplicas
+  ## @skip capi.autoscaling.maxReplicas
+  ## @skip capi.autoscaling.targetCPU
+  ## @skip capi.autoscaling.targetMemory
+  ## @skip capi.autoscaling.requests
+  ## @skip confAgentServer.podAffinityPreset
+  ## @skip confAgentServer.podAntiAffinityPreset
+  ## @skip confAgentServer.nodeAffinityPreset.type
+  ## @skip confAgentServer.nodeAffinityPreset.key
+  ## @skip confAgentServer.nodeAffinityPreset.values
+  ## @skip confAgentServer.affinity
+  ## @skip http.podAnnotations
+  ## @skip http.podAffinityPreset
+  ## @skip http.podAntiAffinityPreset
+  ## @skip http.nodeAffinityPreset.type
+  ## @skip http.nodeAffinityPreset.key
+  ## @skip http.nodeAffinityPreset.values
+  ## @skip http.affinity
+  ## @skip syncapi.podAffinityPreset
+  ## @skip syncapi.podAntiAffinityPreset
+  ## @skip syncapi.nodeAffinityPreset.type
+  ## @skip syncapi.nodeAffinityPreset.key
+  ## @skip syncapi.nodeAffinityPreset.values
+  ## @skip syncapi.affinity
+  ## @skip webadm.podAffinityPreset
+  ## @skip webadm.podAntiAffinityPreset
+  ## @skip webadm.nodeAffinityPreset.type
+  ## @skip webadm.nodeAffinityPreset.key
+  ## @skip webadm.nodeAffinityPreset.values
+  ## @skip webadm.affinity
+  ## @skip worker.podAffinityPreset
+  ## @skip worker.podAntiAffinityPreset
+  ## @skip worker.nodeAffinityPreset.type
+  ## @skip worker.nodeAffinityPreset.key
+  ## @skip worker.nodeAffinityPreset.values
+  ## @skip worker.affinity
+  ## @skip merchant.podAffinityPreset
+  ## @skip merchant.podAntiAffinityPreset
+  ## @skip merchant.nodeAffinityPreset.type
+  ## @skip merchant.nodeAffinityPreset.key
+  ## @skip merchant.nodeAffinityPreset.values
+  ## @skip merchant.affinity
+  ## @skip limits.podAffinityPreset
+  ## @skip limits.podAntiAffinityPreset
+  ## @skip limits.nodeAffinityPreset.type
+  ## @skip limits.nodeAffinityPreset.key
+  ## @skip limits.nodeAffinityPreset.values
+  ## @skip limits.affinity
+  ## @skip mult.podAffinityPreset
+  ## @skip mult.podAntiAffinityPreset
+  ## @skip mult.nodeAffinityPreset.type
+  ## @skip mult.nodeAffinityPreset.key
+  ## @skip mult.nodeAffinityPreset.values
+  ## @skip mult.affinity
+  ## @skip usercode.podAffinityPreset
+  ## @skip usercode.podAntiAffinityPreset
+  ## @skip usercode.nodeAffinityPreset.type
+  ## @skip usercode.nodeAffinityPreset.key
+  ## @skip usercode.nodeAffinityPreset.values
+  ## @skip usercode.affinity

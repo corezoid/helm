@@ -1,0 +1,143 @@
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "corezoid.webadm" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.webadm.name }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  replicas: {{ .Values.webadm.replicaCount | default 1 }}
+  {{- if .Values.webadm.updateStrategy }}
+  strategy: {{- toYaml .Values.webadm.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.webadm.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/nginx: {{ include (print $.Template.BasePath "/web/web-configmap-nginx.yaml") . | sha256sum }}
+        checksum/nginx-site: {{ include (print $.Template.BasePath "/web/web-configmap-site.yaml") . | sha256sum }}
+        {{- if .Values.webadm.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.webadm.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.webadm.name }}
+        {{- if .Values.webadm.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.webadm.podLabels "context" $) | nindent 8 }}
+    {{- end }}
+    spec:
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.webadm.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.webadm.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.webadm.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.webadm.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.webadm.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.webadm.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.webadm.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.webadm.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.webadm.priorityClassName }}
+      priorityClassName: {{ .Values.webadm.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.webadm.terminationGracePeriodSeconds | default 10 }}
+      shareProcessNamespace: true
+      containers:
+        - name: {{ template "corezoid.webadm" . }}
+          image: {{ template "corezoid.webadm.image" . }}
+          imagePullPolicy: {{ .Values.webadm.image.pullPolicy | default "IfNotPresent" }}
+          {{- if .Values.webadm.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.webadm.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.webadm.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.webadm.args "context" $) | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: web
+              containerPort: 80
+          {{- if .Values.webadm.resources }}
+          resources: {{- toYaml .Values.webadm.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.webadm.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.webadm.lifecycleHooks "context" $) | nindent 12 }}
+          {{- else }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sleep","3"]
+          {{- end }}
+          {{- if .Values.webadm.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.webadm.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            httpGet:
+              path: /nginx_status
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          {{- if .Values.webadm.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.webadm.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            httpGet:
+              path: /nginx_status
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          volumeMounts:
+            - name: web-config-nginx
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: web-config-site
+              mountPath: /etc/nginx/conf.d/corezoid.conf
+              subPath: corezoid.conf
+            - name: web-config-logo
+              mountPath: /usr/share/nginx/html/logo/logo.svg
+              subPath: logo.svg
+            - name: web-config-logo
+              mountPath: /usr/share/nginx/html/logo/logo_auth.svg
+              subPath: logo_auth.svg
+        - name: nginx-exporter
+          image: docker-hub.middleware.biz/public/nginx-prometheus-exporter:latest
+          resources:
+            requests:
+              cpu: 10m
+              memory: 30Mi
+          ports:
+            - name: nginx-exp-port
+              containerPort: 9113
+          args:
+            - -nginx.scrape-uri=http://localhost/nginx_status
+            - -nginx.retries=2
+      volumes:
+        - name: web-config-nginx
+          configMap:
+            name: {{ .Values.webadm.name }}-main
+        - name: web-config-site
+          configMap:
+            name: {{ .Values.webadm.name }}-site
+        - name: web-config-logo
+          configMap:
+            name: {{ .Values.webadm.name }}-config-logo

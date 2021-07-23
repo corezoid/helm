@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.webadm.name }}-service
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.webadm.name }}
+spec:
+  selector: {{- include "corezoid.labels.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.webadm.name }}
+  ports:
+    - name: web
+      protocol: TCP
+      port: {{ .Values.webadm.service.port | default 80 }}
+      targetPort: web
+  type: NodePort

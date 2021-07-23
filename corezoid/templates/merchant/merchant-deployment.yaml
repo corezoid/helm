@@ -1,0 +1,154 @@
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "corezoid.merchant" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.merchant.name }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  {{- if not .Values.merchant.autoscaling.enabled }}
+  replicas: {{ .Values.merchant.replicaCount | default 1 }}
+  {{- end }}
+  {{- if .Values.merchant.updateStrategy }}
+  strategy: {{- toYaml .Values.merchant.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.merchant.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/application: {{ include (print $.Template.BasePath "/merchant/merchant-application-properties-configmap.yaml") . | sha256sum }}
+        checksum/callback: {{ include (print $.Template.BasePath "/merchant/merchant-callback-properties-configmap.yaml") . | sha256sum }}
+        checksum/datasource: {{ include (print $.Template.BasePath "/merchant/merchant-datasource-configmap.yaml") . | sha256sum }}
+        checksum/log4j2: {{ include (print $.Template.BasePath "/merchant/merchant-log4j2-spring-configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/merchant/merchant-secret.yaml") . | sha256sum }}
+        {{- if .Values.merchant.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.merchant.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.merchant.name }}
+        {{- if .Values.merchant.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.merchant.podLabels "context" $) | nindent 8 }}
+    {{- end }}
+    spec:
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.merchant.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.merchant.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.merchant.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.merchant.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.merchant.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.merchant.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.merchant.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.merchant.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.merchant.priorityClassName }}
+      priorityClassName: {{ .Values.merchant.priorityClassName | quote }}
+      {{- end }}
+      initContainers:
+        - name: init-wait
+          image: docker-hub.middleware.biz/public/alpine
+          command: ["sh", "-c", "apk add postgresql-client; until PGPASSWORD=${POSTGRES_DBPWD} psql -h {{ template "corezoid.postgres.host" . }} -U {{ template "corezoid.postgres.username" . }} -d merchant -c \"select 1\" > /dev/null 2>&1 ; do echo Waiting while postgres created settings db ...; sleep 3; done"]
+          envFrom:
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+      containers:
+        - name: {{ template "corezoid.merchant" . }}
+          image: {{ template "corezoid.merchant.image" . }}
+          imagePullPolicy: {{ .Values.merchant.image.pullPolicy | default "IfNotPresent" }}
+          {{- if .Values.merchant.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.merchant.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.merchant.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.merchant.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            {{- if (include "corezoid.redis.auth.enabled" .) }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.redis.secretName" . }}
+                  key: {{ include "corezoid.redis.secretPasswordKey" . }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.merchant.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.merchant.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+            - secretRef:
+                name: merchant-secret
+          ports:
+            - name: merchant
+              containerPort: 8080
+            - name: managment
+              containerPort: 7980
+            - name: metrics
+              containerPort: {{ .Values.prometheus.port | default 9100 }}
+          {{- if .Values.merchant.resources }}
+          resources: {{- toYaml .Values.merchant.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.merchant.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.merchant.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.merchant.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.merchant.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.merchant.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.merchant.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: {{ .Values.merchant.name }}-config
+              mountPath: /ebsmnt/conf/application.properties
+              subPath: application.properties
+            - name: {{ .Values.merchant.name }}-callback-properties
+              mountPath: /ebsmnt/conf/callback.properties
+              subPath: callback.properties
+            - name: {{ .Values.merchant.name }}-datasource
+              mountPath: /ebsmnt/conf/data.sql
+              subPath: data.sql
+            - name: {{ .Values.merchant.name }}-log4j2-spring
+              mountPath: /ebsmnt/conf/log4j2-spring.xml
+              subPath: log4j2-spring.xml
+          {{- if .Values.merchant.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.merchant.extraVolumeMounts "context" $) | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: {{ .Values.merchant.name }}-config
+          configMap:
+            name: {{ .Values.merchant.name }}-config
+        - name: {{ .Values.merchant.name }}-callback-properties
+          configMap:
+            name: {{ .Values.merchant.name }}-callback-properties
+        - name: {{ .Values.merchant.name }}-datasource
+          configMap:
+            name: {{ .Values.merchant.name }}-datasource
+        - name: {{ .Values.merchant.name }}-log4j2-spring
+          configMap:
+            name: {{ .Values.merchant.name }}-log4j2-spring
+        {{- if .Values.merchant.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.merchant.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}

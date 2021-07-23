@@ -1,0 +1,317 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.http.name }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.http.name }}
+  annotations:
+    {{- include "corezoid.provisoner.configmap" . | nindent 4 }}
+data:
+  http_worker.config: |
+    %% -*- mode: erlang;  -*-
+    %server name
+    [
+
+    {corezoid_license_client, [
+      {path_to_license, "/ebsmnt/certs/corezoid_license"}
+    ]},
+
+      {mw_metrics, [
+        {is_enabled, true},
+        {subsystems, [erlprometheus]}
+      ]},
+
+      {erlprometheus, [
+        {host, {0,0,0,0}},
+        {port, {{ .Values.prometheus.port | default 9100 }}}
+      ]},
+
+    {ermql, [
+        {publish_request, [
+          {servers, [
+              [
+                {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                {port, {{ template "corezoid.rabbitmq.port" . }}},
+                {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+              ]
+            ]},
+        {queues_count, 1},
+        {min_size, 1},
+        {max_size, 1},
+        {start_size, 1}
+        ]},
+
+        {consumer_response, [
+            {servers, [
+                  [
+                    {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                    {port, {{ template "corezoid.rabbitmq.port" . }}},
+                    {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                ]
+            ]},
+        {connections_per_queue, 1},
+        {channels_per_connection, 1},
+        {messages_prefetch_size_per_channel, {{ .Values.http.tune.consumer_response_prefetch_size_per_channel | default 50 }} }
+        ]}
+        ]},
+
+    {corezoid_global_stats, [
+        {disabled, true}
+    ]},
+
+    %% pool_size to resolve ip through dns services.
+    {kernel, [
+      {gethost_poolsize, 10},
+      {inet_cache_refresh, 60000}, % default 1h
+      {{/*      {inet_lookup, [file, dns]},  % default native*/}}
+      {inet_cache_size, 100}       % default 100
+
+    ]},
+
+    %% These queues is for send full http logs to external systems
+    %% Like kibana, logstash etc.
+      { corezoid_logs_sender, [
+        { handlers, [
+        ]}
+      ]},
+
+    %% for clustering components
+      {corezoid_cluster, [
+          {backend, redis}, %% maybe if future list will increase
+          {redis, [
+              {host, "{{ template "corezoid.redis.host" . }}"},
+              {port, {{ template "corezoid.redis.port" . }}},
+              {password,"${REDIS_PASSWORD}"},
+              {database, 10}
+          ]}
+      ]},
+
+      {enigma, [
+             {is_enabled, {{ .Values.enigma.enabled }}},
+             {private_key_id, "{{ .Values.http.enigma_pk_id }}"},
+             {key_manager_host, "http://enigma-key-manager-service:8080"},
+             {rotors_pool, [
+               {min_size, 3},
+               {max_size, 50},
+               {start_size, 3}
+             ]}
+           ]},
+
+        {corezoid_queues_gc, [
+          {disabled, false},
+          {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+          {port, 15672},
+          {login, "{{ template "corezoid.rabbitmq.username" . }}"},
+          {password, "${MQ_PASSWORD}"},
+          {vhost, "{{ template "corezoid.rabbitmq.vhost" . }}"},
+          {gc_queues_regexp, ["api.ctrl", "settings.http_worker"]}
+        ]},
+
+      {http_worker, [
+        %server name
+        {worker_id, <<"">>},
+
+        {blocked_domains, [
+    {{- range .Values.http.blocked_domains  }}
+    {{ . | quote }},{{- end }}
+        "ifconfig.me"
+        ]},
+
+    {{- if .Values.enigma.encryption }}
+        %% for ENCRYPT/DECRYPT data
+        {encrypt_decrypt, [
+            queue, %% now it's encode-decode RabbitMQ
+            cache, %% Redis
+            db     %% PostgreSQL
+        ]},
+    {{- end }}
+
+        %% maximum response size
+        {max_http_resp_size, {{ .Values.http.max_http_resp_size | default 5242880  }} },
+        %% in seconds
+        {max_client_response_wait_time, 60},
+        %% use for poolling keep-alive connections. If zerro it'll open new connection each query
+        %% {max_keep_alive_connections_len, 600},
+
+        %% shards in whole system. This one must be eq with shards_count in worker section
+        { shards_count, {{ .Values.externalPostgresql.shards_count | default 10 }} },
+
+        %% PgSQL settings
+        { pgsql,
+          [
+              {host, "{{ template "corezoid.postgres.host" . }}"},
+                { hosts, [
+              { [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+    {{- range $i, $e := .Values.externalPostgresql.shards }}
+    {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], "{{ template "corezoid.postgres.host" . }}" }
+            ]},
+            { user, "{{ template "corezoid.postgres.username" . }}" },
+            { dbname, "conveyor" },
+            { password, "${POSTGRES_DBPWD}" },
+            { start_size, 2 },
+            { min_size, 0 },
+            { max_size, 100 }
+          ]
+        },
+        {pgsql2, []},
+        %% memory redis for cache task list
+        {redis, [
+            [
+            {host, "{{ template "corezoid.redisCache.host" . }}"},
+            {port, {{ template "corezoid.redisCache.port" . }}},
+            {password,"${REDIS_PASSWORD_CACHE}"},
+            {database,3},
+            {start_size, 20},
+            {min_size, 20},
+            {max_size, 100}
+          ]
+        ]},
+
+        % http answer
+        {publish_http_request, [
+          {servers, [
+            { [{{- $lastIndex := sub (len .Values.externalPostgresql.shards) 1}}
+    {{- range $i, $e := .Values.externalPostgresql.shards }}
+    {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], [[
+    	    {host, "{{ template "corezoid.rabbitmq.host" . }}"}
+            ]]}
+          ]},
+          {port, {{ template "corezoid.rabbitmq.port" . }}},
+          {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+          {password, <<"${MQ_PASSWORD}">>},
+          {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>},
+          {min_size, 15},
+          {max_size, 15},
+          {start_size, 15}
+        ]},
+
+        %% consumer http
+        {http_consumer, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {queues_count, {{ .Values.http.tune.http_consumer_queues_count | default 8 }} },
+          {connections_per_queue, {{ .Values.http.tune.http_consumer_connections_per_queue | default 1 }} },        %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, {{ .Values.http.tune.http_consumer_channels_per_connection | default 1 }} },       %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, {{ .Values.http.tune.http_consumer_messages_prefetch_size_per_channel | default 10 }} }      %% The number of queues within the channel
+        ]},
+
+        %% producer of settings
+        {publish_settings, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {min_size, 2},
+          {max_size, 2},
+          {start_size, 2}
+        ]},
+
+        %% consumer settings
+        {consumer_settings, [
+                {servers, [
+                      [
+                        {host, "{{ template "corezoid.rabbitmq.host" . }}"},
+                        {port, {{ template "corezoid.rabbitmq.port" . }}},
+                        {username, <<"{{ template "corezoid.rabbitmq.username" . }}">>},
+                        {password, <<"${MQ_PASSWORD}">>},
+                        {vhost, <<"{{ template "corezoid.rabbitmq.vhost" . }}">>}
+                    ]
+                ]},
+          {connections_per_queue, 1},        %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, 1},       %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, {{ .Values.http.tune.consumer_settings_messages_prefetch_size_per_channel | default 50 }} }      %% The number of queues within the channel
+        ]},
+        %% if loglevel = debug - all on / else off
+    {{ $loglevel := .Values.global.error_log_level }}
+        {logs, [
+    {{- if eq $loglevel "debug" }}
+          {info, on},
+          {error, on}
+    {{- else }}
+          {info, off},
+          {error, off}
+    {{- end }}
+        ]},
+        %% Statistics of http logging to elastic
+        {statistics, [
+          {max_elements_in_log, 20},
+          {time_to_print_log, 5}
+        ]}
+      ]},
+
+      {lager,
+        [
+          {log_root, "/ebsmnt/erlang/http_worker/log"},
+          {handlers, [ {lager_console_backend, {{ .Values.global.error_log_level | default "info" }} } ]},
+
+          %% What colors to use with what log levels
+          {colored, true},
+          {colors, [
+            {debug,     "\e[0;38m" },
+            {info,      "\e[1;37m" },
+            {notice,    "\e[1;36m" },
+            {warning,   "\e[1;33m" },
+            {error,     "\e[1;31m" },
+            {critical,  "\e[1;35m" },
+            {alert,     "\e[1;44m" },
+            {emergency, "\e[1;41m" }
+
+          ]},
+
+          %% Whether to write a crash log, and where. Undefined means no crash logger.
+          {crash_log, "crash.log"},
+          %% Maximum size in bytes of events in the crash log - defaults to 65536
+          {crash_log_msg_size, 65536},
+          %% Maximum size of the crash log in bytes, before its rotated, set
+          %% to 0 to disable rotation - default is 0
+          {crash_log_size, 734003200},
+          %% What time to rotate the crash log - default is no time
+          %% rotation. See the README for a description of this format.
+          {crash_log_date, "$D0"},
+          %% Number of rotated crash logs to keep, 0 means keep only the
+          %% current one - default is 0
+          {crash_log_count, 5},
+          %% Whether to redirect error_logger messages into lager - defaults to true
+          {error_logger_redirect, true},
+          %% How many messages per second to allow from error_logger before we start dropping them
+          {error_logger_hwm, 50},
+          %% How big the gen_event mailbox can get before it is switched into sync mode
+          {async_threshold, 20},
+          %% Switch back to async mode, when gen_event mailbox size decrease from 'async_threshold'
+          %% to async_threshold - async_threshold_window
+          {async_threshold_window, 5}
+        ]
+      },
+
+      %% Client for healthcheck server
+      {hcheck_sender, [
+        {host, <<"hcs-service">>}, %% host of the remote healthcheck server
+        {port, 5011}, %% port of the remote healthcheck server
+        {node_name,  <<"http-worker-{{ .Values.capi.subdomain }}.{{ .Values.global.domain }}">> }, %% different for each node
+        {node_type,  <<"http_worker">> }, %% api | worker | multipart | http_worker | usercode | deepmemo ...
+        {disabled, true}, %% true by default
+        {send_interval_sec, 30}, %% by default 10 sec
+        {send_system_counters, true} %% memory processes etc, false by default
+      ]},
+
+      {sasl, [{sasl_error_logger, false}]}
+
+    ].
+

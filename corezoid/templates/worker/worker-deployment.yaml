@@ -1,0 +1,205 @@
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "corezoid.worker" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.worker.name }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  {{- if not .Values.worker.autoscaling.enabled }}
+  replicas: {{ .Values.worker.replicaCount | default 1 }}
+  {{- end }}
+  {{- if .Values.worker.updateStrategy }}
+  strategy: {{- toYaml .Values.worker.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.worker.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/worker/worker-configmap.yaml") . | sha256sum }}
+        checksum/config-vm: {{ include (print $.Template.BasePath "/worker/worker-configmap-vm.yaml") . | sha256sum }}
+        {{- if .Values.worker.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.worker.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.worker.name }}
+        {{- if .Values.worker.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.worker.podLabels "context" $) | nindent 8 }}
+    {{- end }}
+    spec:
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.worker.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.worker.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.worker.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.worker.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.worker.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.worker.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.worker.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.worker.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.worker.priorityClassName }}
+      priorityClassName: {{ .Values.worker.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds | default 10 }}
+      shareProcessNamespace: true
+      initContainers:
+        - name: init-wait
+          image: docker-hub.middleware.biz/public/alpine
+          command: ["sh", "-c", "until nc -zvw1 {{ template "corezoid.postgres.host" . }} {{ template "corezoid.postgres.port" . }} &&  nc -zvw1  {{ template "corezoid.rabbitmq.host" . }} {{ template "corezoid.rabbitmq.port" . }} ; do echo waiting for dependences; sleep 2; done;"]
+          envFrom:
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+        - name: init-wait-rmq
+          image: docker-hub.middleware.biz/public/alpine
+          command: ['sh']
+          args:
+            - "-c"
+            - |
+              until wget -O - -q --header "Authorization: Basic `echo -n \"{{ template "corezoid.rabbitmq.username" . }}:$MQ_PASSWORD\" | base64`" http://{{ template "corezoid.rabbitmq.host" . }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+          env:
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+      containers:
+        - name: {{ template "corezoid.worker" . }}
+          image: {{ template "corezoid.worker.image" . }}
+          imagePullPolicy: {{ .Values.worker.image.pullPolicy | default "IfNotPresent" }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              add: ["IPC_LOCK"]
+          {{- if .Values.worker.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.worker.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.worker.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.worker.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            {{- if .Values.global.debug }}
+            - name: ERL_CRASH_DUMP
+              value: "/dev/stderr"
+            {{- end }}
+            - name: NODE_COOKIE
+              value: {{ template "corezoid.worker" . }}-{{ .Release.Namespace }}
+            - name: RELX_REPLACE_OS_VARS
+              value: "true"
+            - name: SCHEDULERS
+              value: "{{ .Values.worker.schedulers }}"
+            {{- if .Values.store_dumps.enabled }}
+            - name: ERL_CRASH_DUMP
+              value: "/var/dumps/$(POD_NAME)-erl.dump"
+            {{- end }}
+            - name: MQ_GITCALL_VHOST
+              value: {{ .Values.gitcall.mq_vhost }}
+            - name: MQ_DUNDER_GITCALL_VHOST
+              value: {{ .Values.gitcall.dunder_mq_vhost }}
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+            {{- if (include "corezoid.redis.auth.enabled" .) }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.redis.secretName" . }}
+                  key: {{ include "corezoid.redis.secretPasswordKey" . }}
+            {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+          ports:
+            - name: worker
+              containerPort: 9080
+            - name: metrics
+              containerPort: {{ .Values.prometheus.port | default 9100 }}
+          {{- if .Values.worker.resources }}
+          resources: {{- toYaml .Values.worker.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.worker.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.worker.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.worker.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.worker.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            exec:
+              command:
+                - bash
+                - -ec
+                - |
+                  ulimit -n 1024
+                  exec /usr/bin/worker liveness
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 15
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          {{- if .Values.worker.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.worker.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -ec
+                - |
+                  ulimit -n 1024
+                  exec /usr/bin/worker readiness
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 15
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          volumeMounts:
+            - name: worker-config
+              mountPath: /ebsmnt/conf/worker.config
+              subPath: worker.config
+            - name: {{ .Values.worker.name }}-config-vm
+              mountPath: /ebsmnt/erlang/worker/releases/1/vm.args
+              subPath: vm.args
+            - name: corezoid-license
+              mountPath: /ebsmnt/certs
+      volumes:
+        - name: worker-config
+          configMap:
+            name: {{ .Values.worker.name }}-config
+        - name: {{ .Values.worker.name }}-config-vm
+          configMap:
+            name: {{ .Values.worker.name }}-config-vm
+        - name: corezoid-license
+          secret:
+            secretName: license-share-new

@@ -1,0 +1,181 @@
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "corezoid.syncapi" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.syncapi.name }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  {{- if not .Values.syncapi.autoscaling.enabled }}
+  replicas: {{ .Values.syncapi.replicaCount | default 1 }}
+  {{- end }}
+  {{- if .Values.syncapi.updateStrategy }}
+  strategy: {{- toYaml .Values.syncapi.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.syncapi.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/syncapi/syncapi-configmap.yaml") . | sha256sum }}
+        checksum/config-vm: {{ include (print $.Template.BasePath "/syncapi/syncapi-configmap-vm.yaml") . | sha256sum }}
+        {{- if .Values.syncapi.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.syncapi.name }}
+        {{- if .Values.syncapi.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.podLabels "context" $) | nindent 8 }}
+    {{- end }}
+    spec:
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.syncapi.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.syncapi.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.syncapi.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.syncapi.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.syncapi.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.syncapi.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.syncapi.priorityClassName }}
+      priorityClassName: {{ .Values.syncapi.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.syncapi.terminationGracePeriodSeconds | default 10 }}
+      shareProcessNamespace: true
+      initContainers:
+        - name: init-wait-rmq
+          image: docker-hub.middleware.biz/public/alpine
+          command: ['sh']
+          args:
+            - "-c"
+            - |
+              until wget -O - -q --header "Authorization: Basic `echo -n \"{{ template "corezoid.rabbitmq.username" . }}:$MQ_PASSWORD\" | base64`" http://{{ template "corezoid.rabbitmq.host" . }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+          env:
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+      containers:
+        - name: {{ template "corezoid.syncapi" . }}
+          image: {{ template "corezoid.syncapi.image" . }}
+          imagePullPolicy: {{ .Values.syncapi.image.pullPolicy | default "IfNotPresent" }}
+          {{- if .Values.syncapi.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.syncapi.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: RELX_REPLACE_OS_VARS
+              value: "true"
+            - name: SCHEDULERS
+              value: "{{ .Values.syncapi.schedulers }}"
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.syncapi.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.syncapi.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.syncapi.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.syncapi.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          ports:
+            - name: syncapi
+              containerPort: 8090
+            - name: metrics
+              containerPort: {{ .Values.prometheus.port | default 9100 }}
+            - name: liveness
+              containerPort: 8383
+          {{- if .Values.syncapi.resources }}
+          resources: {{- toYaml .Values.syncapi.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.syncapi.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.lifecycleHooks "context" $) | nindent 12 }}
+          {{- else }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/ebsmnt/erlang/corezoid_api_sync/bin/corezoid_api_sync","stop"]
+          {{- end }}
+          {{- if .Values.syncapi.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          livenessProbe:
+            httpGet:
+              path: /is_ready
+              port: 8383
+            initialDelaySeconds: 30
+            periodSeconds: 3
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          {{- if .Values.syncapi.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else }}
+          readinessProbe:
+            httpGet:
+              path: /is_ready
+              port: 8383
+            initialDelaySeconds: 30
+            periodSeconds: 3
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          volumeMounts:
+            - name: {{ .Values.syncapi.name }}-config
+              mountPath: /ebsmnt/conf/corezoid_api_sync.config
+              subPath: corezoid_api_sync.config
+            - name: {{ .Values.syncapi.name }}-config-vm
+              mountPath: /ebsmnt/erlang/corezoid_api_sync/releases/1/vm.args
+              subPath: vm.args
+          {{- if .Values.syncapi.extraVolumeMounts }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.extraVolumeMounts "context" $) | nindent 12 }}
+      {{- end }}
+      volumes:
+        - name: {{ .Values.syncapi.name }}-config
+          configMap:
+            name: {{ .Values.syncapi.name }}-config
+        - name: {{ .Values.syncapi.name }}-config-vm
+          configMap:
+            name: {{ .Values.syncapi.name }}-config-vm
+          {{- if .Values.syncapi.extraVolumes }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.syncapi.extraVolumes "context" $) | nindent 8 }}
+          {{- end }}
+
+

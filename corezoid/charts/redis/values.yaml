@@ -1,5 +1,0 @@
-appName: redis
-image:
-  registry: docker-hub.middleware.biz
-  repository: /redis
-  tag: 3.2.12

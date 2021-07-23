@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.limits.name }}-service
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.limits.name }}
+spec:
+  selector: {{- include "corezoid.labels.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.limits.name }}
+  ports:
+    - name: limits
+      protocol: TCP
+      port: {{ .Values.limits.service.limitsPort | default 80 }}
+      targetPort: limits
+

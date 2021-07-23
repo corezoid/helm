@@ -1,5 +1,0 @@
-appName: elasticsearch
-
-image:
-  registry: docker-hub.middleware.biz
-  repository: /elasticsearch

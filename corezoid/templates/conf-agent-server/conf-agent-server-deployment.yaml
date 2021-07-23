@@ -1,0 +1,153 @@
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "corezoid.confAgentServer" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "corezoid.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.confAgentServer.name }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.schedulerName }}
+  schedulerName: {{ .Values.schedulerName }}
+  {{- end }}
+  {{- if not .Values.confAgentServer.autoscaling.enabled }}
+  replicas: {{ .Values.confAgentServer.replicaCount | default 1 }}
+  {{- end }}
+  {{- if .Values.confAgentServer.updateStrategy }}
+  strategy: {{- toYaml .Values.confAgentServer.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "corezoid.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.confAgentServer.name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/conf-agent-server/conf-agent-server-configmap.yaml") . | sha256sum }}
+        {{- if .Values.confAgentServer.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.confAgentServer.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+        {{- include "corezoid.prometheus" . | nindent 8 }}
+      labels: {{- include "corezoid.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.confAgentServer.name }}
+        {{- if .Values.confAgentServer.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.confAgentServer.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- include "corezoid.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.confAgentServer.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.confAgentServer.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.confAgentServer.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.confAgentServer.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.confAgentServer.podAffinityPreset "component" .Values.confAgentServer.name  "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.confAgentServer.podAntiAffinityPreset "component" .Values.confAgentServer.name "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.confAgentServer.nodeAffinityPreset.type "key" .Values.confAgentServer.nodeAffinityPreset.key "values" .Values.confAgentServer.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.confAgentServer.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.confAgentServer.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.confAgentServer.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.confAgentServer.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.confAgentServer.priorityClassName }}
+      priorityClassName: {{ .Values.confAgentServer.priorityClassName | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.confAgentServer.terminationGracePeriodSeconds | default 40 }}
+      shareProcessNamespace: true
+      initContainers:
+        - name: init-wait
+          image: docker-hub.middleware.biz/public/alpine
+          command: ["sh", "-c", "apk add postgresql-client; until PGPASSWORD=${POSTGRES_DBPWD} psql -h {{ template "corezoid.postgres.host" . }} -U {{ template "corezoid.postgres.username" . }} -d settings -c \"select 1\" > /dev/null 2>&1 ; do echo Waiting while postgres created settings db ...; sleep 3; done"]
+          envFrom:
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+      containers:
+        - name: {{ template "corezoid.confAgentServer" . }}
+          imagePullPolicy: {{ .Values.confAgentServer.image.pullPolicy | default "IfNotPresent" }}
+          image: {{ template "corezoid.confAgentServer.image" . }}
+          {{- if .Values.confAgentServer.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.confAgentServer.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.confAgentServer.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.confAgentServer.args "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IPNODEDOMAIN
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: NODE_COOKIE
+              value: {{ template "corezoid.confAgentServer" . }}-{{ .Release.Namespace }}
+            - name: RELX_REPLACE_OS_VARS
+              value: "true"
+            {{- if (include "corezoid.redis.auth.enabled" .) }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.redis.secretName" . }}
+                  key: {{ include "corezoid.redis.secretPasswordKey" . }}
+            {{- end }}
+            {{- if (include "corezoid.rabbitmq.auth.enabled" .) }}
+            - name: MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "corezoid.rabbitmq.secretName" . }}
+                  key: {{ include "corezoid.rabbitmq.secretPasswordKey" . }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.confAgentServer.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.confAgentServer.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            - secretRef:
+                name: {{ template "common.names.fullname" . }}-postgres
+          ports:
+            - name: confagent
+              containerPort: 8585
+            - name: metrics
+              containerPort: {{ .Values.prometheus.port | default 9100 }}
+          {{- if .Values.confAgentServer.resources }}
+          resources: {{- toYaml .Values.confAgentServer.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.confAgentServer.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.confAgentServer.lifecycleHooks "context" $) | nindent 12 }}
+          {{- else }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/ebsmnt/erlang/conf_agent_server/bin/conf_agent_server","stop"]
+          {{- end }}
+          {{- if .Values.confAgentServer.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.confAgentServer.customLivenessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.confAgentServer.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.confAgentServer.customReadinessProbe "context" $) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: {{ .Values.confAgentServer.name }}-config
+              mountPath: /ebsmnt/conf/conf_agent_server.config
+              subPath: conf_agent_server.config
+            - name: corezoid-license
+              mountPath: /ebsmnt/certs
+      volumes:
+        - name: {{ .Values.confAgentServer.name }}-config
+          configMap:
+            name: {{ .Values.confAgentServer.name }}-config
+        - name: corezoid-license
+          secret:
+            secretName: license-share-new
+        {{- if .Values.confAgentServer.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.confAgentServer.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}
