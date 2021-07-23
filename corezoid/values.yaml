@@ -1,6 +1,4 @@
 # Global values for subcharts | production
-#helm upgrade corezoid -n corezoid-k8s-public  .
-
 global:
   # second level domain only! / core domain (example: corezoid.com)
   domain: "devopsdev.corezoid.com"
@@ -191,8 +189,8 @@ global:
     maxReplicas: 4
     resources:
       limits:
-        cpu: 4
-        memory: 4000Mi
+        cpu: 2
+        memory: 2000Mi
       requests:
         cpu: 2
         memory: 2000Mi
@@ -295,8 +293,8 @@ global:
     maxReplicas: 4
     resources:
       limits:
-        cpu: 4
-        memory: 4000Mi
+        cpu: 2
+        memory: 2000Mi
       requests:
         cpu: 2
         memory: 2000Mi
@@ -341,16 +339,16 @@ global:
   # usercode
   usercode:
     tag: "7.2.1"
-    minReplicas: 1
-    maxReplicas: 1
+    minReplicas: 2
+    maxReplicas: 4
     # application resources limits and requests
     resources:
       limits:
-        cpu: 1
-        memory: 1000Mi
+        cpu: 4
+        memory: 2000Mi
       requests:
-        cpu: 1
-        memory: 1000Mi
+        cpu: 4
+        memory: 2000Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
@@ -384,11 +382,11 @@ global:
     # application resources limits and requests
     resources:
       limits:
-        cpu: 4
-        memory: 4000M
+        cpu: 2
+        memory: 2000M
       requests:
-        cpu: 4
-        memory: 4000M
+        cpu: 2
+        memory: 2000M
     # enigma private_key_id
     enigma_pk_id: ""
     affinity: {}
@@ -426,11 +424,11 @@ global:
     # application resources limits and requests
     resources:
       limits:
-        cpu: 1
-        memory: 1000Mi
+        cpu: 2
+        memory: 2000Mi
       requests:
-        cpu: 1
-        memory: 1000Mi
+        cpu: 2
+        memory: 2000Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
@@ -503,8 +501,8 @@ global:
     maxReplicas: 4
     resources:
       limits:
-        cpu: 4
-        memory: 4000Mi
+        cpu: 2
+        memory: 2000Mi
       requests:
         cpu: 2
         memory: 2000Mi
@@ -573,8 +571,8 @@ global:
   sa:
     # true or false
     enabled: false
-    google_client_id: "1324123412341234-gtkf93avg23vfhtgg9ood8hfpfitf95.apps.googleusercontent.com"
-    google_client_secret: "QW4s20Vobe7_QuqzKViGC"
+    google_client_id: ""
+    google_client_secret: ""
   sa_web:
     subdomain: ""
 
@@ -589,8 +587,8 @@ global:
   # conf-agent-server
   conf_agent_server:
     tag: "1.5.1"
-    minReplicas: 1
-    maxReplicas: 3
+    minReplicas: 2
+    maxReplicas: 4
     resources:
       limits:
         cpu: 1000m
@@ -600,8 +598,8 @@ global:
         memory: 1000Mi
 
   limits:
-    tag: "1.2.2-without-tini"
-    minReplicas: 1
+    tag: "1.2.2"
+    minReplicas: 2
 
   # global log level definition, info - default
   # available value info | warning | error | debug
@@ -615,7 +613,7 @@ global:
     notification_url: http://dump-service:3000/telegram
     # domain name for dumps web ui
     subdomain: ""
-#    dump-k8s-public
+    #    dump-k8s-public
     # how to create login and password
     # https://www.web2generators.com/apache-tools/htpasswd-generator
     base_auth:
