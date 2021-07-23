@@ -1,4 +1,10 @@
 ## Changelog
+
+### Chart 0.19 [ Corezoid 5.7.0 ]
+- prometheus_metrics of applications
+- global log_level 
+- manage vm.args
+
 ### Chart 0.18.1 [ Corezoid 5.6.1 ]
 Improvements:
 - Fix duplicate checksum/config in deployments

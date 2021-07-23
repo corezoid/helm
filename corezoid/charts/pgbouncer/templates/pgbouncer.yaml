@@ -105,7 +105,7 @@ spec:
               value: "2"
             - name: SERVER_IDLE_TIMEOUT
               value: "15"
-            {{ $loglevel := .Values.global.error_log_level }}
+            {{ $loglevel := .Values.global.log_level }}
             {{- if eq $loglevel "debug" }}
             - name: VERBOSE
               value: "2"

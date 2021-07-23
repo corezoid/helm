@@ -78,7 +78,7 @@ data:
 
       {corezoid_api_sync, [
       {nodes, []},
-      {domain, <<"https://{{ .Values.global.syncapi.subdomain }}.{{ .Values.global.domain }}">> }, %% Application url
+      {domain, <<"http://${IPNODEDOMAIN}:8090">> }, %% callback domain (podIP)
       {api_port, 8090},
       {corezoid_host, <<"http://capi-service:9080">>},
 
@@ -91,7 +91,7 @@ data:
       {lager, [
         %% What handlers to install with what arguments
         {log_root, "/ebsmnt/erlang/corezoid_api_sync/log"},
-        {handlers, [ {lager_console_backend, {{ .Values.global.error_log_level | default "info" }} } ]},
+        {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
         {extra_sinks,
                 [
                 {error_logger_lager_event,
