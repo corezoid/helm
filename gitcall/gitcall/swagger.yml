@@ -1,0 +1,543 @@
+---
+swagger: "2.0"
+basePath: "/api/v2"
+info:
+  version: 2.0.0
+  title: Gitcall Service API
+schemes:
+  - "https"
+  - "http"
+tags:
+  - name: "function"
+    description: "Function operations"
+  - name: "ssh-key"
+    description: "SSH key operations"
+paths:
+  /function/save:
+    post:
+      operationId: SaveFunction
+      tags: ["function"]
+      security:
+        - sa: [ ]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/SaveFunctionRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+              $ref: "#/definitions/OkFunctionResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+  /function/get:
+    post:
+      operationId: GetFunction
+      tags: ["function"]
+      security:
+        - sa: [ ]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/GetFunctionRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/OkFunctionResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+  /function/validate:
+    post:
+      operationId: ValidateFunction
+      tags: ["function"]
+      security:
+        - sa: [ ]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/ValidateFunctionRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/OkResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+  /function/run:
+    post:
+      operationId: RunFunction
+      security:
+        - sa: [ ]
+      tags: ["function"]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/RunFunctionRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/OkFunctionResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+  /function/deploy:
+    post:
+      operationId: DeployFunction
+      tags: ["function"]
+      security:
+        - sa: [ ]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/DeployFunctionRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/OkFunctionResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+  /function/stop:
+    post:
+      operationId: StopFunction
+      tags: ["function"]
+      security:
+        - sa: [ ]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/StopFunctionRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/OkResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+  /function/remove:
+    post:
+      operationId: RemoveFunction
+      tags: ["function"]
+      security:
+        - sa: [ ]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/RemoveFunctionRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/OkResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+  /function/build-archive:
+    post:
+      operationId: BuildArchiveFunction
+      tags: ["function"]
+      security:
+        - sa: [ ]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/BuildArchiveFunctionRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/OkBuildArchiveFunctionResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+  /function/build:
+    post:
+      operationId: BuildFunction
+      tags: ["function"]
+      security:
+        - sa: [ ]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/BuildFunctionRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/OkFunctionResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+  /ssh-key/get:
+    post:
+      operationId: GetSSHKey
+      tags: ["ssh-key"]
+      security:
+        - sa: [ ]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/SSHKeyRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/OkSSHKeyResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+  /ssh-key/refresh:
+    post:
+      operationId: RefreshSSHKey
+      tags: ["ssh-key"]
+      security:
+        - sa: [ ]
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "request"
+          required: true
+          schema:
+            $ref: "#/definitions/SSHKeyRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/OkSSHKeyResponse"
+        "400":
+          description: "invalid request"
+          schema:
+            $ref: "#/definitions/ErrResponse"
+
+definitions:
+  Function:
+    type: "object"
+    required: ["service_id", "group_id", "owner_id", "version"]
+    properties:
+      service_id:
+        type: "string"
+        minLength: 1
+        maxLength: 1000
+      group_id:
+        type: "string"
+        minLength: 1
+        maxLength: 1000
+      owner_id:
+        type: "string"
+        minLength: 1
+        maxLength: 1000
+      company_id:
+        type: "string"
+        minLength: 0
+        maxLength: 1000
+      lang:
+        type: "string"
+        enum: ["golang", "js", "php", "python", "java"]
+      code:
+        type: "string"
+        minLength: 0
+      repo:
+        type: "string"
+        minLength: 0
+      commit:
+        type: "string"
+        minLength: 0
+      script:
+        type: "string"
+        minLength: 0
+      handler:
+        type: "string"
+        minLength: 0
+      version:
+        type: "number"
+        format: "int"
+        minimum: 0
+      build_lang:
+        type: "string"
+        enum: ["", "golang", "js", "php", "python", "java"]
+      build_version:
+        type: "number"
+        format: "int"
+        minimum: 0
+      build_usercode_image:
+        type: "string"
+        minLength: 0
+      deploy_lang:
+        type: "string"
+        enum: ["", "golang", "js", "php", "python", "java"]
+      deploy_version:
+        type: "number"
+        format: "int"
+        minimum: 0
+      deploy_status:
+        type:  "string"
+        enum: ["stopped", "stopping", "maybe_stopping", "starting", "running", "idling"]
+      deploy_status_time:
+        type: "number"
+        format: "int"
+        minimum: 1
+      deploy_task_queue:
+        type: "string"
+        minLength: 0
+        maxLength: 1000
+
+  BaseRequest:
+    type: "object"
+    required: [ "service_id", "owner_id", "group_id" ]
+    properties:
+      service_id:
+        type: "string"
+        minLength: 1
+        maxLength: 253
+        pattern: "^[0-9a-zA-Z-]*$"
+      owner_id:
+        type: "string"
+        minLength: 1
+        maxLength: 253
+        pattern: "^[0-9a-zA-Z-]*$"
+      group_id:
+        type: "string"
+        minLength: 1
+        maxLength: 253
+        pattern: "^[0-9a-zA-Z-]*$"
+
+  SaveFunctionRequest:
+    allOf:
+      - $ref: "#/definitions/BaseRequest"
+      - type: "object"
+        required: ["lang"]
+        properties:
+          company_id:
+            type: "string"
+            minLength: 0
+            maxLength: 1000
+          lang:
+            type: "string"
+            enum: ["golang", "js", "php", "python", "java"]
+          code:
+            type: "string"
+            minLength: 0
+          repo:
+            type: "string"
+            minLength: 0
+          commit:
+            type: "string"
+            minLength: 0
+          script:
+            type: "string"
+            minLength: 0
+          handler:
+            type: "string"
+            minLength: 0
+
+  GetFunctionRequest:
+    $ref: "#/definitions/BaseRequest"
+
+  ValidateFunctionRequest:
+    allOf:
+      - $ref: "#/definitions/BaseRequest"
+      - type: "object"
+        required: ["version"]
+        properties:
+          version:
+            type:  "number"
+            format: "integer"
+            minimum: 0
+
+  RunFunctionRequest:
+    $ref: "#/definitions/BaseRequest"
+
+  DeployFunctionRequest:
+    allOf:
+      - $ref: "#/definitions/BaseRequest"
+      - type: "object"
+        required: ["version"]
+        properties:
+          version:
+            type:  "number"
+            format: "integer"
+            minimum: 0
+
+  StopFunctionRequest:
+    $ref: "#/definitions/BaseRequest"
+
+  RemoveFunctionRequest:
+    $ref: "#/definitions/BaseRequest"
+
+  BuildArchiveFunctionRequest:
+    type: "object"
+    required: [ "build_id" ]
+    properties:
+      build_id:
+        type: "string"
+        minLength: 1
+        maxLength: 253
+        pattern: "^[0-9a-zA-Z-]*$"
+
+  BuildFunctionRequest:
+    allOf:
+      - $ref: "#/definitions/BaseRequest"
+      - type: "object"
+        required: [ "version" ]
+        properties:
+          build_id:
+            type: "string"
+            minLength: 1
+            maxLength: 253
+            pattern: "^[0-9a-zA-Z-]*$"
+          version:
+            type:  "number"
+            format: "integer"
+            minimum: 0
+
+  SSHKeyRequest:
+    type: "object"
+    required: [ "owner_id" ]
+    properties:
+      owner_id:
+        type: "string"
+        minLength: 1
+        maxLength: 253
+        pattern: "^[0-9a-zA-Z-]*$"
+
+  OkResponse:
+    type: "object"
+    required: [ "type" ]
+    properties:
+      type:
+        type: "string"
+        enum: ["done"]
+
+  OkFunctionResponse:
+    allOf:
+      - $ref: "#/definitions/OkResponse"
+      - type: "object"
+        required: [ "function" ]
+        properties:
+          function:
+            $ref: "#/definitions/Function"
+
+  OkBuildArchiveFunctionResponse:
+    allOf:
+      - $ref: "#/definitions/OkResponse"
+      - type: "object"
+        required: [ "build_archive" ]
+        properties:
+          build_archive:
+            type: "object"
+            required: [ "build_id", "status" ]
+            properties:
+              build_id:
+                type: "string"
+                minLength: 36
+                maxLength: 253
+                pattern: "^[0-9a-zA-Z-]*$"
+              status:
+                type: "string"
+                enum: [ "not_found", "in_progress", "error", "internal_error", "done" ]
+
+  OkSSHKeyResponse:
+    allOf:
+      - $ref: "#/definitions/OkResponse"
+      - type: "object"
+        required: [ "public_key" ]
+        properties:
+          public_key:
+            type: "string"
+            minLength: 1
+
+  ErrResponse:
+    type: "object"
+    required: [ "type" ]
+    properties:
+      type:
+        type: "string"
+        enum: [ "error", "internal_error" ]
+      message:
+        type: "string"
+
+securityDefinitions:
+  sa:
+    type: apiKey
+    in: header
+    name: Authorization

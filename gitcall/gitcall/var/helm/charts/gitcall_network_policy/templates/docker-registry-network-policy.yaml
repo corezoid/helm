@@ -1,0 +1,52 @@
+{{- $config := .Values.docker_registry }}
+apiVersion: crd.projectcalico.org/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-gitcall-docker-registry-network-policy
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  selector: app == 'docker-registry'
+  types:
+    - Egress
+    - Ingress
+  ingress:
+    - action: Allow
+      protocol: TCP
+      {{- if eq $config.ingress.type "nets" }}
+      source:
+        nets:
+          {{- range $config.ingress.nets }}
+          - {{ . | quote }}
+          {{- end }}
+      {{- else if eq $config.ingress.type "selector" }}
+      source:
+        namespaceSelector: {{ $config.ingress.namespaceSelector }}
+        selector: {{ $config.ingress.selector }}
+      {{- end}}
+      destination:
+        ports:
+          - 5000
+  egress:
+    # DNS
+    - action: Allow
+      protocol: UDP
+      destination:
+        namespaceSelector: projectcalico.org/name == 'kube-system'
+        selector: k8s-app == 'kube-dns'
+        ports:
+          - 53
+    {{- if eq $config.egress.type "nets" }}
+    - action: Allow
+      protocol: TCP
+      destination:
+        nets:
+          {{- range $config.egress.nets }}
+          - {{ . | quote }}
+          {{- end }}
+        ports:
+          - 443
+    {{- end}}

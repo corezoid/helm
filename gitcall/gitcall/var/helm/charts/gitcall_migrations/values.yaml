@@ -1,0 +1,10 @@
+component_name: gitcall_migrations
+helm:
+  enabled: true
+  app: gitcall
+  tier: migrations
+  chart:
+    version: "0.1.1"
+    description: "The gitcall migrations tool. It is run on deployment"
+config_file: ""
+image: docker-hub.middleware.biz/public/gitcall/gitcall-migrations

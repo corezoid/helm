@@ -1,0 +1,4 @@
+apiVersion: v1
+description: The gitcall application
+name: gitcall_app
+version: 2.1.0

@@ -1,0 +1,738 @@
+release:
+    name: 'gitcall_app'
+    helm:
+        enabled: true
+        chart:
+            version: '2.1.0'
+            description: 'The gitcall application'
+        context: ''
+        namespace: ''
+        release: ''
+        deploy: ['gitcall_amulet', 'kube', 'gitcall', 'gitcall_network_policy', 'gitcall_migrations', 'gitcall_docker_server', 'gitcall_pimp', 'docker-registry']
+    require:
+        docker-registry: '2.0.0'
+        gitcall: '2.1.0'
+        gitcall_amulet: '1.1.0'
+        gitcall_docker_server: '1.0.4'
+        gitcall_migrations: '2.1.0'
+        gitcall_network_policy: '1.0.4'
+        gitcall_pimp: '1.0.7'
+        kube: '2.0.0'
+        postgresql_credentials: '2.0.0'
+        rabbitmq_credentials: '2.0.0'
+    repositories:
+        docker-registry:
+            source: 'git'
+            git:
+                repo: 'git@github.com:corezoid/cz-packages.git'
+                path: 'docker-registry'
+        gitcall:
+            source: 'git'
+            git:
+                repo: 'git@github.com:corezoid/gitcall.git'
+                path: 'component'
+        gitcall_amulet:
+            source: 'git'
+            git:
+                repo: 'git@github.com:corezoid/gitcall-amulet.git'
+                path: 'component'
+        gitcall_docker_server:
+            source: 'git'
+            git:
+                repo: 'git@github.com:corezoid/gitcall-docker-server.git'
+        gitcall_migrations:
+            source: 'git'
+            git:
+                repo: 'git@github.com:corezoid/gitcall-migrations.git'
+                path: 'component'
+        gitcall_network_policy:
+            source: 'git'
+            git:
+                repo: 'git@github.com:corezoid/gitcall-network-policy.git'
+        gitcall_pimp:
+            source: 'git'
+            git:
+                repo: 'git@github.com:corezoid/gitcall-pimp.git'
+                path: 'component'
+        kube:
+            source: 'git'
+            git:
+                repo: 'git@github.com:corezoid/cz-packages.git'
+                path: 'kube'
+        postgresql_credentials:
+            source: 'git'
+            git:
+                repo: 'git@github.com:corezoid/cz-packages.git'
+                path: 'postgresql_credentials'
+        rabbitmq_credentials:
+            source: 'git'
+            git:
+                repo: 'git@github.com:corezoid/cz-packages.git'
+                path: 'rabbitmq_credentials'
+postgresql_credentials:
+    gitcall:
+        host: 'postgre.host'
+        password: 'pass'
+        port: 5432
+        username: 'user'
+    main:
+        host: null
+        password: ''
+        port: 5432
+        username: 'postgres'
+rabbitmq_credentials:
+    gitcall:
+        host: 'rabbit.host'
+        username: 'gitcall'
+        password: 'pass'
+        port: 5672
+        vhost: '/gitcall'
+    dundergitcall_system:
+        host: 'rabbit.host'
+        username: 'gitcall'
+        password: 'pass'
+        port: 5672
+        vhost: '/gitcall'
+    dundergitcall_task:
+        host: 'rabbit.host'
+        username: 'gitcall'
+        password: 'pass'
+        port: 5672
+        vhost: '/dundergitcall'
+gitcall:
+    config:
+        dundergitcall:
+            global_policy:
+                dundergitcall_image: 'docker-hub.middleware.biz/public/gitcall/dundergitcall:1.0.2'
+                usercode_proxy_image: 'docker-hub.middleware.biz/public/gitcall/usercode-proxy:1.0.1'
+                usercode_js_runner_image: 'docker-hub.middleware.biz/public/gitcall/js-runner:0.5.1'
+                usercode_php_runner_image: 'docker-hub.middleware.biz/public/gitcall/php-runner:0.4.5'
+                usercode_php_runtime_image: 'docker-hub.middleware.biz/public/gitcall/php-runtime:7.3-2'
+                usercode_python_runner_image: 'docker-hub.middleware.biz/public/gitcall/python-runner:0.1.3'
+                usercode_python_runtime_image: 'docker-hub.middleware.biz/public/gitcall/python:3'
+                usercode_java_runner_image: 'docker-hub.middleware.biz/public/gitcall/java-runner:0.1.5'
+                dundergitcall_enabled: true
+                dundergitcall_limit_cpu_milli_cores: 200
+                dundergitcall_limit_memory_mb: 100
+                dundergitcall_max_replicas: 2
+                dundergitcall_min_replicas: 1
+                dundergitcall_request_cpu_milli_cores: 100
+                dundergitcall_request_memory_mb: 50
+                usercode_body_size_limit_bytes: 128000
+                usercode_limit_cpu_milli_cores: 100
+                usercode_limit_memory_mb: 50
+                usercode_limit_per_owner: 0
+                usercode_max_replicas: 10
+                usercode_min_replicas: 1
+                usercode_request_cpu_milli_cores: 100
+                usercode_request_memory_mb: 50
+                usercode_scale_cpu_average_utilization: 80
+                usercode_scale_prometheus_server: ''
+            # Defines docker registry credentials. Credentials might be used to push usercode images to private registry.
+            docker_config:
+                # Property patterns:
+                # .+:
+                # password: null
+                # username: null
+                auths: {}
+            # [REQUIRED]
+            # The docker daemon is used to built usercode images
+            # Alternative settings:
+            # 1#
+            # The docker daemon is used to built usercode images
+            # [REQUIRED]: string.
+            # discovery: 'dns'
+            # [REQUIRED]: string.
+            # Docker daemons domain name
+            # host: ''
+            # [REQUIRED]: number.
+            # Docker daemons port
+            # port: 2375
+            docker_daemon:
+                discovery: 'none'
+                # [REQUIRED]: array.
+                hosts: ['tcp://127.0.0.1:2375']
+            # gops tool https://github.com/google/gops. Useful for profiling CPU and Memory in prod.
+            # Alternative settings:
+            # 1#
+            # enabled: false
+            gopsagent:
+                enabled: true
+                host: '127.0.0.1'
+                port: 6527
+            logger:
+                format: 'text'
+                level: 'debug'
+                output: 'stderr'
+            # Expose prometheus metrics. There are two ways promapp can work
+            #  * scrape - the app starts metrics server that prometheus can scrape (preferred)
+            # * push - the app itself sends metrics to prometheus server
+            # Alternative settings:
+            # 0#
+            # [REQUIRED]: boolean.
+            # enabled: true
+            # [REQUIRED]: string.
+            # metrics_host: ''
+            # [REQUIRED]: number.
+            # metrics_port: 0
+            # [REQUIRED]: string.
+            # type: 'scrape'
+
+            # 1#
+            # [REQUIRED]: boolean.
+            # enabled: true
+            # [REQUIRED]: string.
+            # push_job: ''
+            # [REQUIRED]: number.
+            # push_period_sec: 60
+            # [REQUIRED]: string.
+            # push_url: ''
+            # [REQUIRED]: string.
+            # type: 'push'
+            prometheus:
+                enabled: false
+            # Sentry is a tool for tracking errors (https://sentry.io/welcome/).
+            # Alternative settings:
+            # 0#
+            # attach_stacktrace: true
+            # debug: true
+            # [REQUIRED]: string.
+            # dsn: null
+            # enabled: true
+            # environment: 'dev'
+            # [REQUIRED]: array.
+            # levels: ['panic', 'fatal', 'error', 'error']
+            sentry:
+                enabled: false
+            status_update_period_sec: 30
+            status_update_queue: 'dundergitcall-status-update'
+            # [REQUIRED]: object.
+            # Dundergitcall uses this RabbitMQ to send status updates
+            system_amqp:
+                host: '${DUNDERGITCALL_SYSTEM_RABBITMQ_HOST}'
+                password: '${DUNDERGITCALL_SYSTEM_RABBITMQ_PASSWORD}'
+                port: '${int:DUNDERGITCALL_SYSTEM_RABBITMQ_PORT}'
+                username: '${DUNDERGITCALL_SYSTEM_RABBITMQ_USERNAME}'
+                vhost: '${DUNDERGITCALL_SYSTEM_RABBITMQ_VHOST}'
+            # [REQUIRED]: object.
+            # Dundergitcall uses this RabbitMQ to consume usercode tasks
+            task_amqp:
+                host: '${DUNDERGITCALL_TASK_RABBITMQ_HOST}'
+                password: '${DUNDERGITCALL_TASK_RABBITMQ_PASSWORD}'
+                port: '${int:DUNDERGITCALL_TASK_RABBITMQ_PORT}'
+                prefetch: 50
+                username: '${DUNDERGITCALL_TASK_RABBITMQ_USERNAME}'
+                vhost: '${DUNDERGITCALL_TASK_RABBITMQ_VHOST}'
+                workers_num: 50
+            tmp_dir: '/tmp/gitcall'
+            # [REQUIRED]: object.
+            usercode:
+                discovery_period_ms: 60000
+                reconnect_period_ms: 5000
+                service_port: 9999
+                startup_discovery_period_ms: 100
+                startup_period_ms: 300000
+                worker_num: 50
+            usercode_registry: ''
+            usercode_registry_schema: null
+        # [REQUIRED]
+        amqp:
+            # [REQUIRED]: array.
+            connections:
+                - host: '${GITCALL_RABBITMQ_HOST}'
+                  password: '${GITCALL_RABBITMQ_PASSWORD}'
+                  port: '${int:GITCALL_RABBITMQ_PORT}'
+                  username: '${GITCALL_RABBITMQ_USERNAME}'
+                  vhost: '${GITCALL_RABBITMQ_VHOST}'
+            # [REQUIRED]
+            # The consumer build usercode images
+            buildservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-buildservice'
+            # [REQUIRED]
+            # Defines build archive consumer settings.
+            # Could be used to get builds status
+            buildarchive_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-buildarchive'
+            # [REQUIRED]
+            # The consumers runs usercode in k8s.
+            # It calls Pimp service for that.
+            # It is somewhat smart and decide (based on status) whether the function should be deployed or not.
+            runservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-runservice'
+            # [REQUIRED]
+            # The consumer updates usercode version run in k8s cluster.
+            # If the function is in running state it triggers actual re-deploy.
+            # Otherwise, it just updates version in database.
+            deployservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-deployservice'
+            # [REQUIRED]
+            # The consumer sends usercode info in reply
+            getservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 20
+                prefetch: 20
+                queue: 'gitcall-v2-getservice'
+            # [REQUIRED]
+            # The consumer removes usercode.
+            # If usercode is in running state it stops it.
+            # Otherwise, the service is marked deleted in database, and images are removed from registry.
+            removeservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-removeservice'
+            # [REQUIRED]
+            # The consumer stops usercode. It triggers service stopper internally.
+            stopservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-stopservice'
+            # [REQUIRED]
+            # The consumer could be used to perform some light validations against the usercode.
+            # The buildservice consumer calls it internally before building the image.
+            validateservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-validateservice'
+            # [REQUIRED]
+            # The consumer updates sandbox version of usercode. At this stage it might be invalid code.
+            saveservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-saveservice'
+            # [REQUIRED]
+            # The consumer processes status updates sent by dundergitcal services
+            statusupdate_consumer:
+                prefetch: 20
+                queue: 'dundergitcall-status-update'
+            # [REQUIRED]
+            # The consumer sends policy info in reply
+            getpolicy_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 2
+                prefetch: 2
+                queue: 'gitcall-v2-getpolicy'
+            # [REQUIRED]
+            # The consumer sets the policy.
+            setpolicy_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 2
+                prefetch: 2
+                queue: 'gitcall-v2-setpolicy'
+            # [REQUIRED]
+            # The consumer sets the policy.
+            removepolicy_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 2
+                prefetch: 2
+                queue: 'gitcall-v2-setpolicy'
+            # [REQUIRED]
+            # The consumer sends public ssh key info in reply
+            getsshkey_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 2
+                prefetch: 2
+                queue: 'gitcall-v2-getsshkey'
+            # [REQUIRED]
+            # The consumer sends new public ssh key info in reply
+            refreshsshkey_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 2
+                prefetch: 2
+                queue: 'gitcall-v2-refreshsshkey'
+        # [REQUIRED]: object.
+        db:
+            dsn: 'postgres://${GITCALL_POSTGRESQL_USERNAME}:${GITCALL_POSTGRESQL_PASSWORD}@${GITCALL_POSTGRESQL_HOST}:${GITCALL_POSTGRESQL_PORT}/gitcall?sslmode=disable&binary_parameters=yes'
+        # Consumers might work with messages encrypted by Enigma services.
+        # To enable encrypted communication:
+        #  * configure this section
+        #  * send encrypted messages with use_enigma=true header.
+        # Alternative settings:
+        # 0#
+        # [REQUIRED]: string.
+        # ca_pem: ''
+        # [REQUIRED]: string.
+        # cert_file: ''
+        # [REQUIRED]: string.
+        # cert_key: ''
+        # enabled: true
+        # [REQUIRED]: string.
+        # enigma_key_manager_host: ''
+        # [REQUIRED]: boolean.
+        # not_secure_tls: false
+        # [REQUIRED]: string.
+        # owner_key_id: ''
+        # [REQUIRED]: number.
+        # version: 1
+        enigma:
+            enabled: false
+        # gops tool https://github.com/google/gops. Useful for profiling CPU and Memory in prod.
+        # Alternative settings:
+        # 1#
+        # enabled: false
+        gopsagent:
+            enabled: true
+            host: '127.0.0.1'
+            port: 6527
+        # Expose prometheus metrics. There are two ways promapp can work
+        #  * scrape - the app starts metrics server that prometheus can scrape (preferred)
+        # * push - the app itself sends metrics to prometheus server
+        # Alternative settings:
+        # 0#
+        # [REQUIRED]: boolean.
+        # enabled: true
+        # [REQUIRED]: string.
+        # metrics_host: ''
+        # [REQUIRED]: number.
+        # metrics_port: 0
+        # [REQUIRED]: string.
+        # type: 'scrape'
+
+        # 1#
+        # [REQUIRED]: boolean.
+        # enabled: true
+        # [REQUIRED]: string.
+        # push_job: ''
+        # [REQUIRED]: number.
+        # push_period_sec: 60
+        # [REQUIRED]: string.
+        # push_url: ''
+        # [REQUIRED]: string.
+        # type: 'push'
+        prometheus:
+            enabled: false
+        # REST API
+        # Alternative settings:
+        # 1#
+        # enabled: false
+        restapi:
+            auth:
+                # Defines a list of auth tokens.
+                # Property patterns:
+                # .+:
+                # ''
+                simple: {}
+                single_account:
+                    client_id: null
+                    client_secret: null
+                    http_host: null
+                    # [REQUIRED]: array.
+                    scopes: []
+                    token_cache_time_sec: 2
+            enabled: true
+            host: '127.0.0.1'
+            # [REQUIRED]: array.
+            listen_to: ['http']
+            rest_port: 8080
+            wamp_port: 9000
+        # Sentry is a tool for tracking errors (https://sentry.io/welcome/).
+        # Alternative settings:
+        # 0#
+        # attach_stacktrace: true
+        # debug: true
+        # [REQUIRED]: string.
+        # dsn: null
+        # enabled: true
+        # environment: 'dev'
+        # [REQUIRED]: array.
+        # levels: ['panic', 'fatal', 'error', 'error']
+        sentry:
+            enabled: false
+        # [REQUIRED]
+        # Describes Pimp service settings.Gitcall uses Pimp service to run\stop functions in k8s.
+        servicespimp:
+            access_token: null
+            uri: null
+        # [REQUIRED]
+        # Service stopper is responsible for stopping idling usercode functions.
+        servicestopper:
+            check_period_ms: 60000
+            maybe_stop_after_idling_sec: 600
+            stop_after_maybe_stop_ms: 15000
+            worker_pool_size: 10
+        status_update_exchange: 'gitcall-v2-status-update'
+        # [REQUIRED]
+        # Status cleaner removes outdated status from database.
+        # If a status in database it is considered when summary status is calculated.
+        statuscleaner:
+            outdated_check_period_ms: 20000
+            outdated_query_limit: 10000
+            outdated_time_ms: 90000
+    logger:
+        format: 'text'
+        level: 'debug'
+        output: 'stderr'
+    # [REQUIRED]: object.
+    # Describes GitCall settings specific for Helm deployment
+    helm:
+        image_pull_policy: 'Always'
+        image_pull_secrets: []
+        max_replicas: 1
+        min_replicas: 1
+        resources:
+            # [REQUIRED]: object.
+            limits:
+                cpu: '500m'
+                memory: '500Mi'
+            # [REQUIRED]: object.
+            requests:
+                cpu: '500m'
+                memory: '500Mi'
+gitcall_pimp:
+    # [REQUIRED]
+    config:
+        # [REQUIRED]: object.
+        # Pimp API endpoint.
+        api:
+            # [REQUIRED]: object.
+            # Defines a list of auth tokens. Pimp clients should call Pimp API with a token.
+            # Add header Authorization: abscdToken.
+            # The property name does not take part in auth process.
+            # Used by humans to add some extra meaning to the token.
+            # Property patterns:
+            # .+:
+            # ''
+            auth: {}
+            # [REQUIRED]: object.
+            server:
+                host: '0.0.0.0'
+                port: 8080
+        # gops tool https://github.com/google/gops. Useful for profiling CPU and Memory in prod.
+        # Alternative settings:
+        # 1#
+        # enabled: false
+        gopsagent:
+            enabled: true
+            host: '127.0.0.1'
+            port: 6527
+        # [REQUIRED]
+        # k8s related settings
+        k8s:
+            apply_timeout_ms: 10000
+            # [REQUIRED]
+            # Defines how Pimp should authorize in k8s cluster
+            # Alternative settings:
+            # 0#
+            # [REQUIRED]: string.
+            # kubeconfig: ''
+            # kubecontext: ''
+            auth:
+                in_cluster: true
+            image_pull_secrets: []
+            namespace_cache_ms: 86400
+            secrets_cache_ms: 86400
+        # Expose prometheus metrics. There are two ways promapp can work
+        #  * scrape - the app starts metrics server that prometheus can scrape (preferred)
+        # * push - the app itself sends metrics to prometheus server
+        # Alternative settings:
+        # 0#
+        # [REQUIRED]: boolean.
+        # enabled: true
+        # [REQUIRED]: string.
+        # metrics_host: ''
+        # [REQUIRED]: number.
+        # metrics_port: 0
+        # [REQUIRED]: string.
+        # type: 'scrape'
+
+        # 1#
+        # [REQUIRED]: boolean.
+        # enabled: true
+        # [REQUIRED]: string.
+        # push_job: ''
+        # [REQUIRED]: number.
+        # push_period_sec: 60
+        # [REQUIRED]: string.
+        # push_url: ''
+        # [REQUIRED]: string.
+        # type: 'push'
+        promserver:
+            enabled: false
+        # Sentry is a tool for tracking errors (https://sentry.io/welcome/).
+        # Alternative settings:
+        # 0#
+        # attach_stacktrace: true
+        # debug: true
+        # [REQUIRED]: string.
+        # dsn: null
+        # enabled: true
+        # environment: 'dev'
+        # [REQUIRED]: array.
+        # levels: ['panic', 'fatal', 'error', 'error']
+        sentry:
+            enabled: false
+    logger:
+        format: 'text'
+        level: 'debug'
+        output: 'stderr'
+    # [REQUIRED]: object.
+    helm:
+        cluster_role_binding_name: ''
+        cluster_role_name: ''
+        image_pull_policy: 'Always'
+        # [REQUIRED]: array.
+        image_pull_secrets: []
+        ingress_host: ''
+        max_replicas: 1
+        min_replicas: 1
+        resources:
+            # [REQUIRED]: object.
+            limits:
+                cpu: '500m'
+                memory: '500Mi'
+            # [REQUIRED]: object.
+            requests:
+                cpu: '500m'
+                memory: '500Mi'
+        # [REQUIRED]: array.
+        secrets: []
+gitcall_migrations:
+    # [REQUIRED]: object.
+    # GitCall Migrations
+    config:
+        db: ''
+        dir: ''
+        host: ''
+        migrator_password: ''
+        migrator_username: 'gitcall_migrator'
+        port: 5432
+    # [REQUIRED]: object.
+    helm:
+        # [REQUIRED]: array.
+        image_pull_secrets: []
+gitcall_amulet:
+    # End-to-end functional test. Creates a code, builds it, deploys, send a test, validate result, remove code
+    # Alternative settings:
+    # 1#
+    # enabled: null
+    gitcall_features_tests:
+        enabled: true
+        rabbitmq_dundergitcall_vhost: ''
+        rabbitmq_gitcall_vhost: ''
+        rabbitmq_host: ''
+        rabbitmq_password: ''
+        rabbitmq_user: ''
+    # In this section you can define allowed\denied endpoints for components: gitcall, pimp, docker registry etc.
+    # The component adds 'helm test' that you can run at anytime or after deploy.
+    # Works in conjunction with gitcall_network_policy component.
+    # google.com is used to test access to Internet
+    # Alternative settings:
+    # 1#
+    # enabled: null
+    gitcall_network_policy_tests:
+        docker_engine_allow: ['gitcall-docker-registry:443', 'google.com:443']
+        docker_engine_deny: []
+        docker_registry_allow: []
+        docker_registry_deny: ['rabbitmq:5672', 'postgres:5432', 'google.com:443']
+        enabled: true
+        gitcall_allow: ['rabbitmq:5672', 'postgres:5432', 'gitcall-docker-engine:2375', 'gitcall-docker-registry:443', 'pimp-service:8080', 'github.com:443']
+        gitcall_deny: []
+        pimp_allow: ['10.96.0.1:443']
+        pimp_deny: ['rabbitmq:5672', 'postgres:5432', 'google.com:443']
+    # This section performs network policy tests. What usercode can access and what not.
+    # Alternative settings:
+    # 1#
+    # enabled: null
+    usercode_network_policy_tests:
+        enabled: true
+        rabbitmq_dundergitcall_vhost: ''
+        rabbitmq_gitcall_vhost: ''
+        rabbitmq_host: ''
+        rabbitmq_password: ''
+        rabbitmq_user: ''
+    # [REQUIRED]: object.
+    helm:
+        image_pull_policy: 'IfNotPresent'
+        image_pull_secrets: []
+gitcall_docker_server:
+    # [REQUIRED]: object.
+    config:
+        debug: false
+        experimental: false
+        insecure_registries: []
+        metrics_addr: ''
+    # [REQUIRED]: object.
+    helm:
+        # [REQUIRED]: object.
+        exporter:
+            enabled: true
+        image_pull_policy: 'Always'
+        max_replicas: 1
+        min_replicas: 1
+        resources:
+            # [REQUIRED]: object.
+            limits:
+                cpu: '500m'
+                memory: '500Mi'
+            # [REQUIRED]: object.
+            requests:
+                cpu: '500m'
+                memory: '500Mi'
+        service_headless: true
+# [REQUIRED]: object.
+# For more info visit: https://artifacthub.io/packages/helm/twuni/docker-registry
+docker-registry:
+    image:
+        pullPolicy: 'IfNotPresent'
+        repository: 'registry'
+        tag: '2.7.1'
+# [REQUIRED]: object.
+gitcall_network_policy:
+    # [REQUIRED]: object.
+    docker_registry:
+        # Alternative settings:
+        # 1#
+        # [REQUIRED]: array.
+        # nets: []
+        # [REQUIRED]: string.
+        # type: 'nets'
+        egress:
+            type: 'disabled'
+        # Alternative settings:
+        # 1#
+        # [REQUIRED]: array.
+        # nets: []
+        # [REQUIRED]: string.
+        # type: 'nets'
+        ingress:
+            namespaceSelector: 'projectcalico.org/name == ''kube-system'''
+            selector: 'app == ''nginx-ingress'''
+            type: 'selector'
+# [REQUIRED]: object.
+kube:
+    dockerconfig_secrets: []
+    # Alternative settings:
+    # 0#
+    # Property patterns:
+    # .+:
+    # null
+    # annotations: {}
+    # api_version: 'networking.k8s.io/v1beta1'
+    # [REQUIRED]: boolean.
+    # enabled: true
+    # Property patterns:
+    # .+:
+    # null
+    # labels: {}
+    # [REQUIRED]: string.
+    # name: ''
+    # [REQUIRED]: array.
+    # rules: []
+    ingress:
+        enabled: false
+    secrets: []

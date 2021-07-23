@@ -1,0 +1,37 @@
+{{- define "cz.kubernetes.ingress.v1" }}
+apiVersion: {{ .api_version | default "networking.k8s.io/v1" | quote }}
+kind: Ingress
+metadata:
+  name: {{ .name | quote }}
+  {{- if .labels }}
+  labels:
+  {{- range $key, $value := .labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+  {{- if .annotations }}
+  annotations:
+  {{- range $key, $value := .annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+spec:
+  rules:
+    {{- range $rule := .rules }}
+    - host: {{ $rule.host | quote  }}
+      {{- if $rule.http }}
+      http:
+        paths:
+        {{- range $path := $rule.http }}
+          - path: {{ $path.path | quote  }}
+            pathType: {{ $path.pathType | quote }}
+            backend:
+              service: 
+                name: {{ $path.service.name | quote }}
+                port: 
+                  name: {{ $path.service.port.name | default "" | quote }}
+                  number: {{ $path.service.port.number }}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+{{- end }}

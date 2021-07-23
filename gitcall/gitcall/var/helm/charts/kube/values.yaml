@@ -1,0 +1,10 @@
+component_name: kube
+
+helm:
+  enabled: true
+  app: "none"
+  tier: kube
+  global: false
+  chart:
+    version: "0.1.0"
+    description: The component provides schemas and charts for k8s resources (ingress).

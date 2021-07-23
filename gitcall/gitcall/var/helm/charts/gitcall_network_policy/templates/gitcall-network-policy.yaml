@@ -1,0 +1,95 @@
+apiVersion: crd.projectcalico.org/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-gitcall-network-policy
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  selector: tier == 'gitcall'
+  types:
+    - Egress
+    - Ingress
+  ingress:
+    # Prometheus
+    - action: Allow
+      protocol: TCP
+      source:
+        namespaceSelector: projectcalico.org/name == 'monitoring'
+        selector: app == 'prometheus'
+      destination:
+        ports:
+          - 9100
+  egress:
+    # DNS
+    - action: Allow
+      protocol: UDP
+      destination:
+        namespaceSelector: projectcalico.org/name == 'kube-system'
+        selector: k8s-app == 'kube-dns'
+        ports:
+          - 53
+    # AMQP
+    - action: Allow
+      protocol: TCP
+      destination:
+        nets:
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+        ports:
+          - 5672
+    # Postgres
+    - action: Allow
+      protocol: TCP
+      destination:
+        nets:
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+        ports:
+          - 5432
+    # Enigma
+    - action: Allow
+      protocol: TCP
+      destination:
+        nets:
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+        ports:
+          - 443
+    # Pimp
+    - action: Allow
+      protocol: TCP
+      destination:
+        selector: tier == 'pimp'
+        ports:
+          - 8080
+    # Docker engine
+    - action: Allow
+      protocol: TCP
+      destination:
+        selector: tier == 'docker_server'
+        ports:
+          # TLS
+          - 2376
+          # Plain
+          - 2375
+    # Docker registry ingress
+    - action: Allow
+      protocol: TCP
+      destination:
+        selector: app == 'docker-registry'
+        ports:
+          - 443
+    # Allow all external traffic to clone external repos
+    - action: Allow
+      protocol: TCP
+      destination:
+        notNets:
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16

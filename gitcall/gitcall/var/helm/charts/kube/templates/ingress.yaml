@@ -1,0 +1,5 @@
+{{- if .Values.ingress }}
+{{- if .Values.ingress.enabled }}
+{{ include "cz.kubernetes.ingress.v1" .Values.ingress | indent 0 }}
+{{- end }}
+{{- end }}

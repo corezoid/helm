@@ -1,0 +1,59 @@
+release:
+  name: 'gitcall_app'
+  helm:
+    enabled: true
+    chart:
+      version: '2.1.0'
+      description: 'The gitcall application'
+  require:
+    docker-registry: '2.0.0'
+    gitcall: '2.1.0'
+    gitcall_docker_server: '1.0.4'
+    gitcall_network_policy: '1.0.4'
+    gitcall_amulet: '1.1.0'
+    gitcall_pimp: '1.0.7'
+    kube: '2.0.0'
+    postgresql_credentials: '2.0.0'
+    rabbitmq_credentials: '2.0.0'
+    gitcall_migrations: '2.1.0'
+
+postgresql_credentials:
+  # [REQUIRED]: object.
+  gitcall:
+    host: "postgre.host"
+    password: 'pass'
+    port: 5432
+    username: 'user'
+
+rabbitmq_credentials:
+  gitcall:
+    host: 'rabbit.host'
+    username: 'gitcall'
+    password: 'pass'
+    port: 5672
+    vhost: '/gitcall'
+  dundergitcall_system:
+    host: 'rabbit.host'
+    username: 'gitcall'
+    password: 'pass'
+    port: 5672
+    vhost: '/gitcall'
+  dundergitcall_task:
+    host: 'rabbit.host'
+    username: 'gitcall'
+    password: 'pass'
+    port: 5672
+    vhost: '/dundergitcall'
+
+gitcall:
+  config:
+    dundergitcall:
+      global_policy:
+        dundergitcall_image: 'docker-hub.middleware.biz/public/gitcall/dundergitcall:1.0.2'
+        usercode_proxy_image: 'docker-hub.middleware.biz/public/gitcall/usercode-proxy:1.0.1'
+        usercode_js_runner_image: 'docker-hub.middleware.biz/public/gitcall/js-runner:0.5.1'
+        usercode_php_runner_image: 'docker-hub.middleware.biz/public/gitcall/php-runner:0.4.5'
+        usercode_php_runtime_image: 'docker-hub.middleware.biz/public/gitcall/php-runtime:7.3-2'
+        usercode_python_runner_image: 'docker-hub.middleware.biz/public/gitcall/python-runner:0.1.3'
+        usercode_python_runtime_image: 'docker-hub.middleware.biz/public/gitcall/python:3'
+        usercode_java_runner_image: "docker-hub.middleware.biz/public/gitcall/java-runner:0.1.5"

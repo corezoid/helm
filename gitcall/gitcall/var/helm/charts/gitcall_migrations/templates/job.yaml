@@ -1,0 +1,47 @@
+{{- $cfg := .Values.config }}
+{{- $rls := .Values.global.release }}
+{{- $d := .Values.helm }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-gitcall-migrations-job
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": hook-succeeded
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  activeDeadlineSeconds: 180 # 3min
+  ttlSecondsAfterFinished: 360 # 6min
+  template:
+    metadata:
+      labels:
+        release: {{ .Release.Name | quote }}
+        app: {{ .Values.helm.app | quote }}
+        tier: {{ .Values.helm.tier | quote }}
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: main
+        image: {{ print .Values.image ":" $rls.require.gitcall_migrations }}
+        env:
+          - name: MIGRATOR_USERNAME
+            value: {{ $cfg.migrator_username | quote }}
+          - name: MIGRATOR_PASSWORD
+            value: {{ $cfg.migrator_password | quote }}
+          - name: DB
+            value: {{ $cfg.db | quote }}
+          - name: HOST
+            value: {{ $cfg.host | quote }}
+          - name: PORT
+            value: {{ $cfg.port | quote }}
+          - name: DIR
+            value: {{ $cfg.dir | quote }}
+      {{- if $d.image_pull_secrets }}
+      imagePullSecrets:
+      {{- range $d.image_pull_secrets}}
+        - name: {{ . | quote }}
+      {{- end }}
+      {{- end}}

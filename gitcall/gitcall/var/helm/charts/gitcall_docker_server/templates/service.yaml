@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-gitcall-docker-server-service
+  labels:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+spec:
+  {{- if .Values.helm.service_headless | default false }}
+  clusterIP: "None"
+  {{- end }}
+  selector:
+    release: {{ .Release.Name | quote }}
+    app: {{ .Values.helm.app | quote }}
+    tier: {{ .Values.helm.tier | quote }}
+    http: "true"
+  ports:
+  - port: 2375
+    name: api
+    protocol: TCP
+    targetPort: 2375
+#  - port: 2376
+#    name: apis
+#    protocol: TCP
+#    targetPort: 2376
+  type: ClusterIP

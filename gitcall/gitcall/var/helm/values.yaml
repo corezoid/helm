@@ -1,0 +1,457 @@
+global:
+    release:
+        name: 'gitcall_app'
+        helm:
+            enabled: true
+            chart:
+                version: '2.1.0'
+                description: 'The gitcall application'
+            context: ''
+            namespace: ''
+            release: ''
+            deploy: ['gitcall_amulet', 'kube', 'gitcall', 'gitcall_network_policy', 'gitcall_migrations', 'gitcall_docker_server', 'gitcall_pimp', 'docker-registry']
+        require:
+            docker-registry: '2.0.0'
+            gitcall: '2.1.0'
+            gitcall_amulet: '1.1.0'
+            gitcall_docker_server: '1.0.4'
+            gitcall_migrations: '2.1.0'
+            gitcall_network_policy: '1.0.4'
+            gitcall_pimp: '1.0.7'
+            kube: '2.0.0'
+            postgresql_credentials: '2.0.0'
+            rabbitmq_credentials: '2.0.0'
+        repositories:
+            docker-registry:
+                source: 'git'
+                git:
+                    repo: 'git@github.com:corezoid/cz-packages.git'
+                    path: 'docker-registry'
+            gitcall:
+                source: 'git'
+                git:
+                    repo: 'git@github.com:corezoid/gitcall.git'
+                    path: 'component'
+            gitcall_amulet:
+                source: 'git'
+                git:
+                    repo: 'git@github.com:corezoid/gitcall-amulet.git'
+                    path: 'component'
+            gitcall_docker_server:
+                source: 'git'
+                git:
+                    repo: 'git@github.com:corezoid/gitcall-docker-server.git'
+            gitcall_migrations:
+                source: 'git'
+                git:
+                    repo: 'git@github.com:corezoid/gitcall-migrations.git'
+                    path: 'component'
+            gitcall_network_policy:
+                source: 'git'
+                git:
+                    repo: 'git@github.com:corezoid/gitcall-network-policy.git'
+            gitcall_pimp:
+                source: 'git'
+                git:
+                    repo: 'git@github.com:corezoid/gitcall-pimp.git'
+                    path: 'component'
+            kube:
+                source: 'git'
+                git:
+                    repo: 'git@github.com:corezoid/cz-packages.git'
+                    path: 'kube'
+            postgresql_credentials:
+                source: 'git'
+                git:
+                    repo: 'git@github.com:corezoid/cz-packages.git'
+                    path: 'postgresql_credentials'
+            rabbitmq_credentials:
+                source: 'git'
+                git:
+                    repo: 'git@github.com:corezoid/cz-packages.git'
+                    path: 'rabbitmq_credentials'
+    postgresql_credentials:
+        gitcall:
+            host: 'postgre.host'
+            password: 'pass'
+            port: 5432
+            username: 'user'
+        main:
+            host: null
+            password: ''
+            port: 5432
+            username: 'postgres'
+    rabbitmq_credentials:
+        gitcall:
+            host: 'rabbit.host'
+            username: 'gitcall'
+            password: 'pass'
+            port: 5672
+            vhost: '/gitcall'
+        dundergitcall_system:
+            host: 'rabbit.host'
+            username: 'gitcall'
+            password: 'pass'
+            port: 5672
+            vhost: '/gitcall'
+        dundergitcall_task:
+            host: 'rabbit.host'
+            username: 'gitcall'
+            password: 'pass'
+            port: 5672
+            vhost: '/dundergitcall'
+gitcall_pimp:
+    config:
+        api:
+            auth: {}
+            server:
+                host: '0.0.0.0'
+                port: 8080
+        gopsagent:
+            enabled: true
+            host: '127.0.0.1'
+            port: 6527
+        k8s:
+            apply_timeout_ms: 10000
+            auth:
+                in_cluster: true
+            image_pull_secrets: []
+            namespace_cache_ms: 86400
+            secrets_cache_ms: 86400
+        promserver:
+            enabled: false
+        sentry:
+            enabled: false
+    logger:
+        format: 'text'
+        level: 'debug'
+        output: 'stderr'
+    helm:
+        cluster_role_binding_name: ''
+        cluster_role_name: ''
+        image_pull_policy: 'Always'
+        image_pull_secrets: []
+        ingress_host: ''
+        max_replicas: 1
+        min_replicas: 1
+        resources:
+            limits:
+                cpu: '500m'
+                memory: '500Mi'
+            requests:
+                cpu: '500m'
+                memory: '500Mi'
+        secrets: []
+gitcall_amulet:
+    gitcall_features_tests:
+        enabled: true
+        rabbitmq_dundergitcall_vhost: ''
+        rabbitmq_gitcall_vhost: ''
+        rabbitmq_host: ''
+        rabbitmq_password: ''
+        rabbitmq_user: ''
+    gitcall_network_policy_tests:
+        docker_engine_allow: ['gitcall-docker-registry:443', 'google.com:443']
+        docker_engine_deny: []
+        docker_registry_allow: []
+        docker_registry_deny: ['rabbitmq:5672', 'postgres:5432', 'google.com:443']
+        enabled: true
+        gitcall_allow: ['rabbitmq:5672', 'postgres:5432', 'gitcall-docker-engine:2375', 'gitcall-docker-registry:443', 'pimp-service:8080', 'github.com:443']
+        gitcall_deny: []
+        pimp_allow: ['10.96.0.1:443']
+        pimp_deny: ['rabbitmq:5672', 'postgres:5432', 'google.com:443']
+    usercode_network_policy_tests:
+        enabled: true
+        rabbitmq_dundergitcall_vhost: ''
+        rabbitmq_gitcall_vhost: ''
+        rabbitmq_host: ''
+        rabbitmq_password: ''
+        rabbitmq_user: ''
+    helm:
+        image_pull_policy: 'IfNotPresent'
+        image_pull_secrets: []
+gitcall_docker_server:
+    config:
+        debug: false
+        experimental: false
+        insecure_registries: []
+        metrics_addr: ''
+    helm:
+        exporter:
+            enabled: true
+        image_pull_policy: 'Always'
+        max_replicas: 1
+        min_replicas: 1
+        resources:
+            limits:
+                cpu: '500m'
+                memory: '500Mi'
+            requests:
+                cpu: '500m'
+                memory: '500Mi'
+        service_headless: true
+kube:
+    dockerconfig_secrets: []
+    ingress:
+        enabled: false
+    secrets: []
+rabbitmq_credentials:
+    gitcall:
+        host: 'rabbit.host'
+        username: 'gitcall'
+        password: 'pass'
+        port: 5672
+        vhost: '/gitcall'
+    dundergitcall_system:
+        host: 'rabbit.host'
+        username: 'gitcall'
+        password: 'pass'
+        port: 5672
+        vhost: '/gitcall'
+    dundergitcall_task:
+        host: 'rabbit.host'
+        username: 'gitcall'
+        password: 'pass'
+        port: 5672
+        vhost: '/dundergitcall'
+docker-registry:
+    image:
+        pullPolicy: 'IfNotPresent'
+        repository: 'registry'
+        tag: '2.7.1'
+gitcall_migrations:
+    config:
+        db: ''
+        dir: ''
+        host: ''
+        migrator_password: ''
+        migrator_username: 'gitcall_migrator'
+        port: 5432
+    helm:
+        image_pull_secrets: []
+gitcall_network_policy:
+    docker_registry:
+        egress:
+            type: 'disabled'
+        ingress:
+            namespaceSelector: 'projectcalico.org/name == ''kube-system'''
+            selector: 'app == ''nginx-ingress'''
+            type: 'selector'
+gitcall:
+    config:
+        dundergitcall:
+            global_policy:
+                dundergitcall_image: 'docker-hub.middleware.biz/public/gitcall/dundergitcall:1.0.2'
+                usercode_proxy_image: 'docker-hub.middleware.biz/public/gitcall/usercode-proxy:1.0.1'
+                usercode_js_runner_image: 'docker-hub.middleware.biz/public/gitcall/js-runner:0.5.1'
+                usercode_php_runner_image: 'docker-hub.middleware.biz/public/gitcall/php-runner:0.4.5'
+                usercode_php_runtime_image: 'docker-hub.middleware.biz/public/gitcall/php-runtime:7.3-2'
+                usercode_python_runner_image: 'docker-hub.middleware.biz/public/gitcall/python-runner:0.1.3'
+                usercode_python_runtime_image: 'docker-hub.middleware.biz/public/gitcall/python:3'
+                usercode_java_runner_image: 'docker-hub.middleware.biz/public/gitcall/java-runner:0.1.5'
+                dundergitcall_enabled: true
+                dundergitcall_limit_cpu_milli_cores: 200
+                dundergitcall_limit_memory_mb: 100
+                dundergitcall_max_replicas: 2
+                dundergitcall_min_replicas: 1
+                dundergitcall_request_cpu_milli_cores: 100
+                dundergitcall_request_memory_mb: 50
+                usercode_body_size_limit_bytes: 128000
+                usercode_limit_cpu_milli_cores: 100
+                usercode_limit_memory_mb: 50
+                usercode_limit_per_owner: 0
+                usercode_max_replicas: 10
+                usercode_min_replicas: 1
+                usercode_request_cpu_milli_cores: 100
+                usercode_request_memory_mb: 50
+                usercode_scale_cpu_average_utilization: 80
+                usercode_scale_prometheus_server: ''
+            docker_config:
+                auths: {}
+            docker_daemon:
+                discovery: 'none'
+                hosts: ['tcp://127.0.0.1:2375']
+            gopsagent:
+                enabled: true
+                host: '127.0.0.1'
+                port: 6527
+            logger:
+                format: 'text'
+                level: 'debug'
+                output: 'stderr'
+            prometheus:
+                enabled: false
+            sentry:
+                enabled: false
+            status_update_period_sec: 30
+            status_update_queue: 'dundergitcall-status-update'
+            system_amqp:
+                host: '${DUNDERGITCALL_SYSTEM_RABBITMQ_HOST}'
+                password: '${DUNDERGITCALL_SYSTEM_RABBITMQ_PASSWORD}'
+                port: '${int:DUNDERGITCALL_SYSTEM_RABBITMQ_PORT}'
+                username: '${DUNDERGITCALL_SYSTEM_RABBITMQ_USERNAME}'
+                vhost: '${DUNDERGITCALL_SYSTEM_RABBITMQ_VHOST}'
+            task_amqp:
+                host: '${DUNDERGITCALL_TASK_RABBITMQ_HOST}'
+                password: '${DUNDERGITCALL_TASK_RABBITMQ_PASSWORD}'
+                port: '${int:DUNDERGITCALL_TASK_RABBITMQ_PORT}'
+                prefetch: 50
+                username: '${DUNDERGITCALL_TASK_RABBITMQ_USERNAME}'
+                vhost: '${DUNDERGITCALL_TASK_RABBITMQ_VHOST}'
+                workers_num: 50
+            tmp_dir: '/tmp/gitcall'
+            usercode:
+                discovery_period_ms: 60000
+                reconnect_period_ms: 5000
+                service_port: 9999
+                startup_discovery_period_ms: 100
+                startup_period_ms: 300000
+                worker_num: 50
+            usercode_registry: ''
+            usercode_registry_schema: null
+        amqp:
+            connections:
+                - host: '${GITCALL_RABBITMQ_HOST}'
+                  password: '${GITCALL_RABBITMQ_PASSWORD}'
+                  port: '${int:GITCALL_RABBITMQ_PORT}'
+                  username: '${GITCALL_RABBITMQ_USERNAME}'
+                  vhost: '${GITCALL_RABBITMQ_VHOST}'
+            buildservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-buildservice'
+            buildarchive_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-buildarchive'
+            runservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-runservice'
+            deployservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-deployservice'
+            getservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 20
+                prefetch: 20
+                queue: 'gitcall-v2-getservice'
+            removeservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-removeservice'
+            stopservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-stopservice'
+            validateservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-validateservice'
+            saveservice_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 10
+                prefetch: 10
+                queue: 'gitcall-v2-saveservice'
+            statusupdate_consumer:
+                prefetch: 20
+                queue: 'dundergitcall-status-update'
+            getpolicy_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 2
+                prefetch: 2
+                queue: 'gitcall-v2-getpolicy'
+            setpolicy_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 2
+                prefetch: 2
+                queue: 'gitcall-v2-setpolicy'
+            removepolicy_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 2
+                prefetch: 2
+                queue: 'gitcall-v2-setpolicy'
+            getsshkey_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 2
+                prefetch: 2
+                queue: 'gitcall-v2-getsshkey'
+            refreshsshkey_consumer:
+                exchange: 'gitcall-v2'
+                num_consumers: 2
+                prefetch: 2
+                queue: 'gitcall-v2-refreshsshkey'
+        db:
+            dsn: 'postgres://${GITCALL_POSTGRESQL_USERNAME}:${GITCALL_POSTGRESQL_PASSWORD}@${GITCALL_POSTGRESQL_HOST}:${GITCALL_POSTGRESQL_PORT}/gitcall?sslmode=disable&binary_parameters=yes'
+        enigma:
+            enabled: false
+        gopsagent:
+            enabled: true
+            host: '127.0.0.1'
+            port: 6527
+        prometheus:
+            enabled: false
+        restapi:
+            auth:
+                simple: {}
+                single_account:
+                    client_id: null
+                    client_secret: null
+                    http_host: null
+                    scopes: []
+                    token_cache_time_sec: 2
+            enabled: true
+            host: '127.0.0.1'
+            listen_to: ['http']
+            rest_port: 8080
+            wamp_port: 9000
+        sentry:
+            enabled: false
+        servicespimp:
+            access_token: null
+            uri: null
+        servicestopper:
+            check_period_ms: 60000
+            maybe_stop_after_idling_sec: 600
+            stop_after_maybe_stop_ms: 15000
+            worker_pool_size: 10
+        status_update_exchange: 'gitcall-v2-status-update'
+        statuscleaner:
+            outdated_check_period_ms: 20000
+            outdated_query_limit: 10000
+            outdated_time_ms: 90000
+    logger:
+        format: 'text'
+        level: 'debug'
+        output: 'stderr'
+    helm:
+        image_pull_policy: 'Always'
+        image_pull_secrets: []
+        max_replicas: 1
+        min_replicas: 1
+        resources:
+            limits:
+                cpu: '500m'
+                memory: '500Mi'
+            requests:
+                cpu: '500m'
+                memory: '500Mi'
+postgresql_credentials:
+    gitcall:
+        host: 'postgre.host'
+        password: 'pass'
+        port: 5432
+        username: 'user'
+    main:
+        host: null
+        password: ''
+        port: 5432
+        username: 'postgres'
