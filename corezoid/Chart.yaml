@@ -1,7 +1,7 @@
 apiVersion: v1
 name: corezoid
-version: "0.17"
-appVersion: "5.6.1"
+version: "0.19"
+appVersion: "5.7.0"
 description: Chart for Corezoid.
 home: https://corezoid.com/
 maintainers:

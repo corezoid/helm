@@ -11,7 +11,7 @@ data:
         {is_enabled, true},
         {subsystems, [erlprometheus]}
       ]},
-
+      {corezoid_sdk, [{scheme, "http://"}]},
       {erlprometheus, [
         {host, {0,0,0,0}},
         {port, 9100}
@@ -78,9 +78,9 @@ data:
 
       {corezoid_api_sync, [
       {nodes, []},
-      {domain, <<"https://{{ .Values.global.syncapi.subdomain }}.{{ .Values.global.domain }}">> }, %% Application url
+      {domain, <<"http://${IPNODEDOMAIN}:8090">> }, %% callback domain (podIP)
       {api_port, 8090},
-      {corezoid_host, <<"https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},
+      {corezoid_host, <<"http://capi-service:9080">>},
 
       %% CALLBACK SETUP
       {callback, [
@@ -91,13 +91,7 @@ data:
       {lager, [
         %% What handlers to install with what arguments
         {log_root, "/ebsmnt/erlang/corezoid_api_sync/log"},
-        {handlers, [
-        {lager_console_backend, info},
-        {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 1500000}, {date, "$D0"}, {count, 0}]},
-        {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 1500000}, {date, "$D0"}, {count, 0}]},
-        {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 1500000}, {date, "$D0"}, {count, 0}]}
-        ]},
-
+        {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
         {extra_sinks,
                 [
                 {error_logger_lager_event,

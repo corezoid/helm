@@ -4,6 +4,24 @@ data:
     %% -*- mode: erlang;  -*-
     [
 
+      %% for clustering components
+      {corezoid_cluster, [
+          {backend, redis}, %% maybe if future list will increase
+          {redis, [
+          {{- if eq .Values.global.redis.internal false }}
+              {host, "${REDIS_HOST}"},
+              {port, ${REDIS_PORT}},
+              {password,"${REDIS_PASSWORD}"},
+          {{- else }}
+              {host, "redis-master"},
+              {port, 6379},
+              {password,""},
+          {{- end }}
+              {database, 10}
+          ]}
+      ]},
+
+
       {corezoid_sdk, [
         {host, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"}
       ]},
@@ -104,17 +122,8 @@ data:
 
       {lager, [
           %% What handlers to install with what arguments (wrapped by middleman)
-
           {log_root, "/ebsmnt/erlang/conf_agent_server/log"},
-
-          {handlers, [
-            {lager_console_backend, debug},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
-
-          ]},
-
+          {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
           %% What colors to use with what log levels
           {colored, true},
           {colors, [
@@ -153,8 +162,6 @@ data:
           {async_threshold_window, 5}
         ]
       }
-
-
     ].
 
 kind: ConfigMap

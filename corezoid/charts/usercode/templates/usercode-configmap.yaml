@@ -217,8 +217,8 @@ data:
                 ]},
             {queues_count, 1},
             {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
-            {channels_per_connection, 2},   %% Virtual connections for one connections_per_queue
-            {messages_prefetch_size_per_channel, 10}    %% The number of queues within the channel
+            {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
+            {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
         ]},
 
         %% answer producer cce
@@ -271,7 +271,7 @@ data:
             {queues_count, 5},
             {connections_per_queue, 5},   %% The specified number of tcp connections will be created for each queue
             {channels_per_connection, 2},   %% Virtual connections for one connections_per_queue
-            {messages_prefetch_size_per_channel, 50}    %% The number of queues within the channel
+            {messages_prefetch_size_per_channel, 100}    %% The number of queues within the channel
         ]},
 
         %% sending metrics to zabbix
@@ -293,11 +293,7 @@ data:
 
       {lager, [
           %% What handlers to install with what arguments (wrapped by middleman)
-            {handlers, [
-                {lager_console_backend, info},
-                {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 1500000}, {date, "$D0"}, {count, 1}]},
-                {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 1500000}, {date, "$D0"}, {count, 1}]}
-            ]},
+          {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
             %% What colors to use with what log levels
             {colored, true},
             {colors, [

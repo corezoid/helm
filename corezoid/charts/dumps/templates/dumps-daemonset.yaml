@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Values.appName }}-dameonset
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  selector:
+    matchLabels:
+      tier: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.global.product }}
+        tier: {{ .Values.appName }}
+    spec:
+      initContainers:
+        - name: go-file-init
+          image: busybox:latest
+          command: ["sh","-c","chmod 777 /var/dumps"]
+          volumeMounts:
+            - name: dumps-volume
+              mountPath: /var/dumps
+      containers:
+        - name: go-file-sender
+          image: clubdevops/go-file-sender:0.0.4
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: RELEASE_NAME
+              value: {{ .Release.Name }}
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: DUMPS_DIR
+              value: {{ .Values.global.store_dumps.dumps_dir }}
+            - name: ENDPOINT
+              value: {{ .Values.global.store_dumps.http_endpoint}}
+            {{ if .Values.global.store_dumps.notification_url }}
+            - name: NOTIFICATION_URL
+              value: {{ .Values.global.store_dumps.notification_url }}
+            {{- end}}
+          volumeMounts:
+            - mountPath: /var/dumps
+              name: dumps-volume
+      volumes:
+        - name: dumps-volume
+          hostPath:
+            path: /var/dumps

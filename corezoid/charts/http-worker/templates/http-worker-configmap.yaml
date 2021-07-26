@@ -134,16 +134,17 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["api.ctrl", "settings"]}
+          {gc_queues_regexp, ["api.ctrl", "settings.http_worker"]}
         ]},
 
       {http_worker, [
+        {prometheus_metrics, true},
         %server name
         {worker_id, <<"">>},
 
         {blocked_domains, [
         {{- range .Values.global.http.blocked_domains  }}
-        {{. | quote}},{{- end }}
+        {{ . | quote }},{{- end }}
         "ifconfig.me"
         ]},
 
@@ -158,6 +159,10 @@ data:
 
         %% maximum response size
         {max_http_resp_size, {{ .Values.global.http.max_http_resp_size | default 5242880  }} },
+        %% in seconds
+        {max_client_response_wait_time, 60},
+        %% use for poolling keep-alive connections. If zerro it'll open new connection each query
+        %% {max_keep_alive_connections_len, 600},
 
         %% shards in whole system. This one must be eq with shards_count in worker section
         { shards_count, {{ .Values.global.db.shards_count | default 10 }} },
@@ -191,18 +196,18 @@ data:
         %% memory redis for cache task list
         {redis, [
           [ {{- if eq .Values.global.redis.internal false }}
-            {host, "${REDIS_HOST}"},
-            {port, ${REDIS_PORT} },
-            {password,"${REDIS_PASSWORD}"},
+            {host, "${REDIS_HOST_CACHE}"},
+            {port, ${REDIS_PORT_CACHE} },
+            {password,"${REDIS_PASSWORD_CACHE}"},
           {{- else }}
             {host, "redis-master"},
             {port, 6379},
             {password,""},
           {{- end }}
             {database,3},
-            {start_size, 2},
-            {min_size, 2},
-            {max_size, 50}
+            {start_size, 20},
+            {min_size, 20},
+            {max_size, 100}
           ]
         ]},
 
@@ -228,9 +233,9 @@ data:
           {password, <<"${MQ_PASSWORD}">>},
           {{- end }}
           {vhost, <<"${MQ_VHOST}">>},
-          {min_size, 5},
-          {max_size, 5},
-          {start_size, 5}
+          {min_size, 15},
+          {max_size, 15},
+          {start_size, 15}
         ]},
 
         %% consumer http
@@ -311,10 +316,16 @@ data:
           {channels_per_connection, 1},       %% Virtual connections for one connections_per_queue
           {messages_prefetch_size_per_channel, {{ .Values.global.http.tune.consumer_settings_messages_prefetch_size_per_channel | default 50 }} }      %% The number of queues within the channel
         ]},
-
+        %% if loglevel = debug - all on / else off
+    {{ $loglevel := .Values.global.log_level }}
         {logs, [
-          {info, off},
+    {{- if eq $loglevel "debug" }}
+          {info, on},
           {error, on}
+    {{- else }}
+          {info, off},
+          {error, off}
+    {{- end }}
         ]},
         %% Statistics of http logging to elastic
         {statistics, [
@@ -326,13 +337,7 @@ data:
       {lager,
         [
           {log_root, "/ebsmnt/erlang/http_worker/log"},
-          {handlers, [
-            {lager_console_backend, info},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
-{{/*    ,*/}}
-{{/*            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]},*/}}
-{{/*            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 50000000}, {date, "$D0"}, {count, 1}]}*/}}
-          ]},
+          {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
 
           %% What colors to use with what log levels
           {colored, true},

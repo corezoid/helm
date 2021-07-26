@@ -23,7 +23,7 @@ data:
         ]},
       {conv_params, [
         {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid.
-                           %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
+        %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
       ]},
 
         {mw_metrics, [
@@ -161,7 +161,7 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["worker.ctrl", "settings.worker"]}
+          {gc_queues_regexp, ["worker.ctrl", "to_worker_.*.cce.*","to_worker_.*.es_call.*","to_worker_.*.git_call.*","settings.worker"]}
         ]},
 
       {conv_params, [
@@ -367,9 +367,9 @@ data:
         { redis2, [
           [
           {{- if eq .Values.global.redis.internal false }}
-            {host, "${REDIS_HOST}"},
-            {port, ${REDIS_PORT}},
-            {password,"${REDIS_PASSWORD}"},
+            {host, "${REDIS_HOST_CACHE}"},
+            {port, ${REDIS_PORT_CACHE}},
+            {password,"${REDIS_PASSWORD_CACHE}"},
           {{- else }}
             {host, "redis-master"},
             {port, 6379},
@@ -388,9 +388,9 @@ data:
         {redis_timers, [
           [
           {{- if eq .Values.global.redis.internal false }}
-            {host, "${REDIS_HOST}"},
-            {port, ${REDIS_PORT}},
-            {password,"${REDIS_PASSWORD}"},
+            {host, "${REDIS_HOST_TIMERS}"},
+            {port, ${REDIS_PORT_TIMERS}},
+            {password,"${REDIS_PASSWORD_TIMERS}"},
           {{- else }}
             {host, "redis-master"},
             {port, 6379},
@@ -595,9 +595,9 @@ data:
           {{- end }}
                 ]},
           {queues_count, 8},
-          {min_size, 15},
-          {max_size, 15},
-          {start_size, 15}
+          {min_size, 30},
+          {max_size, 30},
+          {start_size, 30}
         ]},
 
         %% consumer for http responses, API logic
@@ -623,7 +623,7 @@ data:
                 ]},
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+          {messages_prefetch_size_per_channel, 40}    %% The number of queues within the channel
         ]},
 
         %% Logic call process
@@ -1412,17 +1412,8 @@ data:
         %% Or create conv and put id to new_billing_conv_id section
         {billing, []},
         {lager, [
-          %% What handlers to install with what arguments (wrapped by middleman)
-
           {log_root, "/ebsmnt/erlang/worker/log"},
-
-          {handlers, [
-            {lager_console_backend, debug},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 15000000}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 15000000}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "debug.log"}, {level, debug}, {size, 15000000}, {date, "$D0"}, {count, 1}]}
-
-          ]},
+          {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
 
           %% What colors to use with what log levels
           {colored, true},
@@ -1461,20 +1452,7 @@ data:
           %% to async_threshold - async_threshold_window
           {async_threshold_window, 5}
         ]
-      },
-
-      %% Client for healthcheck server
-      {hcheck_sender, [
-        {host, <<"hcs-service">>}, %% host of the remote healthcheck server
-        {port, 5011}, %% port of the remote healthcheck server
-        {node_name,  <<"worker-{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">> }, %% different for each node
-        {node_type,  <<"worker">> }, %% api | worker | multipart | http_worker | usercode | deepmemo ...
-        {disabled, true}, %% true by default
-        {send_interval_sec, 30}, %% by default 10 sec
-        {send_system_counters, true} %% memory processes etc, false by default
-      ]},
-
-      {sasl, [{sasl_error_logger, false}]}
+      }
     ].
 
 

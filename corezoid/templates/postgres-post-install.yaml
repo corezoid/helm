@@ -1,0 +1,44 @@
+{{- if  eq .Values.global.db.postgres_schema.version "5.7.0" }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres-post-install
+  annotations:
+    helm.sh/hook: "post-install,post-upgrade"
+    helm.sh/hook-weight: "-5"
+  labels:
+    tier: postgres
+spec:
+  containers:
+    - image: docker-hub.middleware.biz/public/postgres:9.6.2-alpine
+      imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+      name: postgres-taskarchive-cron
+      command:
+        - sh
+        - -c
+        - |
+          echo  "$POSTGRES_DBHOST:*:*:$POSTGRES_DBSUPERUSER:$POSTGRES_DBSUPERUSERPWD" > ~/.pgpass; chmod 0600 ~/.pgpass;
+          psql -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d conveyor -Atc "alter table IF EXISTS projects DROP column IF EXISTS owner_id;";
+          psql -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d conveyor -Atc "alter table IF EXISTS aliases drop constraint IF EXISTS temp_aliases_short_name_company_id_project_id;";
+      securityContext:
+        runAsUser: 70
+      env:
+        - name: POSTGRES_DBHOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.global.db.secret.name }}
+              key: dbhost
+        - name: POSTGRES_DBSUPERUSER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.global.db.secret.name }}-root
+              key: dbsuperuser
+        - name: POSTGRES_DBSUPERUSERPWD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.global.db.secret.name }}-root
+              key: dbsuperuserpwd
+        - name: SHARD_COUNT
+          value: '{{ .Values.global.db.shards_count }}'
+  restartPolicy: Never
+{{- end }}

@@ -3,7 +3,12 @@ data:
   nginx.conf: |
     user  nginx;
     worker_processes 1;
+    {{ $loglevel := .Values.global.log_level }}
+    {{- if eq $loglevel "debug" }}
+    error_log /dev/stdout debug;
+    {{- else }}
     error_log /dev/stdout;
+    {{- end }}
     pid        /var/run/nginx.pid;
     events {
         worker_connections  512000;

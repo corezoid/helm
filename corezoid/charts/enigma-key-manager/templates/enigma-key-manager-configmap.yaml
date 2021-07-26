@@ -12,7 +12,7 @@ data:
                 "port": 8080
             },
             "logger": {
-                "level": "debug",
+                "level": {{ .Values.global.log_level | default "info" }},
                 "transports": [ "console" ],
                 "path": "/tmp/"
             },

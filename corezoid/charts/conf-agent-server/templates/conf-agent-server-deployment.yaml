@@ -63,15 +63,39 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbpwd
+      shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.conf_agent_server.tag }}"
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- if .Values.global.store_dumps.enabled }}
+            - name: ERL_CRASH_DUMP
+              value: "/var/dumps/$(POD_NAME)-erl.dump"
+            {{- end }}
             - name: NODE_COOKIE
               value: {{ .Values.appName }}-{{ .Release.Namespace }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: host
+            - name: REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: port
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: password
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -133,6 +157,10 @@ spec:
               subPath: conf_agent_server.config
             - name: corezoid-license
               mountPath: /ebsmnt/certs
+            {{- if .Values.global.store_dumps.enabled }}
+            - name: dumps-volume
+              mountPath: /var/dumps
+            {{- end }}
           resources:
             {{ .Values.global.conf_agent_server.resources | toYaml | indent 12 | trim }}
       {{- if not  (eq .Values.global.repotype "public") }}
@@ -146,3 +174,8 @@ spec:
         - name: corezoid-license
           secret:
             secretName: license-share-new
+        {{- if .Values.global.store_dumps.enabled }}
+        - name: dumps-volume
+          hostPath:
+            path: /var/dumps
+        {{- end }}

@@ -308,16 +308,11 @@ data:
       },
 
       {corezoid_fs, [
-
         {profiles, [
-
             %% profile name for maret schemas
           [
             {name, schemas}, %% Storage for process schemas, stored in marketplace
-
-                                                               %% switch between storages
             {default_file_storage, file_f3},
-
               %% f3 file storage settings
             {file_f3,[
               {allowed_namespaces, ["avatars"]},
@@ -326,6 +321,25 @@ data:
               {ttl_file, 600}                 %% file ttl in seconds
             ]}
           ],
+
+          [
+            {name, versions}, %% Temp storage for process schemas
+            %% switch between storages
+            {default_file_storage, file_f3},
+            %% s3 settings
+            {amazon_s3, [
+            {s3_profile, versions},
+            {opts, [{acl, public_read}, {meta, [{"Cache-Control", "max-age=86400"}]}]},
+            {type, <<"role">>}, %% <<"credentials">> (by default) | <<"env">> | <<"role">>
+            {bucket, "admin.corezoid.com-version"}
+            ]},
+            %% f3 file storage settings
+            {file_f3,[
+                {path_to_dir, "/ebsmnt_share"},
+                {network_partition, true},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+                {ttl_file, 86400}                 %% file ttl in seconds
+            ]}
+            ],
 
             %% profile name for avatars
           [
@@ -336,7 +350,7 @@ data:
               %% f3 file storage settings
             {file_f3,[
               {allowed_namespaces, ["avatars"]},
-              {path_to_dir, "/tmp"}, %% todo
+              {path_to_dir, "/ebsmnt_share"}, %% todo
               {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
               {ttl_file, 60}                 %% file ttl in seconds
             ]}
@@ -350,14 +364,8 @@ data:
       {lager,
         [
           %% What handlers to install with what arguments (wrapped by middleman)
-
           {log_root, "/ebsmnt/erlang/conveyor_api_multipart/log"},
-
-          {handlers, [
-            {lager_console_backend, info},
-            {lager_file_backend, [{file, "error.log"}, {level, error}, {size, 50000000}, {date, "$D0"}, {count, 1}]},
-            {lager_file_backend, [{file, "console.log"}, {level, info}, {size, 50000000}, {date, "$D0"}, {count, 1}]}
-          ]},
+          {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
 
           %% What colors to use with what log levels
           {colored, true},
@@ -396,26 +404,6 @@ data:
           {async_threshold_window, 5}
         ]
       },
-
-      %% Client for healthcheck server
-      {hcheck_sender, [
-        {host, <<"hcs-service">>}, %% host of the remote healthcheck server
-        {port, 5011}, %% port of the remote healthcheck server
-        {node_name,  <<"mult-{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">> }, %% different for each node
-        {node_type,  <<"multipart">> }, %% api | worker | multipart | http_worker | usercode | deepmemo ...
-        {disabled, true}, %% true by default
-        {send_interval_sec, 30}, %% by default 10 sec
-        {send_system_counters, true} %% memory processes etc, false by default
-      ]},
-
-      %% SASL config
-      {sasl, [
-        {sasl_error_logger, {file, "log/sasl-error.log"}},
-        {errlog_type, error},
-        {error_logger_mf_dir, "log/sasl"},      % Log directory
-        {error_logger_mf_maxbytes, 10485760},   % 10 MB max file size
-        {error_logger_mf_maxfiles, 1}           % 5 files max
-      ]},
 
       {corezoid_sdk, [
         {host, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"}

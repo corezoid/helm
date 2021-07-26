@@ -19,6 +19,8 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/http-worker-configmap.yaml") . | sha256sum }}
+        checksum/config_vm: {{ include (print $.Template.BasePath "/http-worker-configmap-vm.yaml") . | sha256sum }}
+
         prometheus.io/path: /metrics
         prometheus.io/port: "9100"
         prometheus.io/scrape: "true"
@@ -26,6 +28,10 @@ spec:
         app: {{ .Values.global.product}}
         tier: {{ .Values.appName}}
     spec:
+      {{ if .Values.global.http.affinity }}
+      affinity:
+        {{ .Values.global.http.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
@@ -79,6 +85,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+      shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName}}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.http.tag }}"
@@ -88,11 +95,17 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+            - name: SCHEDULERS
+              value: "4"
             - name: NODE_COOKIE
               value: {{ .Values.appName }}-{{ .Release.Namespace }}
-            {{- if .Values.global.debug }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- if .Values.global.store_dumps.enabled }}
             - name: ERL_CRASH_DUMP
-              value: "/dev/stderr"
+              value: "/var/dumps/$(POD_NAME)-erl.dump"
             {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
@@ -111,6 +124,22 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.redis.secret.name }}
                   key: password
+            - name: REDIS_HOST_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: host_cache
+            - name: REDIS_PORT_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: port_cache
+            - name: REDIS_PASSWORD_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: password_cache
+
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:
@@ -170,8 +199,15 @@ spec:
             - name: {{ .Values.appName}}-config
               mountPath: /ebsmnt/conf/http_worker.config
               subPath: http_worker.config
+            - name: {{ .Values.appName }}-config-vm
+              mountPath: /ebsmnt/erlang/http_worker/releases/1/vm.args
+              subPath: vm.args
             - name: corezoid-license
               mountPath: /ebsmnt/certs
+            {{- if .Values.global.store_dumps.enabled }}
+            - name: dumps-volume
+              mountPath: /var/dumps
+            {{- end }}
           resources:
             {{ .Values.global.http.resources | toYaml | indent 12 | trim }}
       {{- if not  (eq .Values.global.repotype "public") }}
@@ -182,6 +218,14 @@ spec:
         - name: {{ .Values.appName}}-config
           configMap:
             name: {{ .Values.appName}}-config
+        - name: {{ .Values.appName }}-config-vm
+          configMap:
+            name: {{ .Values.appName }}-config-vm
         - name: corezoid-license
           secret:
             secretName: license-share-new
+        {{- if .Values.global.store_dumps.enabled }}
+        - name: dumps-volume
+          hostPath:
+            path: /var/dumps
+        {{- end }}

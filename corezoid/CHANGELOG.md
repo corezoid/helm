@@ -1,4 +1,28 @@
 ## Changelog
+
+### Chart 0.19 [ Corezoid 5.7.0 ]
+- prometheus_metrics of applications
+- global log_level 
+- manage vm.args
+
+### Chart 0.18.1 [ Corezoid 5.6.1 ]
+Improvements:
+- Fix duplicate checksum/config in deployments
+- COR-8773 (MAM-872) - Add a single parameter to HELM CHART config for managing logging levels
+
+### Chart 0.18 [ Corezoid 5.6.1 ]
+Improvements:
+- add crashdump saver with telegramm integration
+- remove http->https forward from superadmin
+- fix cronjob
+- fix usercode connections to rmq
+- add SCHEDULERS and sbwt option to vm.args
+- move vm.args to configmaps
+- Enable shareProcessNamespace as replace for tini (github.com/krallin/tini)
+- Fix mult pvc when pvc disable
+- tune http_consumer for http-worker default options
+- add checksum for vm.args
+
 ### Chart 0.17 [ Corezoid 5.6.1 ]
 Improvements:
 - Upgrade to Corezoid 5.6.1
