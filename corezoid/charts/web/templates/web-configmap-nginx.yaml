@@ -20,14 +20,8 @@ data:
         server_names_hash_bucket_size 128;
         include       /etc/nginx/mime.types;
         default_type  application/octet-stream;
-        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                          '$status $body_bytes_sent "$http_referer" '
-                          '"$http_user_agent" "$http_x_forwarded_for"';
-        log_format upstreamlog '$time_iso8601 upstream:$upstream_addr $request $status upstream_response_time $upstream_response_time msec $msec request_time $request_time $http_user_agent';
-
-
-        log_format up_log '$server_addr\t$server_port\t$http_x_forwarded_for\t$time_iso8601\tforward-to $upstream_addr\t$request\t$status\t$body_bytes_sent\t$request_time\t$upstream_response_time\t$http_referer\t$http_user_agent\t$http_cookie\t$host';
-        access_log /dev/stdout up_log;
+        log_format main '$time_iso8601 $server_addr $server_port $request $status $body_bytes_sent $request_time $http_referer $http_user_agent $host';
+        access_log /dev/stdout main;
 
         real_ip_header      X-Forwarded-For;
         set_real_ip_from    0.0.0.0/0;
@@ -36,9 +30,8 @@ data:
         tcp_nopush     on;
 
         server_tokens   off;
-       # disable buffering
-       proxy_buffering off;
-       proxy_max_temp_file_size 0;
+        proxy_buffering off;
+        proxy_max_temp_file_size 0;
         keepalive_timeout  65;
         gzip on;
         gzip_types text/css application/x-javascript text/xml application/xml application/xml+rss text/plain application/javascript text/javascript application/json image/png image/svg+xml;
