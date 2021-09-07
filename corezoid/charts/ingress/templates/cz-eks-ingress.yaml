@@ -2,10 +2,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Values.appName }}-{{ .Release.Namespace }}
-{{- if .Values.global.ingress.annotations }}
+  {{- if .Values.global.ingress.annotations }}
   annotations:
-{{ toYaml .Values.global.ingress.annotations | indent 4 }}
-{{- end }}
+  {{ toYaml .Values.global.ingress.annotations | indent 4 }}
+  {{- end }}
   labels:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
@@ -14,42 +14,42 @@ spec:
     - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
       http:
         paths:
-          - path: /api/?/upload*
+          - path: /api/2/upload
             pathType: Prefix
             backend:
               service:
                 name: mult-service-node
                 port:
                   number: 9082
-          - path: /api/?/copy*
+          - path: /api/2/copy
             pathType: Prefix
             backend:
               service:
                 name: mult-service-node
                 port:
                   number: 9082
-          - path: /user_downloads*
+          - path: /user_downloads
             pathType: Prefix
             backend:
               service:
                 name: mult-service-node
                 port:
                   number: 9082
-          - path: /api/?/download*
+          - path: /api/2/download
             pathType: Prefix
             backend:
               service:
                 name: mult-service-node
                 port:
                   number: 9082
-          - path: /api/*
+          - path: /api
             pathType: Prefix
             backend:
               service:
                 name: capi-service-node
                 port:
                   number: 9080
-          - path: /auth/*
+          - path: /auth
             pathType: Prefix
             backend:
               service:
@@ -126,6 +126,6 @@ spec:
         - {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
         {{- if .Values.global.sa.enabled }}
         - {{ .Values.global.sa_web.subdomain}}.{{ .Values.global.domain }}
-        {{- end }}
+      {{- end }}
       secretName: tls-{{ .Values.appName }}-{{ .Release.Namespace }}
   {{- end }}
