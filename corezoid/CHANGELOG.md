@@ -1,4 +1,7 @@
 ## Changelog
+### Chart 0.19.2 [ Corezoid 5.7.1 ]
+- add elasticsearch schema variable
+- 
 ### Chart 0.19.1 [ Corezoid 5.7.1 ]
 - add redis sentinel 
 - fix store dumps ingress
