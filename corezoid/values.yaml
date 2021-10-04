@@ -163,6 +163,8 @@ global:
         host: "elasticsearch-service.elasticsearch.svc.cluster.local"
         ## be careful with port - in internal install used 9200, in aws uses 443
         port: "9200"
+        schema: "http"
+
 
   #######  RabbitMQ  ########
   ## Supported version  3.8.*

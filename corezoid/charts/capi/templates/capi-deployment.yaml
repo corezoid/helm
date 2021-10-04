@@ -193,6 +193,11 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.elasticsearch.secret.name }}
                 key: port
+          - name: ELASTICSEARCH_SCHEMA
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.elasticsearch.secret.name }}
+                key: schema
           - name: POSTGRES_DBHOST
             {{- if .Values.global.db.bouncer }}
             value: "pgbouncer-service"
