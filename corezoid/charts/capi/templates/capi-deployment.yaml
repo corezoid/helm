@@ -31,12 +31,9 @@ spec:
       affinity:
         {{ .Values.global.capi.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
-
-      terminationGracePeriodSeconds: 300
-
+      terminationGracePeriodSeconds: 60
       initContainers:
         - name: init-wait
-
           image: docker-hub.middleware.biz/public/alpine
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- end }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}; do echo waiting for deps; sleep 2; done;"]
           env:
@@ -223,10 +220,6 @@ spec:
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           - containerPort: 8585
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/ebsmnt/erlang/capi/bin/capi","stop"]
           volumeMounts:
             - name: {{ .Values.appName }}config
               mountPath: /ebsmnt/conf/capi.config
@@ -250,8 +243,8 @@ spec:
               - |
                 ulimit -n 1024
                 exec /usr/bin/capi liveness
-            initialDelaySeconds: 20
-            periodSeconds: 20
+            initialDelaySeconds: 30
+            periodSeconds: 30
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
@@ -263,7 +256,7 @@ spec:
               - |
                 ulimit -n 1024
                 exec /usr/bin/capi readiness
-            initialDelaySeconds: 15
+            initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 5
             successThreshold: 1

@@ -17,6 +17,8 @@ spec:
         - sh
         - -c
         - |
+          until PGPASSWORD=${POSTGRES_DBSUPERUSERPWD} psql -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBSUPERUSER} -d conveyor -Atc "SELECT 'projects'::regclass"; do echo Waiting while postgres created projects table ...; sleep 3; done
+          until PGPASSWORD=${POSTGRES_DBSUPERUSERPWD} psql -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBSUPERUSER} -d conveyor -Atc "SELECT 'aliases'::regclass"; do echo Waiting while postgres created projects aliases ...; sleep 3; done
           echo  "$POSTGRES_DBHOST:*:*:$POSTGRES_DBSUPERUSER:$POSTGRES_DBSUPERUSERPWD" > ~/.pgpass; chmod 0600 ~/.pgpass;
           psql -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d conveyor -Atc "alter table IF EXISTS projects DROP column IF EXISTS owner_id;";
           psql -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d conveyor -Atc "alter table IF EXISTS aliases drop constraint IF EXISTS temp_aliases_short_name_company_id_project_id;";
