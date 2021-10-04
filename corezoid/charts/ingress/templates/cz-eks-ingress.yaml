@@ -2,10 +2,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Values.appName }}-{{ .Release.Namespace }}
-{{- if .Values.global.ingress.annotations }}
+  {{- if .Values.global.ingress.annotations }}
   annotations:
-{{ toYaml .Values.global.ingress.annotations | indent 4 }}
-{{- end }}
+  {{ toYaml .Values.global.ingress.annotations | indent 4 }}
+  {{- end }}
   labels:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
@@ -126,6 +126,6 @@ spec:
         - {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
         {{- if .Values.global.sa.enabled }}
         - {{ .Values.global.sa_web.subdomain}}.{{ .Values.global.domain }}
-        {{- end }}
+      {{- end }}
       secretName: tls-{{ .Values.appName }}-{{ .Release.Namespace }}
   {{- end }}

@@ -37,7 +37,7 @@ global:
   ######## Settings AWS EFS filesystem   ########
   efs:
     awsRegion: "eu-west-1"
-    efsFileSystemId: "fs-5b5cee6f"
+    efsFileSystemId: "fs-3de75409"
     ## set true if you choose storage: efs
     enabled: true
   ######## Settings NFS filesystem   ########
@@ -190,7 +190,7 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "f1fd46921a177d891385af6e29de5ea4acb06394"
+    tag: "ba1f2dbd43e6a42faec36c4ab5b9f58ee7b23339"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -296,7 +296,7 @@ global:
 
   # http-worker
   http:
-    tag: "a177d89138b063945af6e29def1fd469215ea4ac"
+    tag: "abddbe56ccfa28e4f56743de76eb652a3c698b4c"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -346,7 +346,7 @@ global:
 
   # usercode
   usercode:
-    tag: "aec75c5bff56180a99ffa92b7fa5d4afc8e66d54"
+    tag: "29e8740b9b28d954239fb76242b0a64fc058d808"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -384,7 +384,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "99b6175031a2bec7febaabe1382471a1e8c91d04"
+    tag: "f09fa8fe10d7123b2d49bb0c1159bcc26675caed"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -594,7 +594,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "1.5.1"
+    tag: "dcc58f33639b714218660f82b7e805a2a2e3530e"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -611,7 +611,7 @@ global:
 
   # global log level definition, info - default
   # available value info | warning | error | debug
-  log_level: info
+  log_level: debug
   # allows store crushdumps and send to Telegram chat
   store_dumps:
     enabled: false

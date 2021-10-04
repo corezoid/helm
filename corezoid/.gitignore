@@ -1,3 +1,5 @@
 .idea/*
 templates/corezoid-secret.yaml
 license/*
+/.idea/
+/license/
