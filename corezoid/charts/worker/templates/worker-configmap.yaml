@@ -5,6 +5,9 @@ data:
         {limits_client, [
             {redis, [
                 [
+    {{- if eq .Values.global.redis.sentinel.enable  true }}
+                    {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+    {{- else }}
                     {{- if eq .Values.global.redis.internal false }}
                     {host, "${REDIS_HOST}"},
                     {port, ${REDIS_PORT}},
@@ -14,6 +17,7 @@ data:
                     {port, 6379},
                     {password,""},
                     {{- end }}
+    {{- end }}
                     {database, 9},
                     {start_size, 1},
                     {min_size, 1},
@@ -44,10 +48,32 @@ data:
          {disabled, true}
        ]},
 
+    {{- if eq .Values.global.redis.sentinel.enable true }}
+      {redis_sentinel, [
+          {servers, [
+            [
+              {master_name, "{{ .Values.global.redis.sentinel.master_name }}"},     %% name of master redis santinel
+              {redis_password, "${REDIS_PASSWORD}"},        %% Used for connect to redis          (optional) if empty can remove
+              {sentinel_password, "${REDIS_PASSWORD}"},  %% Used for connect to redis sentinel (optional) if empty can remove
+              {sentinels, [
+                [
+                  {host, "${REDIS_HOST}"},
+                  {port, ${REDIS_PORT}}
+                ]
+              ]}
+            ]
+          ]}
+        ]},
+    {{- end }}
+
+
       %% for clustering components
       {corezoid_cluster, [
           {backend, redis}, %% maybe if future list will increase
           {redis, [
+    {{- if eq .Values.global.redis.sentinel.enable  true }}
+              {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+    {{- else }}
         {{- if eq .Values.global.redis.internal false }}
               {host, "${REDIS_HOST}"},
               {port, ${REDIS_PORT}},
@@ -57,6 +83,7 @@ data:
               {port, 6379},
               {password,""},
         {{- end }}
+    {{- end }}
               {database, 10}
           ]}
       ]},
@@ -326,6 +353,9 @@ data:
         %% please don't forget about backup of this data
         { redis, [
           [
+    {{- if eq .Values.global.redis.sentinel.enable  true }}
+                    {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+    {{- else }}
           {{- if eq .Values.global.redis.internal false }}
             {host, "${REDIS_HOST}"},
             {port, ${REDIS_PORT}},
@@ -335,6 +365,7 @@ data:
             {port, 6379},
             {password,""},
           {{- end }}
+    {{- end }}
             {database,1},
             {start_size, 5},
             {min_size, 5},
@@ -346,6 +377,9 @@ data:
         %% please don't forget about backup of this data
         { redis_api_sum, [
           [
+    {{- if eq .Values.global.redis.sentinel.enable  true }}
+                    {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+    {{- else }}
           {{- if eq .Values.global.redis.internal false }}
             {host, "${REDIS_HOST}"},
             {port, ${REDIS_PORT}},
@@ -355,7 +389,7 @@ data:
             {port, 6379},
             {password,""},
           {{- end }}
-
+    {{- end }}
             {database,2},
             {start_size, 5},
             {min_size, 5},
@@ -366,6 +400,9 @@ data:
         %% cache, nonpersistent storage, keys will expire after N hours
         { redis2, [
           [
+    {{- if eq .Values.global.redis.sentinel.enable  true }}
+                    {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+    {{- else }}
           {{- if eq .Values.global.redis.internal false }}
             {host, "${REDIS_HOST_CACHE}"},
             {port, ${REDIS_PORT_CACHE}},
@@ -375,7 +412,7 @@ data:
             {port, 6379},
             {password,""},
           {{- end }}
-
+    {{- end }}
             {database,3},
             {start_size, 5},
             {min_size, 5},
@@ -387,6 +424,9 @@ data:
         %% these servers store timers in whole system
         {redis_timers, [
           [
+    {{- if eq .Values.global.redis.sentinel.enable  true }}
+                    {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+    {{- else }}
           {{- if eq .Values.global.redis.internal false }}
             {host, "${REDIS_HOST_TIMERS}"},
             {port, ${REDIS_PORT_TIMERS}},
@@ -396,7 +436,7 @@ data:
             {port, 6379},
             {password,""},
           {{- end }}
-
+    {{- end }}
             {database,4},
             {start_size, 5},
             {min_size, 5},

@@ -21,12 +21,12 @@ spec:
     spec:
       initContainers:
         - name: increase-vm-max-map
-          image: busybox
+          image: docker-hub.middleware.biz/hub.docker.com/library/busybox
           command: ["sysctl", "-w", "vm.max_map_count=262144"]
           securityContext:
             privileged: true
         - name: increase-fd-ulimit
-          image: busybox
+          image: docker-hub.middleware.biz/hub.docker.com/library/busybox
           command: ["sh", "-c", "ulimit -n 65536"]
           securityContext:
             privileged: true

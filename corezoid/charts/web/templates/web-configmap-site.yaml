@@ -69,21 +69,20 @@ data:
             add_header Cache-Control "public";
         }
 
-        location ~^/dashboard {
+        location ~ ^(/[a-zA-Z0-9]+)?/dashboard {
             root $admin_root;
             try_files $uri /dashboard.html;
             expires 1y;
             add_header Cache-Control "public";
         }
 
-        location ~ ^/health {
+        location ~ ^(/[a-zA-Z0-9]+)?/process {
             root $admin_root;
-            try_files $uri /health.html;
+            try_files $uri /editor.html;
             expires 1y;
             add_header Cache-Control "public";
         }
 
-        # web
         location ~ ^/api/[0-9]/sock_json {
             proxy_pass http://capi-service:9080;
             proxy_http_version 1.1;
@@ -92,7 +91,6 @@ data:
             proxy_intercept_errors on;
         }
 
-        # api/json
         location ~ ^/api/[0-9]/json {
             add_header X-Content-Type-Options "nosniff";
             add_header X-Frame-Options "SAMEORIGIN";
@@ -127,7 +125,6 @@ data:
             proxy_send_timeout        300;
         }
 
-        # api plugins route
         location ~ ^/api/[0-9]/plugins {
             add_header X-Content-Type-Options "nosniff";
             proxy_pass http://capi-service:9080;
@@ -139,7 +136,6 @@ data:
             proxy_send_timeout        300;
         }
 
-        # multipart_worker
         location ~ ^/api/2/(download|upload|copy) {
             add_header X-Content-Type-Options "nosniff";
             proxy_pass http://mult-service:9082;
@@ -181,7 +177,6 @@ data:
             proxy_send_timeout        720;
         }
 
-        # multitenancy support
         location ~ ^/multitenant/(js|css) {
             root /usr/share/nginx/html/multitenant;
             expires 1M;
@@ -194,6 +189,10 @@ data:
             try_files $uri /index.html;
             expires 1M;
             add_header Cache-Control "public";
+        }
+
+        location /superadmin {
+        rewrite ^/superadmin(.*)$ https://{{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }} redirect;
         }
 
     }

@@ -31,7 +31,7 @@ spec:
       affinity:
         {{ .Values.global.worker.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
-      terminationGracePeriodSeconds: 60
+      terminationGracePeriodSeconds: 600
       initContainers:
         - name: init-wait
           image: docker-hub.middleware.biz/public/alpine
@@ -208,10 +208,6 @@ spec:
                   key: dbport
           ports:
           - containerPort: 9080
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/ebsmnt/erlang/worker/bin/worker","stop"]
           volumeMounts:
             - name: workerconfig
               mountPath: /ebsmnt/conf/worker.config
@@ -235,21 +231,8 @@ spec:
               - |
                 ulimit -n 1024
                 exec /usr/bin/worker liveness
-            initialDelaySeconds: 20
-            periodSeconds: 20
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
-          readinessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/worker readiness
-            initialDelaySeconds: 15
-            periodSeconds: 5
+            initialDelaySeconds: 30
+            periodSeconds: 30
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3

@@ -11,12 +11,10 @@ SingleAccount:  https://{{ .Values.global.sa_web.subdomain}}.{{ .Values.global.d
 Dumps url:      https://{{ .Values.global.store_dumps.subdomain}}.{{ .Values.global.domain }}
 {{- end }}
 Default login : admin@corezoid.loc
-     password : admin111
+Init password : {{ .Values.global.capi.init_admin_password  }}
 
-
-Uninstall:  helm delete  {{ .Release.Name }}
-Upgrade:    helm upgrade {{ .Release.Name }} .
-
+Uninstall:  helm uninstall -n corezoid-k8s-qa  {{ .Release.Name }}
+Upgrade:    helm upgrade --install -n corezoid-k8s-qa {{ .Release.Name }} .
 
 *****************************************************************************************************
 

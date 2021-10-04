@@ -102,11 +102,30 @@ data:
           {vhost, "${MQ_VHOST}"},
           {gc_queues_regexp, ["cce.ctrl", "settings.cce"]}
         ]},
-
+    {{- if eq .Values.global.redis.sentinel.enable true }}
+      {redis_sentinel, [
+          {servers, [
+            [
+              {master_name, "{{ .Values.global.redis.sentinel.master_name }}"},     %% name of master redis santinel
+              {redis_password, "${REDIS_PASSWORD}"},        %% Used for connect to redis          (optional) if empty can remove
+              {sentinel_password, "${REDIS_PASSWORD}"},  %% Used for connect to redis sentinel (optional) if empty can remove
+              {sentinels, [
+                [
+                  {host, "${REDIS_HOST}"},
+                  {port, ${REDIS_PORT}}
+                ]
+              ]}
+            ]
+          ]}
+        ]},
+    {{- end }}
       %% for clustering components
       {corezoid_cluster, [
           {backend, redis}, %% maybe if future list will increase
           {redis, [
+    {{- if eq .Values.global.redis.sentinel.enable  true }}
+                {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+    {{- else }}
           {{- if eq .Values.global.redis.internal false }}
               {host, "${REDIS_HOST}"},
               {port, ${REDIS_PORT}},
@@ -116,6 +135,7 @@ data:
               {port, 6379},
               {password,""},
           {{- end }}
+    {{- end }}
               {database, 10}
           ]}
       ]},
@@ -292,6 +312,7 @@ data:
       ]},
 
       {lager, [
+          {log_root, "/ebsmnt/erlang/usercode/log"},
           %% What handlers to install with what arguments (wrapped by middleman)
           {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
             %% What colors to use with what log levels

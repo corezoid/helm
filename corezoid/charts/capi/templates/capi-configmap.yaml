@@ -6,6 +6,9 @@ data:
             {limits_client, [
                 {redis, [
                     [
+            {{- if eq .Values.global.redis.sentinel.enable  true }}
+                        {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+            {{- else }}
                         {{- if eq .Values.global.redis.internal false }}
                         {host, "${REDIS_HOST}"},
                         {port, ${REDIS_PORT}},
@@ -15,6 +18,7 @@ data:
                         {port, 6379},
                         {password,""},
                         {{- end }}
+            {{- end }}
                         {database, 9},
                         {start_size, 1},
                         {min_size, 1},
@@ -31,11 +35,31 @@ data:
             {disabled, true}
         ]},
 
+    {{- if eq .Values.global.redis.sentinel.enable true }}
+    {redis_sentinel, [
+          {servers, [
+            [
+              {master_name, "{{ .Values.global.redis.sentinel.master_name }}"},     %% name of master redis santinel
+              {redis_password, "${REDIS_PASSWORD}"},        %% Used for connect to redis          (optional) if empty can remove
+              {sentinel_password, "${REDIS_PASSWORD}"},  %% Used for connect to redis sentinel (optional) if empty can remove
+              {sentinels, [
+                [
+                  {host, "${REDIS_HOST}"},
+                  {port, ${REDIS_PORT}}
+                ]
+              ]}
+            ]
+          ]}
+        ]},
+    {{- end }}
 
         %% for clustering components
         {corezoid_cluster, [
             {backend, redis}, %% maybe if future list will increase
             {redis, [
+    {{- if eq .Values.global.redis.sentinel.enable  true }}
+                {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+    {{- else }}
             {{- if eq .Values.global.redis.internal false }}
                 {host, "${REDIS_HOST}"},
                 {port, ${REDIS_PORT}},
@@ -45,6 +69,7 @@ data:
                 {port, 6379},
                 {password,""},
             {{- end }}
+    {{- end }}
                 {database, 10}
             ]}
         ]},
@@ -212,8 +237,28 @@ data:
         %% MAIN capi application
         {capi,
             [
+                {init_password, <<"{{ .Values.global.capi.init_admin_password }}">>},
                 {prometheus_metrics, true},
-                {{- if .Values.global.gitcall.enabled }}
+                {redis_users, [[
+        {{- if eq .Values.global.redis.sentinel.enable  true }}
+                 {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+        {{- else }}
+        {{- if eq .Values.global.redis.internal false }}
+                  {host, "${REDIS_HOST}"},
+                  {port, ${REDIS_PORT}},
+                  {password,"${REDIS_PASSWORD}"},
+        {{- else }}
+                  {host, "redis-master"},
+                  {port, 6379},
+                  {password,""},
+        {{- end }}
+        {{- end }}
+                  {start_size, 3},
+                  {min_size, 3},
+                  {max_size, 50},
+                  {database, 1}
+            ]]},
+    {{- if .Values.global.gitcall.enabled }}
                 {components, [<<"git_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
                 {{- end }}
                 %% It must be changed to unique name for every api node. It's personal
@@ -344,7 +389,7 @@ data:
                 %% 3. Folders
                 %% Elastic helps us to find these objects for name, It's as like in DB
             {elastic_search, [
-                {host, <<"${ELASTICSEARCH_HOST}">>},
+                {host, <<"http://${ELASTICSEARCH_HOST}">>},
                 {port, ${ELASTICSEARCH_PORT} },
                 {timeout, 50000}
             ]},
@@ -433,7 +478,11 @@ data:
 
             % redis pool for counters and api-sum-s
             {redis1, [
-                [   {{- if eq .Values.global.redis.internal false }}
+                [
+            {{- if eq .Values.global.redis.sentinel.enable  true }}
+                    {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+            {{- else }}
+                    {{- if eq .Values.global.redis.internal false }}
                     {host, "${REDIS_HOST}"},
                     {port, ${REDIS_PORT}},
                     {password,"${REDIS_PASSWORD}"},
@@ -442,6 +491,7 @@ data:
                     {port, 6379},
                     {password,""},
                     {{- end }}
+            {{- end }}
                     {database,1},
                     {start_size, 5},
                     {min_size, 5},
@@ -451,7 +501,11 @@ data:
 
             %% memory redis for cache task
             {redis2, [
-                [   {{- if eq .Values.global.redis.internal false }}
+                [
+            {{- if eq .Values.global.redis.sentinel.enable  true }}
+                    {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+            {{- else }}
+                    {{- if eq .Values.global.redis.internal false }}
                     {host, "${REDIS_HOST_CACHE}"},
                     {port, ${REDIS_PORT_CACHE}},
                     {password,"${REDIS_PASSWORD_CACHE}"},
@@ -460,6 +514,7 @@ data:
                     {port, 6379},
                     {password,""},
                     {{- end }}
+            {{- end }}
                     {database,3},
                     {start_size, 10},
                     {min_size, 10},
@@ -469,7 +524,11 @@ data:
 
             %% redis pool for api_sum logic
             {redis_api_sum, [
-                [   {{- if eq .Values.global.redis.internal false }}
+                [
+            {{- if eq .Values.global.redis.sentinel.enable  true }}
+                    {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+            {{- else }}
+                    {{- if eq .Values.global.redis.internal false }}
                     {host, "${REDIS_HOST}"},
                     {port, ${REDIS_PORT}},
                     {password,"${REDIS_PASSWORD}"},
@@ -478,6 +537,7 @@ data:
                     {port, 6379},
                     {password,""},
                     {{- end }}
+            {{- end }}
                     {database,2},
                     {start_size, 2},
                     {min_size, 2},

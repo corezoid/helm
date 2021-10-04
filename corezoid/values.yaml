@@ -1,7 +1,7 @@
 # Global values for subcharts | production
 global:
   # second level domain only! / core domain (example: corezoid.com)
-  domain: "devopsdev.corezoid.com"
+  domain: "devops.corezoid.com"
   # subdomain / sitename - dev.mpo.corezoid.com (example: dev.mpo)
   subdomain: "corezoid-k8s-public"
 
@@ -14,12 +14,14 @@ global:
   # Ingress annotations
   ingress:
     annotations:
-      kubernetes.io/ingress.class: alb
-      alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
-      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
-      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
-      alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=false"
+      kubernetes.io/ingress.class: alb-nginx-internal
+
+#      kubernetes.io/ingress.class: alb
+#      alb.ingress.kubernetes.io/scheme: internet-facing
+#      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
+#      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+#      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+#      alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=false"
 
       # access restriction
       # alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
@@ -35,7 +37,7 @@ global:
   ######## Settings AWS EFS filesystem   ########
   efs:
     awsRegion: "eu-west-1"
-    efsFileSystemId: "fs-5b5cee6f"
+    efsFileSystemId: "fs-3de75409"
     ## set true if you choose storage: efs
     enabled: true
   ######## Settings NFS filesystem   ########
@@ -116,10 +118,13 @@ global:
   redis:
     # if internal true - create and use internal k8s redis container
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
-    internal: true
+    internal: false
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
+    sentinel:
+      enable: true
+      master_name: "mymaster"
     secret:
       ## true - secret will be created automatically with provided values
       ## false - secret should be created manually
@@ -127,17 +132,17 @@ global:
       name: "redis-secret"
       # you can specify different servers for redis for counters, cache and timers  - or specify the same server in variables
       data:
-        host: "redis-master"
-        port: "6379"
-        password: ""
+        host: "redis-sentinel.redis-sentinel.svc.cluster.local"
+        port: "26379"
+        password: "redispassword"
         # default redis for cache
-        host_cache: "redis-master"
-        port_cache: "6379"
-        password_cache: ""
+        host_cache: "redis-sentinel.redis-sentinel.svc.cluster.local"
+        port_cache: "26379"
+        password_cache: "redispassword"
         # default redis for timers
-        host_timers: "redis-master"
-        port_timers: "6379"
-        password_timers: ""
+        host_timers: "redis-sentinel.redis-sentinel.svc.cluster.local"
+        port_timers: "26379"
+        password_timers: "redispassword"
 
 
 
@@ -147,7 +152,7 @@ global:
     tag: "6.7.1"
     # if internal true - create and use internal elasticsearch container
     # if internal false - enable external elasticsearch, like aws elasticsearch service
-    internal: true
+    internal: false
     ## secret configuration for elasticsearch
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -155,7 +160,7 @@ global:
       create: true
       name: "elasticsearch-secret"
       data:
-        host: "elasticsearch-elasticsearch-master"
+        host: "elasticsearch-service.elasticsearch.svc.cluster.local"
         ## be careful with port - in internal install used 9200, in aws uses 443
         port: "9200"
 
@@ -164,7 +169,7 @@ global:
   mq:
     # if internal true - create and use internal rmq container
     # if internal false - enable external rmq (on aws ec2 instances as example)
-    internal: true
+    internal: false
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values
@@ -172,11 +177,12 @@ global:
       create: true
       name: "rabbitmq-secret"
       data:
-        host: "rabbit-service"
+        host: "rabbitmq.rabbitmq.svc.cluster.local"
+#        host: "rabbit-service"
         port: "5672"
         vhost: "/conveyor"
-        username: "app-user"
-        password: "passwertws"
+        username: "rabbituser"
+        password: "vefgemknvlwkem"
         rabbitmqErlangCookie: ""
     # vm_memory_high_watermark.relative
     memoryHighWatermark: 0.3
@@ -184,7 +190,7 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "7.7.0.1"
+    tag: "7.8.0.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -192,8 +198,10 @@ global:
         cpu: 2
         memory: 2000Mi
       requests:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 500m
+        memory: 500Mi
+    ## Init password for admin@corezoid.loc
+    init_admin_password: "Q10J-H(QY95jf3zuU463N"
     ## restricting user registration only within the domains specified below if enabled
     registration_restriction:
       enable: false
@@ -288,7 +296,7 @@ global:
 
   # http-worker
   http:
-    tag: "3.6.0.1"
+    tag: "3.7.0.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -296,8 +304,8 @@ global:
         cpu: 2
         memory: 2000Mi
       requests:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 1
+        memory: 500Mi
     max_http_resp_size: "5242880"
     blocked_domains:
       - "169.254.169.254"
@@ -338,7 +346,7 @@ global:
 
   # usercode
   usercode:
-    tag: "7.2.1"
+    tag: "7.3.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -347,8 +355,8 @@ global:
         cpu: 4
         memory: 2000Mi
       requests:
-        cpu: 4
-        memory: 2000Mi
+        cpu: 1
+        memory: 1000Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
@@ -376,7 +384,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "4.7.0.1"
+    tag: "4.8.0.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -385,8 +393,8 @@ global:
         cpu: 2
         memory: 2000M
       requests:
-        cpu: 2
-        memory: 2000M
+        cpu: 1
+        memory: 500M
     # enigma private_key_id
     enigma_pk_id: ""
     affinity: {}
@@ -413,7 +421,7 @@ global:
 
   # mult
   mult:
-    tag: "2.6.0.1"
+    tag: "2.7.0.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -427,8 +435,8 @@ global:
         cpu: 2
         memory: 2000Mi
       requests:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 1
+        memory: 500Mi
     # enigma private_key_id
     enigma_pk_id: ""
 
@@ -456,7 +464,7 @@ global:
 
   # webadm
   webadm:
-    tag: "5.7.0"
+    tag: "5.7.1"
     minReplicas: 1
     resources:
       limits:
@@ -487,16 +495,10 @@ global:
   #                    - corezoid-web-adm
   #            topologyKey: failure-domain.beta.kubernetes.io/zone
 
-  # web-superadm
-  web_superadm:
-    tag: "1.5.1"
-    subdomain: "superadm-k8s-public"
-    minReplicas: 1
-
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "2.1.0"
+    tag: "2.2.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -504,8 +506,8 @@ global:
         cpu: 2
         memory: 2000Mi
       requests:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 1
+        memory: 500Mi
 
     affinity: {}
   #    # hard AZ-based affinity
@@ -586,7 +588,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "1.5.1"
+    tag: "1.6.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -597,13 +599,19 @@ global:
         cpu: 1000m
         memory: 1000Mi
 
+  # web-superadm
+  web_superadm:
+    tag: "1.6.1"
+    subdomain: "superadm-k8s-public"
+    minReplicas: 1
+
   limits:
-    tag: "1.2.2"
+    tag: "1.3.1"
     minReplicas: 2
 
   # global log level definition, info - default
   # available value info | warning | error | debug
-  log_level: info
+  log_level: debug
   # allows store crushdumps and send to Telegram chat
   store_dumps:
     enabled: false
