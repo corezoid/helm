@@ -312,6 +312,7 @@ data:
       ]},
 
       {lager, [
+          {log_root, "/ebsmnt/erlang/usercode/log"},
           %% What handlers to install with what arguments (wrapped by middleman)
           {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
             %% What colors to use with what log levels

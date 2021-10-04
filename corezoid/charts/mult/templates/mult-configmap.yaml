@@ -358,7 +358,7 @@ data:
             %% f3 file storage settings
             {file_f3,[
                 {path_to_dir, "/ebsmnt_share"},
-                {network_partition, true},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+                {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
                 {ttl_file, 86400}                 %% file ttl in seconds
             ]}
             ],

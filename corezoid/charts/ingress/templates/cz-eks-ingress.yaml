@@ -103,7 +103,7 @@ spec:
                 port:
                   number: 80
     {{- end }}
-    {{- if .Values.global.store_dumps.subdomain }}
+    {{- if .Values.global.store_dumps.enabled }}
     - host: {{ .Values.global.store_dumps.subdomain }}.{{ .Values.global.domain }}
       http:
         paths:
@@ -118,7 +118,7 @@ spec:
   {{- if .Values.global.ingress_tls }}
   tls:
     - hosts:
-        {{- if .Values.global.store_dumps.subdomain }}
+        {{- if .Values.global.store_dumps.enabled }}
         - {{ .Values.global.store_dumps.subdomain }}.{{ .Values.global.domain }}
         {{- end }}
         - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}

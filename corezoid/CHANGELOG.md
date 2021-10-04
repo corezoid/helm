@@ -1,4 +1,8 @@
 ## Changelog
+### Chart 0.19.1 [ Corezoid 5.7.1 ]
+- add redis sentinel 
+- fix store dumps ingress
+- elastic initContainers now pulled from mw repo
 
 ### Chart 0.19 [ Corezoid 5.7.0 ]
 - prometheus_metrics of applications

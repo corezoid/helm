@@ -123,8 +123,8 @@ global:
     persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
     sentinel:
-        enable: true
-        master_name: "mymaster"
+      enable: true
+      master_name: "mymaster"
     secret:
       ## true - secret will be created automatically with provided values
       ## false - secret should be created manually
@@ -190,7 +190,7 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "ba1f2dbd43e6a42faec36c4ab5b9f58ee7b23339"
+    tag: "7.8.0.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -296,7 +296,7 @@ global:
 
   # http-worker
   http:
-    tag: "abddbe56ccfa28e4f56743de76eb652a3c698b4c"
+    tag: "3.7.0.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -346,7 +346,7 @@ global:
 
   # usercode
   usercode:
-    tag: "29e8740b9b28d954239fb76242b0a64fc058d808"
+    tag: "7.3.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -384,7 +384,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "f09fa8fe10d7123b2d49bb0c1159bcc26675caed"
+    tag: "4.8.0.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -421,7 +421,7 @@ global:
 
   # mult
   mult:
-    tag: "ce37797d916ac94001cebb324d623a9bcec1eae9"
+    tag: "2.7.0.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -464,7 +464,7 @@ global:
 
   # webadm
   webadm:
-    tag: "5.7.0"
+    tag: "5.7.1"
     minReplicas: 1
     resources:
       limits:
@@ -495,16 +495,10 @@ global:
   #                    - corezoid-web-adm
   #            topologyKey: failure-domain.beta.kubernetes.io/zone
 
-  # web-superadm
-  web_superadm:
-    tag: "1.5.1"
-    subdomain: "superadm-k8s-public"
-    minReplicas: 1
-
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "2.1.0"
+    tag: "2.2.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -594,7 +588,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "dcc58f33639b714218660f82b7e805a2a2e3530e"
+    tag: "1.6.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -605,8 +599,14 @@ global:
         cpu: 1000m
         memory: 1000Mi
 
+  # web-superadm
+  web_superadm:
+    tag: "1.6.1"
+    subdomain: "superadm-k8s-public"
+    minReplicas: 1
+
   limits:
-    tag: "1.2.2"
+    tag: "1.3.1"
     minReplicas: 2
 
   # global log level definition, info - default
