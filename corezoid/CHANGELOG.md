@@ -1,7 +1,16 @@
 ## Changelog
+
+### Chart 0.19.3 [ Corezoid 5.8 ]
+- add http.max_keep_alive_connections_len - poolling keep-alive connections. If zerro it'll open new connection each query
+- add worker.write_data_to_history - write or not tasks data into table
+- add prometheus_metrics enable/disable ( default - disable )
+- add optional basic auth to elasticsearch
+- new captcha providers - recaptcha end hcaptcha 
+- trash scrapper - add capi values to configure the emptying the basket
+
 ### Chart 0.19.2 [ Corezoid 5.7.1 ]
 - add elasticsearch schema variable
-- 
+
 ### Chart 0.19.1 [ Corezoid 5.7.1 ]
 - add redis sentinel 
 - fix store dumps ingress

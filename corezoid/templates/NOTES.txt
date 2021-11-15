@@ -13,9 +13,7 @@ Dumps url:      https://{{ .Values.global.store_dumps.subdomain}}.{{ .Values.glo
 Default login : admin@corezoid.loc
 Init password : {{ .Values.global.capi.init_admin_password  }}
 
-Uninstall:  helm uninstall -n corezoid-k8s-qa  {{ .Release.Name }}
-Upgrade:    helm upgrade --install -n corezoid-k8s-qa {{ .Release.Name }} .
+Uninstall:  helm uninstall   {{ .Release.Name }}
+Upgrade:    helm upgrade --install  {{ .Release.Name }} .
 
 *****************************************************************************************************
-
-
