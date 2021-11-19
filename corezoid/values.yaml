@@ -1,7 +1,3 @@
-#INSTALL/UPGRADE
-# helm upgrade --install -n corezoid-k8s-qa corezoid .
-
-# Global values for subcharts | production
 global:
   # second level domain only! / core domain (example: corezoid.com)
   domain: "devops.corezoid.com"
@@ -11,13 +7,25 @@ global:
   # docker image registry
   imageRegistry: "docker-hub.middleware.biz"
   #IfNotPresent | Always | Never
-  imagePullPolicy: "Always"
-  repotype: "corezoid"
+  imagePullPolicy: "IfNotPresent"
+  repotype: "public"
   product: "corezoid"
   # Ingress annotations
   ingress:
     annotations:
       kubernetes.io/ingress.class: nginx
+
+#      kubernetes.io/ingress.class: alb
+#      alb.ingress.kubernetes.io/scheme: internet-facing
+#      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
+#      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+#      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+#      alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=false"
+
+      # access restriction
+      # alb.ingress.kubernetes.io/inbound-cidrs: 8.8.8.8/32, 1.1.1.1/32, 0.0.0.0/0
+      # for creating route53 record-set
+      # external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
 
   ###########################################
   ######## Settings for filesystems #########
@@ -44,11 +52,11 @@ global:
   db:
     # if internal true - create and use internal postgres container
     # if internal false - enable external db, like aws rds
-    internal: false
+    internal: true
     ## secret configuration for postgresql
 
     ## pvc name
-#    persistantVolumeClaimName: "postgresql-pvc"
+    persistantVolumeClaimName: "postgresql-pvc"
     secret:
       ## true - secret will be created automaticaly with provided values
       ## false - secret should be created manualy
@@ -58,13 +66,12 @@ global:
       ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
       dbsuperuser: "postgres"
       ## password - for dbsuperuser
-      dbsuperuserpwd: "vkrnerafaevlkmwlkvmwrkvmlwer"
+      dbsuperuserpwd: "Corezoid1234!"
       data:
-        dbhost: "postgresql.postgresql.svc.cluster.local"
-        #        dbhost: "pg-postgresql"
+        dbhost: "pg-postgresql"
         dbport: "5432"
-        dbuser: "dbuser"
-        dbpwd: "kjnlqefgsfdgslqmlfq"
+        dbuser: "internal_user"
+        dbpwd: "8hhgasdgiuf"
 
     ###### ATENTION! shards_count and shards cant be changed after first init!!!! ####
     # be careful in defining this variable
@@ -82,8 +89,8 @@ global:
         cpu: "500m"
         memory: "500Mi"
       requests:
-        cpu: "50m"
-        memory: "50Mi"
+        cpu: "500m"
+        memory: "500Mi"
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
@@ -112,7 +119,7 @@ global:
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
     internal: false
     ## pvc name if it already exist or was created manualy
-#    persistantVolumeClaimName: "redis-pvc"
+    persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
     sentinel:
       enable: true
@@ -156,7 +163,7 @@ global:
         ## be careful with port - in internal install used 9200, in aws uses 443
         port: "9200"
         schema: "http"
-        #optional
+      # Optional
       auth_enabled: false
       auth_data:
         username: ""
@@ -188,7 +195,7 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "prerelease"
+    tag: "7.9.0.2"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -208,6 +215,8 @@ global:
         - "yahoo.com"
     # Сaptcha when login in UI enable/disable
     capi_front_captcha_disabled: true
+    # after fail  login_attempts show capcha or block ( can choose in superadmin )
+    login_attempts: "2"
     #captcha_provider - recaptcha or hcaptcha, default recaptcha
     captcha_provider: "recaptcha"
     captcha_verify_url: "https://www.google.com/recaptcha/api/siteverify"
@@ -269,6 +278,7 @@ global:
       timer_default: 5 # 30
     # enigma private_key_id
     enigma_pk_id: ""
+    # clean trash config
     scraper:
       scrap_interval: "1"
       ttl: "30"
@@ -301,7 +311,7 @@ global:
 
   # http-worker
   http:
-    tag: "prerelease"
+    tag: "3.8.0.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -352,7 +362,7 @@ global:
 
   # usercode
   usercode:
-    tag: "prerelease"
+    tag: "7.3.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -390,7 +400,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "prerelease"
+    tag: "4.9.0.0"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -428,7 +438,7 @@ global:
 
   # mult
   mult:
-    tag: "prerelease"
+    tag: "2.8.0.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -471,7 +481,7 @@ global:
 
   # webadm
   webadm:
-    tag: "develop"
+    tag: "5.8.0"
     minReplicas: 1
     resources:
       limits:
@@ -505,7 +515,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "prerelease"
+    tag: "2.3.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -595,7 +605,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "prerelease"
+    tag: "1.7.1"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -608,13 +618,13 @@ global:
 
   # web-superadm
   web_superadm:
-    tag: "prerelease"
+    tag: "1.6.1"
     subdomain: "superadm-k8s-public"
     minReplicas: 1
 
   limits:
-    tag: "prerelease"
-    minReplicas: 1
+    tag: "1.3.1"
+    minReplicas: 2
 
   prometheus_metrics: false
 

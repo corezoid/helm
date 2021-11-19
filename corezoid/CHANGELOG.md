@@ -1,7 +1,7 @@
 ## Changelog
 
 ### Chart 0.19.3 [ Corezoid 5.8 ]
-- add http.max_keep_alive_connections_len - poolling keep-alive connections. If zerro it'll open new connection each query
+- add http.max_keep_alive_connections_len - polling keep-alive connections. If zero it'll open new connection each query
 - add worker.write_data_to_history - write or not tasks data into table
 - add prometheus_metrics enable/disable ( default - disable )
 - add optional basic auth to elasticsearch
