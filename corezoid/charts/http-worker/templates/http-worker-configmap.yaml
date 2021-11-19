@@ -158,10 +158,9 @@ data:
         ]},
 
       {http_worker, [
-        {prometheus_metrics, true},
-        %server name
+        {prometheus_metrics, {{ .Values.global.prometheus_metrics | default false }}  },
         {worker_id, <<"">>},
-
+        {max_keep_alive_connections_len, {{ .Values.global.http.max_keep_alive_connections_len | default "0" }} }, %% use for poolling keep-alive connections. If zerro it'll open new connection each query
         {blocked_domains, [
         {{- range .Values.global.http.blocked_domains  }}
         {{ . | quote }},{{- end }}
