@@ -105,6 +105,50 @@ data:
               ]}
           ]},
 
+    {{- if eq .Values.global.dbcall.enabled true }}
+          {mw_db_call, [
+              {enabled, true},
+              {db_call_host, "{{ .Values.global.dbcall.schema }}://{{ .Values.global.dbcall.host }}"},
+              {request_amqp, [
+    {{- if eq .Values.global.mq.internal false }}
+                {host, <<"${MQ_HOST}">>},
+                {port, ${MQ_PORT}},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>},
+    {{- else }}
+                {host, <<"rabbit-service">>},
+                {port, 5672},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>},
+    {{- end }}
+                {exchange, <<"db-call">>},
+                {is_durable_exchange, true},
+                {is_auto_delete_exchange, false},
+                {prefetch, 100},
+                {is_auto_delete_queue, false},
+                {is_durable_queue, true}
+              ]},
+              {response_amqp, [
+    {{- if eq .Values.global.mq.internal false }}
+                {host, <<"${MQ_HOST}">>},
+                {port, ${MQ_PORT}},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>}
+    {{- else }}
+                {host, <<"rabbit-service">>},
+                {port, 5672},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>}
+    {{- end }}
+              ]},
+              {response_queue, <<"mw_dunderdbcall_response_queue_">>}
+          ]},
+    {{- end }}
+
         %% needed for conf_agent
         {corezoid_sdk, [
           {host, "{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},
@@ -122,6 +166,14 @@ data:
               {username, <<"${MQ_USERNAME}">>},
               {password, <<"${MQ_PASSWORD}">>},
               {vhost, <<"${MQ_VHOST}">>}
+            ],
+            [
+                {host, "${MQ_HOST}"},
+                {port, ${MQ_PORT}},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>},
+                {pools, [dbcall]}
             ]
           {{- else }}
                   [
@@ -130,6 +182,14 @@ data:
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
+                ],
+                [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>},
+                    {pools, [dbcall]}
                 ]
           {{- end }}
             ]},
@@ -148,6 +208,14 @@ data:
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
+                ],
+                [
+                    {host, "${MQ_HOST}"},
+                    {port, ${MQ_PORT}},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>},
+                    {pools, [dbcall]}
                 ]
           {{- else }}
                   [
@@ -156,6 +224,14 @@ data:
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
+                ],
+                [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>},
+                    {pools, [dbcall]}
                 ]
           {{- end }}
             ]},
@@ -261,6 +337,10 @@ data:
             ]]},
     {{- if .Values.global.gitcall.enabled }}
                 {components, [<<"git_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
+                {{- end }}
+
+                {{- if .Values.global.dbcall.enabled }}
+                {components, [<<"db_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
                 {{- end }}
                 %% It must be changed to unique name for every api node. It's personal
                 %% queue where will come messages from others api nodes.
@@ -1004,6 +1084,9 @@ data:
             ]}
 
           ]},
+
+
+
 
 
         {lager, [

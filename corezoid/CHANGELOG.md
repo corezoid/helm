@@ -1,5 +1,8 @@
 ## Changelog
 
+### Chart 0.19.4 [ Corezoid 5.8 ]
+- dbcall integration
+
 ### Chart 0.19.3 [ Corezoid 5.8 ]
 - add http.max_keep_alive_connections_len - polling keep-alive connections. If zero it'll open new connection each query
 - add worker.write_data_to_history - write or not tasks data into table

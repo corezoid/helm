@@ -101,7 +101,7 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.8.0"
+      version: "5.8.0.1"
 
     rotation:
       ## enabled: true or false
@@ -601,6 +601,12 @@ global:
     enabled: false
     mq_vhost: "/gitcall"
     dunder_mq_vhost: "/dundergitcall"
+
+  dbcall:
+    enabled: true
+    host: "dbcall-k8s-public.devops.corezoid.com"
+    schema: "https"
+
 
 
   # conf-agent-server
