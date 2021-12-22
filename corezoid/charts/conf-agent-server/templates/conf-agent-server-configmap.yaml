@@ -28,8 +28,9 @@ data:
 
 
       {corezoid_sdk, [
-        {host, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"}
-      ]},
+          {host, "http://capi-service:9080"},
+          {scheme, "http://"}
+    ]},
 
       %% license client
         {corezoid_license_client, [

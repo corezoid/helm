@@ -149,10 +149,9 @@ data:
           ]},
     {{- end }}
 
-        %% needed for conf_agent
         {corezoid_sdk, [
-          {host, "{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},
-          {scheme, "https://"}
+          {host, "http://capi-service:9080"},
+          {scheme, "http://"}
         ]},
 
         {ermql, [
@@ -258,6 +257,50 @@ data:
           {vhost, "${MQ_VHOST}"},
           {gc_queues_regexp, ["api.ctrl","settings.capi"]}
         ]},
+
+      {{- if eq .Values.global.capi.auth_providers_enable true }}
+        {corezoid_auth_connector, [
+          {auth_providers, [
+            {google_saml_1, [
+              {type, saml},
+              {show, true},
+              {name, "Google SAML"},
+              {login_path, "/auth2/saml/google_saml_1"},
+              {icon_url, "https://upload.wikimedia.org/wikipedia/commons/archive/5/53/20210618182605%21Google_%22G%22_Logo.svg"},
+              {idp_metadata, "/ebsmnt/conf/GoogleIDPMetadata.xml"},
+              {idp_signs_envelopes, false},
+              {idp_signs_assertions, true},
+              {idp_signs_metadata, false},
+              {sp_entity_id, "google_saml_1.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}"},
+              {sp_consume_url, "https://{{ .Values.global.subdomain}}.{{ .Values.global.domain }}/auth2/saml/google_saml_1/return"},
+              {userinfo_map, [
+                {id, subject},
+                {email, subject},
+                {name, [first_name, last_name]}
+              ]}
+            ]},
+
+            {support, [
+              {type, saml},
+              {show, {{ .Values.global.capi.capi_saml_secret_support_front_button | default false }} },
+              {name, "Google SAML Support"},
+              {login_path, "/auth2/saml/support"},
+              {icon_url, "https://upload.wikimedia.org/wikipedia/commons/archive/5/53/20210618182605%21Google_%22G%22_Logo.svg"},
+              {idp_metadata, "/ebsmnt/conf/GoogleIDPMetadataSupport.xml"},
+              {idp_signs_envelopes, false},
+              {idp_signs_assertions, true},
+              {idp_signs_metadata, false},
+              {sp_entity_id, "support.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}"},
+              {sp_consume_url, "https://{{ .Values.global.subdomain}}.{{ .Values.global.domain }}/auth2/saml/support/return"},
+              {userinfo_map, [
+                {id, subject},
+                {email, subject},
+                {name, [first_name, last_name]}
+              ]}
+            ]}
+          ]}
+        ]},
+        {{- end }}
 
         {conv_params, [
             {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid.

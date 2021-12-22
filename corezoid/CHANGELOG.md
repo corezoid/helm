@@ -1,7 +1,11 @@
 ## Changelog
 
-### Chart 0.19.4 [ Corezoid 5.8 ]
+### Chart 0.19.4 [ Corezoid 5.8.1 ]
 - dbcall integration
+- init job change naming
+- add saml. For add second saml provider - add .Values.global.capi.capi_saml_secret_support: true
+- add recaptcha or hcaptcha provider of captcha
+- internal communication for corezoid_sdk
 
 ### Chart 0.19.3 [ Corezoid 5.8 ]
 - add http.max_keep_alive_connections_len - polling keep-alive connections. If zero it'll open new connection each query

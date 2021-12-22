@@ -195,7 +195,7 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "7.9.0.2"
+    tag: "7.9.1.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -213,6 +213,12 @@ global:
       allowed_domains:
         - "gmail.com"
         - "yahoo.com"
+    # Auth provider
+    auth_providers_enable: false
+    capi_saml_secret_name: "capi-saml-secret"
+    capi_saml_secret_support: true
+    # Hide login button. Manual login path /support
+    capi_saml_secret_support_front_button: false
     # Сaptcha when login in UI enable/disable
     capi_front_captcha_disabled: true
     # after fail  login_attempts show capcha or block ( can choose in superadmin )
@@ -438,7 +444,7 @@ global:
 
   # mult
   mult:
-    tag: "2.8.0.1"
+    tag: "2.8.1.0"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -481,7 +487,7 @@ global:
 
   # webadm
   webadm:
-    tag: "5.8.0"
+    tag: "5.8.1"
     minReplicas: 1
     resources:
       limits:
@@ -515,7 +521,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "2.3.1"
+    tag: "2.3.2"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -603,7 +609,7 @@ global:
     dunder_mq_vhost: "/dundergitcall"
 
   dbcall:
-    enabled: true
+    enabled: false
     host: "dbcall-k8s-public.devops.corezoid.com"
     schema: "https"
 
