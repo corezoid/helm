@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: postgres-init-database-{{ randAlphaNum 5 | lower }}
+  name: postgres-init-database-{{ .Values.global.db.postgres_schema.version }}
   labels:
     app: {{ .Values.global.product }}
     tier: postgres-job

@@ -36,14 +36,14 @@ spec:
           image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.elasticsearch.tag }}"
           env:
             - name: ES_JAVA_OPTS
-              value: "-Xmx1g -Xms1g"
+              value: "-Xmx1g -Xms1g -Dlog4j2.formatMsgNoLookups=true"
           ports:
             - name: es
               protocol: TCP
               containerPort: 9200
           resources:
             requests:
-              cpu: 300m
+              cpu: 500m
               memory: 1Gi
             limits:
               cpu: 500m

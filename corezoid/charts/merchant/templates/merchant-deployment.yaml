@@ -61,6 +61,8 @@ spec:
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.merchant.tag }}"
           env:
+          - name: ES_JAVA_OPTS
+            value: "-Dlog4j2.formatMsgNoLookups=true"
           - name: MERCHANT_LOGIN
             valueFrom:
               secretKeyRef:
