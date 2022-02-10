@@ -13,7 +13,7 @@ global:
   # Ingress annotations
   ingress:
     annotations:
-      kubernetes.io/ingress.class: nginx
+      kubernetes.io/ingress.class: "nginx"
 
 #      kubernetes.io/ingress.class: alb
 #      alb.ingress.kubernetes.io/scheme: internet-facing
@@ -101,7 +101,7 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.8.0.1"
+      version: "5.9.0"
 
     rotation:
       ## enabled: true or false
@@ -205,6 +205,8 @@ global:
       requests:
         cpu: 500m
         memory: 500Mi
+    ## Allows you to see the api keys of other users in one company
+    share_api_keys_in_company: "false"
     ## Init password for admin@corezoid.loc
     init_admin_password: "Q10J-H(QY95jf3zuU463N"
     ## restricting user registration only within the domains specified below if enabled
@@ -213,6 +215,7 @@ global:
       allowed_domains:
         - "gmail.com"
         - "yahoo.com"
+    check_2fa: true
     # Auth provider
     auth_providers_enable: false
     capi_saml_secret_name: "capi-saml-secret"

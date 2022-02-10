@@ -356,6 +356,8 @@ data:
         %% MAIN capi application
         {capi,
             [
+                {cookie, [ {secure, true} ]},
+                {check_2fa, {{ .Values.global.capi.check_2fa | default "false" }} },
                 {init_password, <<"{{ .Values.global.capi.init_admin_password }}">>},
                 {login_attempts, {{ .Values.global.capi.login_attempts | default "5" }} },
                 {share_api_keys_in_company, false},
