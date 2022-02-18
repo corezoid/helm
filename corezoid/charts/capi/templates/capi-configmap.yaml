@@ -356,8 +356,11 @@ data:
         %% MAIN capi application
         {capi,
             [
+                {cookie, [ {secure, {{ .Values.global.capi.secure | default "false" }} } ]},
+                {check_2fa, {{ .Values.global.capi.check_2fa | default "false" }} },
                 {init_password, <<"{{ .Values.global.capi.init_admin_password }}">>},
                 {login_attempts, {{ .Values.global.capi.login_attempts | default "5" }} },
+                {share_api_keys_in_company, false},
                 {prometheus_metrics, {{ .Values.global.prometheus_metrics | default false }}  },
                 {redis_users, [[
         {{- if eq .Values.global.redis.sentinel.enable  true }}

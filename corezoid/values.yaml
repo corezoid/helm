@@ -13,7 +13,7 @@ global:
   # Ingress annotations
   ingress:
     annotations:
-      kubernetes.io/ingress.class: nginx
+      kubernetes.io/ingress.class: "nginx"
 
 #      kubernetes.io/ingress.class: alb
 #      alb.ingress.kubernetes.io/scheme: internet-facing
@@ -101,7 +101,7 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.8.0.1"
+      version: "5.9.0"
 
     rotation:
       ## enabled: true or false
@@ -195,7 +195,7 @@ global:
   ########  Settings for Corezoid services  ########
   ## Settings for API Corezoid
   capi:
-    tag: "7.9.1.1"
+    tag: "7.10.0.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -205,6 +205,8 @@ global:
       requests:
         cpu: 500m
         memory: 500Mi
+    ## Allows you to see the api keys of other users in one company
+    share_api_keys_in_company: "false"
     ## Init password for admin@corezoid.loc
     init_admin_password: "Q10J-H(QY95jf3zuU463N"
     ## restricting user registration only within the domains specified below if enabled
@@ -213,6 +215,9 @@ global:
       allowed_domains:
         - "gmail.com"
         - "yahoo.com"
+    check_2fa: true
+    # Enable cookie secure for api
+    secure: true
     # Auth provider
     auth_providers_enable: false
     capi_saml_secret_name: "capi-saml-secret"
@@ -317,7 +322,7 @@ global:
 
   # http-worker
   http:
-    tag: "3.8.0.1"
+    tag: "3.9.0.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -406,7 +411,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "4.9.0.0"
+    tag: "4.10.0.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -444,7 +449,7 @@ global:
 
   # mult
   mult:
-    tag: "2.8.1.0"
+    tag: "2.9.0.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -487,7 +492,7 @@ global:
 
   # webadm
   webadm:
-    tag: "5.8.1"
+    tag: "5.9.0"
     minReplicas: 1
     resources:
       limits:
@@ -521,7 +526,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "2.3.2"
+    tag: "2.3.3"
     minReplicas: 2
     maxReplicas: 4
     resources:
