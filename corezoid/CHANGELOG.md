@@ -1,5 +1,10 @@
 ## Changelog
 
+### Chart 0.19.5 [ Corezoid 5.9.0 ]
+- cookie secure flag for api 
+- avalible enable 2fa with check_2fa env in capi block
+- debug mode for http-worker with logs debug on enable
+
 ### Chart 0.19.4 [ Corezoid 5.8.1 ]
 - dbcall integration
 - init job change naming

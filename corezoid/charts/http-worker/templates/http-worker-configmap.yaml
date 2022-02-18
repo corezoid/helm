@@ -344,11 +344,27 @@ data:
     {{ $loglevel := .Values.global.log_level }}
         {logs, [
     {{- if eq $loglevel "debug" }}
-          {info, on},
-          {error, on}
+            {info, [
+              {status, on},      % off by default
+              {headers, on},    % on by default (For disable Request and Response headers in logs)
+              {body, on}        % on by default (For disable Request and Response body in logs)
+            ]},
+            {error, [
+              {headers, on},
+              {status, on},
+              {body, on}
+            ]}
     {{- else }}
-          {info, off},
-          {error, off}
+            {info, [
+              {status, off},      % off by default
+              {headers, on},    % on by default (For disable Request and Response headers in logs)
+              {body, on}        % on by default (For disable Request and Response body in logs)
+            ]},
+            {error, [
+              {headers, off},
+              {status, on},
+              {body, off}
+            ]}
     {{- end }}
         ]},
         %% Statistics of http logging to elastic
