@@ -156,6 +156,8 @@ data:
             proxy_send_timeout        300;
         }
 
+        location /support { return 301 https://{{ .Values.global.subdomain}}.{{ .Values.global.domain }}/auth2/saml/support; }
+
         location /auth {
             add_header X-Content-Type-Options "nosniff";
             proxy_set_header   Host           $host;

@@ -158,10 +158,9 @@ data:
         ]},
 
       {http_worker, [
-        {prometheus_metrics, true},
-        %server name
+        {prometheus_metrics, {{ .Values.global.prometheus_metrics | default false }}  },
         {worker_id, <<"">>},
-
+        {max_keep_alive_connections_len, {{ .Values.global.http.max_keep_alive_connections_len | default "0" }} }, %% use for poolling keep-alive connections. If zerro it'll open new connection each query
         {blocked_domains, [
         {{- range .Values.global.http.blocked_domains  }}
         {{ . | quote }},{{- end }}
@@ -345,11 +344,27 @@ data:
     {{ $loglevel := .Values.global.log_level }}
         {logs, [
     {{- if eq $loglevel "debug" }}
-          {info, on},
-          {error, on}
+            {info, [
+              {status, on},      % off by default
+              {headers, on},    % on by default (For disable Request and Response headers in logs)
+              {body, on}        % on by default (For disable Request and Response body in logs)
+            ]},
+            {error, [
+              {headers, on},
+              {status, on},
+              {body, on}
+            ]}
     {{- else }}
-          {info, off},
-          {error, off}
+            {info, [
+              {status, off},      % off by default
+              {headers, on},    % on by default (For disable Request and Response headers in logs)
+              {body, on}        % on by default (For disable Request and Response body in logs)
+            ]},
+            {error, [
+              {headers, off},
+              {status, on},
+              {body, off}
+            ]}
     {{- end }}
         ]},
         %% Statistics of http logging to elastic

@@ -198,6 +198,16 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.elasticsearch.secret.name }}
                 key: schema
+          - name: ELASTICSEARCH_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.elasticsearch.secret.name }}
+                key: username
+          - name: ELASTICSEARCH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.elasticsearch.secret.name }}
+                key: password
           - name: POSTGRES_DBHOST
             {{- if .Values.global.db.bouncer }}
             value: "pgbouncer-service"
@@ -226,6 +236,16 @@ spec:
           - containerPort: {{ .Values.containers.containerPort }}
           - containerPort: 8585
           volumeMounts:
+            {{- if eq .Values.global.capi.auth_providers_enable true }}
+            - name: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret" }}
+              mountPath: /ebsmnt/conf/GoogleIDPMetadata.xml
+              subPath: GoogleIDPMetadata.xml
+            {{- if .Values.global.capi.capi_saml_secret_support  }}
+            - name: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret-support" }}-support
+              mountPath: /ebsmnt/conf/GoogleIDPMetadataSupport.xml
+              subPath: GoogleIDPMetadataSupport.xml
+            {{- end }}
+            {{- end }}
             - name: {{ .Values.appName }}config
               mountPath: /ebsmnt/conf/capi.config
               subPath: capi.config
@@ -285,6 +305,16 @@ spec:
         - name: corezoid-license
           secret:
             secretName: license-share-new
+        {{- if eq .Values.global.capi.auth_providers_enable true }}
+        - name: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret" }}
+          secret:
+            secretName: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret" }}
+          {{- if .Values.global.capi.capi_saml_secret_support  }}
+        - name: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret-support" }}-support
+          secret:
+            secretName: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret" }}
+          {{- end }}
+        {{- end }}
         {{- if .Values.global.store_dumps.enabled }}
         - name: dumps-volume
           hostPath:

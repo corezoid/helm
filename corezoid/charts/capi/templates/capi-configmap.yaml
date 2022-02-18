@@ -105,10 +105,53 @@ data:
               ]}
           ]},
 
-        %% needed for conf_agent
+    {{- if eq .Values.global.dbcall.enabled true }}
+          {mw_db_call, [
+              {enabled, true},
+              {db_call_host, "{{ .Values.global.dbcall.schema }}://{{ .Values.global.dbcall.host }}"},
+              {request_amqp, [
+    {{- if eq .Values.global.mq.internal false }}
+                {host, <<"${MQ_HOST}">>},
+                {port, ${MQ_PORT}},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>},
+    {{- else }}
+                {host, <<"rabbit-service">>},
+                {port, 5672},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>},
+    {{- end }}
+                {exchange, <<"db-call">>},
+                {is_durable_exchange, true},
+                {is_auto_delete_exchange, false},
+                {prefetch, 100},
+                {is_auto_delete_queue, false},
+                {is_durable_queue, true}
+              ]},
+              {response_amqp, [
+    {{- if eq .Values.global.mq.internal false }}
+                {host, <<"${MQ_HOST}">>},
+                {port, ${MQ_PORT}},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>}
+    {{- else }}
+                {host, <<"rabbit-service">>},
+                {port, 5672},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>}
+    {{- end }}
+              ]},
+              {response_queue, <<"mw_dunderdbcall_response_queue_">>}
+          ]},
+    {{- end }}
+
         {corezoid_sdk, [
-          {host, "{{ .Values.global.subdomain }}.{{ .Values.global.domain }}"},
-          {scheme, "https://"}
+          {host, "http://capi-service:9080"},
+          {scheme, "http://"}
         ]},
 
         {ermql, [
@@ -122,6 +165,14 @@ data:
               {username, <<"${MQ_USERNAME}">>},
               {password, <<"${MQ_PASSWORD}">>},
               {vhost, <<"${MQ_VHOST}">>}
+            ],
+            [
+                {host, "${MQ_HOST}"},
+                {port, ${MQ_PORT}},
+                {username, <<"${MQ_USERNAME}">>},
+                {password, <<"${MQ_PASSWORD}">>},
+                {vhost, <<"${MQ_VHOST}">>},
+                {pools, [dbcall]}
             ]
           {{- else }}
                   [
@@ -130,6 +181,14 @@ data:
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
+                ],
+                [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>},
+                    {pools, [dbcall]}
                 ]
           {{- end }}
             ]},
@@ -148,6 +207,14 @@ data:
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
+                ],
+                [
+                    {host, "${MQ_HOST}"},
+                    {port, ${MQ_PORT}},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>},
+                    {pools, [dbcall]}
                 ]
           {{- else }}
                   [
@@ -156,6 +223,14 @@ data:
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
+                ],
+                [
+                    {host, "rabbit-service"},
+                    {port, 5672},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>},
+                    {pools, [dbcall]}
                 ]
           {{- end }}
             ]},
@@ -182,6 +257,50 @@ data:
           {vhost, "${MQ_VHOST}"},
           {gc_queues_regexp, ["api.ctrl","settings.capi"]}
         ]},
+
+      {{- if eq .Values.global.capi.auth_providers_enable true }}
+        {corezoid_auth_connector, [
+          {auth_providers, [
+            {google_saml_1, [
+              {type, saml},
+              {show, true},
+              {name, "Google SAML"},
+              {login_path, "/auth2/saml/google_saml_1"},
+              {icon_url, "https://upload.wikimedia.org/wikipedia/commons/archive/5/53/20210618182605%21Google_%22G%22_Logo.svg"},
+              {idp_metadata, "/ebsmnt/conf/GoogleIDPMetadata.xml"},
+              {idp_signs_envelopes, false},
+              {idp_signs_assertions, true},
+              {idp_signs_metadata, false},
+              {sp_entity_id, "google_saml_1.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}"},
+              {sp_consume_url, "https://{{ .Values.global.subdomain}}.{{ .Values.global.domain }}/auth2/saml/google_saml_1/return"},
+              {userinfo_map, [
+                {id, subject},
+                {email, subject},
+                {name, [first_name, last_name]}
+              ]}
+            ]},
+
+            {support, [
+              {type, saml},
+              {show, {{ .Values.global.capi.capi_saml_secret_support_front_button | default false }} },
+              {name, "Google SAML Support"},
+              {login_path, "/auth2/saml/support"},
+              {icon_url, "https://upload.wikimedia.org/wikipedia/commons/archive/5/53/20210618182605%21Google_%22G%22_Logo.svg"},
+              {idp_metadata, "/ebsmnt/conf/GoogleIDPMetadataSupport.xml"},
+              {idp_signs_envelopes, false},
+              {idp_signs_assertions, true},
+              {idp_signs_metadata, false},
+              {sp_entity_id, "support.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}"},
+              {sp_consume_url, "https://{{ .Values.global.subdomain}}.{{ .Values.global.domain }}/auth2/saml/support/return"},
+              {userinfo_map, [
+                {id, subject},
+                {email, subject},
+                {name, [first_name, last_name]}
+              ]}
+            ]}
+          ]}
+        ]},
+        {{- end }}
 
         {conv_params, [
             {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid.
@@ -237,8 +356,12 @@ data:
         %% MAIN capi application
         {capi,
             [
+                {cookie, [ {secure, {{ .Values.global.capi.secure | default "false" }} } ]},
+                {check_2fa, {{ .Values.global.capi.check_2fa | default "false" }} },
                 {init_password, <<"{{ .Values.global.capi.init_admin_password }}">>},
-                {prometheus_metrics, true},
+                {login_attempts, {{ .Values.global.capi.login_attempts | default "5" }} },
+                {share_api_keys_in_company, false},
+                {prometheus_metrics, {{ .Values.global.prometheus_metrics | default false }}  },
                 {redis_users, [[
         {{- if eq .Values.global.redis.sentinel.enable  true }}
                  {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
@@ -260,6 +383,10 @@ data:
             ]]},
     {{- if .Values.global.gitcall.enabled }}
                 {components, [<<"git_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
+                {{- end }}
+
+                {{- if .Values.global.dbcall.enabled }}
+                {components, [<<"db_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
                 {{- end }}
                 %% It must be changed to unique name for every api node. It's personal
                 %% queue where will come messages from others api nodes.
@@ -288,6 +415,13 @@ data:
 
                 %% merchant api module that provides synchronization of the company through the middleware systems (Deepmemo, Corezoid and others)
                 {companies_manager, mapi }, %% mapi
+
+                %% Clearing old processes from the trash in days
+                %% {ttl, 0} - keep forever
+                {scraper, [
+                  {scrap_interval, {{ .Values.global.capi.scraper.scrap_interval | default "1" }} }, % Cleanup script run interval
+                  {ttl, {{ .Values.global.capi.scraper.ttl | default "30" }} }  % Retention time of a remote process in days ( if 0 - save infinity )
+                ]},
 
                 %% max req/sec of create|modify|delete for conv|folder|dashboard
                 %% It will be logged as ->
@@ -356,8 +490,8 @@ data:
                         {builder, <<"/builder.html">>}
                     ]}
                 ]},
-                %{captcha_key, <<"">>},
                 {captcha, [
+                    {provider, {{ .Values.global.capi.captcha_provider }} },
                     {key, <<"${capi_front_captcha_key}">>}, %% key for works with captcha (page /login if corezoid registration)
                     {disabled, {{ .Values.global.capi.capi_front_captcha_disabled }} }
                 ]},
@@ -391,6 +525,10 @@ data:
             {elastic_search, [
                 {host, <<"${ELASTICSEARCH_SCHEMA}://${ELASTICSEARCH_HOST}">>},
                 {port, ${ELASTICSEARCH_PORT} },
+                {{- if eq .Values.global.elasticsearch.secret.auth_enabled true}}
+                {username, <<"${ELASTICSEARCH_USERNAME}">>}, % optional
+                {password, <<"${ELASTICSEARCH_PASSWORD}">>},  % optional
+                {{- end }}
                 {timeout, 50000}
             ]},
 
@@ -893,8 +1031,9 @@ data:
             %% Setting captcha backend
             {backend_settings, [
                 {captcha, [
+                    {provider, {{ .Values.global.capi.captcha_provider }} },
                     {key, <<"${capi_backend_captcha_key}">>},
-                    {verify_url, "https://www.google.com/recaptcha/api/siteverify"},
+                    {verify_url, "{{ .Values.global.capi.captcha_verify_url | default "https://www.google.com/recaptcha/api/siteverify" }}" },
                     {disabled, {{ .Values.global.capi.capi_front_captcha_disabled }} }
                 ]}
             ]},
@@ -991,6 +1130,9 @@ data:
             ]}
 
           ]},
+
+
+
 
 
         {lager, [

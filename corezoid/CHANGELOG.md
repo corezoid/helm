@@ -1,7 +1,28 @@
 ## Changelog
+
+### Chart 0.19.5 [ Corezoid 5.9.0 ]
+- cookie secure flag for api 
+- avalible enable 2fa with check_2fa env in capi block
+- debug mode for http-worker with logs debug on enable
+
+### Chart 0.19.4 [ Corezoid 5.8.1 ]
+- dbcall integration
+- init job change naming
+- add saml. For add second saml provider - add .Values.global.capi.capi_saml_secret_support: true
+- add recaptcha or hcaptcha provider of captcha
+- internal communication for corezoid_sdk
+
+### Chart 0.19.3 [ Corezoid 5.8 ]
+- add http.max_keep_alive_connections_len - polling keep-alive connections. If zero it'll open new connection each query
+- add worker.write_data_to_history - write or not tasks data into table
+- add prometheus_metrics enable/disable ( default - disable )
+- add optional basic auth to elasticsearch
+- new captcha providers - recaptcha end hcaptcha 
+- trash scrapper - add capi values to configure the emptying the basket
+
 ### Chart 0.19.2 [ Corezoid 5.7.1 ]
 - add elasticsearch schema variable
-- 
+
 ### Chart 0.19.1 [ Corezoid 5.7.1 ]
 - add redis sentinel 
 - fix store dumps ingress
