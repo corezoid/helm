@@ -237,13 +237,10 @@ spec:
           - containerPort: 8585
           volumeMounts:
             {{- if eq .Values.global.capi.auth_providers_enable true }}
-            - name: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret" }}
-              mountPath: /ebsmnt/conf/GoogleIDPMetadata.xml
-              subPath: GoogleIDPMetadata.xml
-            {{- if .Values.global.capi.capi_saml_secret_support  }}
-            - name: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret-support" }}-support
-              mountPath: /ebsmnt/conf/GoogleIDPMetadataSupport.xml
-              subPath: GoogleIDPMetadataSupport.xml
+            {{- range $k, $v := $.Values.global.capi.saml_idp }}
+            - name: {{ $.Values.global.capi.capi_saml_secret_name }}
+              mountPath: /ebsmnt/conf/{{ $k }}_metadata.xml
+              subPath: {{ $k }}_metadata.xml
             {{- end }}
             {{- end }}
             - name: {{ .Values.appName }}config

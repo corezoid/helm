@@ -221,9 +221,37 @@ global:
     # Auth provider
     auth_providers_enable: false
     capi_saml_secret_name: "capi-saml-secret"
-    capi_saml_secret_support: true
-    # Hide login button. Manual login path /support
-    capi_saml_secret_support_front_button: false
+
+    # SAML SSO configuration for multiple IdP
+    saml_idp:
+#      # Sample SAML configuration for login page button SSO
+#      sso:
+#        name: "Google SAML"
+#        front_button_show: true
+#        login_path: "/auth2/saml/sso"
+#        icon_url: "https://upload.wikimedia.org/wikipedia/commons/archive/5/53/20210618182605%21Google_%22G%22_Logo.svg"
+#        idp_signs_envelopes: false
+#        idp_signs_assertions: true
+#        idp_signs_metadata: false
+#        sp_consume_url: "/auth2/saml/sso/return"
+#        # IdP SAML Metadata file content for SSO authentication
+#        auth_metadata_content: ""
+      # Sample SAML Support configuration for /support endpoint
+      support:
+        name: "Google SAML2"
+        login_path: "/auth2/saml/support"
+        icon_url: "https://upload.wikimedia.org/wikipedia/commons/archive/5/53/20210618182605%21Google_%22G%22_Logo.svg"
+        idp_signs_envelopes: false
+        idp_signs_assertions: true
+        idp_signs_metadata: false
+        sp_consume_url: "/auth2/saml/support/return"
+        # IdP SAML Metadata file content for SSO authentication
+        auth_metadata_content:
+          <?xml version="1.0" encoding="UTF-8"?>
+          <EntityDescriptor
+          .................
+          </EntityDescriptor>
+
     # Сaptcha when login in UI enable/disable
     capi_front_captcha_disabled: true
     # after fail  login_attempts show capcha or block ( can choose in superadmin )
