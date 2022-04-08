@@ -44,6 +44,19 @@ global:
     ## set true if you choose storage: nfs
     enabled: false
 
+  networkPolicy:
+    enabled: false
+    labelsSelector:
+      ingress:
+        namespaceSelector:
+          name: alb-ingress-nginx-internal
+        podSelector:
+          app.kubernetes.io/name: ingress-nginx
+      monitoring:
+        namespaceSelector:
+          name: monitoring
+        podSelector:
+          release: prometheus-stack
   ########  Settings for stateful services  ########
 
   #######  PostgreSQL  ########

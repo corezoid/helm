@@ -1,0 +1,36 @@
+{{- if .Values.global.networkPolicy.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: corezoid-mult-policy
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: mult
+  policyTypes:
+    - Ingress
+  ingress:
+
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: capi
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.global.networkPolicy.labelsSelector.ingress.namespaceSelector | toYaml}}
+        - podSelector:
+            matchLabels:
+              {{ .Values.global.networkPolicy.labelsSelector.ingress.podSelector | toYaml }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.global.networkPolicy.labelsSelector.monitoring.namespaceSelector | toYaml }}
+        - podSelector:
+            matchLabels:
+              {{ .Values.global.networkPolicy.labelsSelector.ingress.podSelector | toYaml }}
+{{- end}}
