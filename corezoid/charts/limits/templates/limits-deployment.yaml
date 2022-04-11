@@ -26,7 +26,7 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: docker-hub.middleware.biz/public/alpine
+          image: docker-hub.middleware.biz/public/alpine:3.15
           command: ["sh", "-c", "apk add postgresql-client; until PGPASSWORD=${POSTGRES_DBPWD} psql -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBUSER} -d settings -c \"select 1\" > /dev/null 2>&1 ;  {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672  {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}  {{- end }}; do echo waiting for dependences; sleep 3; done;"]
           env:
             - name: MQ_HOST
@@ -64,7 +64,7 @@ spec:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbpwd
         - name: init-wait-rmq
-          image: docker-hub.middleware.biz/public/alpine
+          image: docker-hub.middleware.biz/public/alpine:3.15
           command: ['sh']
           args:
             - "-c"

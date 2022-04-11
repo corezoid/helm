@@ -302,6 +302,7 @@ data:
         %% It's important to be unique
         { worker_id, <<"">> },
         {prometheus_metrics, {{ .Values.global.prometheus_metrics | default false }}  },
+        {use_limits_from_server, {{ .Values.global.use_limits_from_server | default false }}},
         {{- if .Values.global.enigma.encryption }}
         %% for ENCRYPT/DECRYPT data
         {encrypt_decrypt, [

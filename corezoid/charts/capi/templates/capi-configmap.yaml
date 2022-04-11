@@ -362,6 +362,7 @@ data:
                 {login_attempts, {{ .Values.global.capi.login_attempts | default "5" }} },
                 {share_api_keys_in_company, false},
                 {prometheus_metrics, {{ .Values.global.prometheus_metrics | default false }}  },
+                {use_limits_from_server, {{ .Values.global.use_limits_from_server | default false }}},
                 {redis_users, [[
         {{- if eq .Values.global.redis.sentinel.enable  true }}
                  {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name

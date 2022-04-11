@@ -34,7 +34,7 @@ spec:
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-wait-rmq
-          image: docker-hub.middleware.biz/public/alpine
+          image: docker-hub.middleware.biz/public/alpine:3.15
           command: ['sh']
           args:
             - "-c"
