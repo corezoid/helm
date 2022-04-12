@@ -30,7 +30,7 @@ spec:
       {{- end }}
       initContainers:
         - name: init-wait
-          image: docker-hub.middleware.biz/public/alpine
+          image: docker-hub.middleware.biz/public/alpine:3.15
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} nc -zvw1 postgresql 5432 {{- if not .Values.global.db.internal }} && nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }} ; do echo waiting for dependences; sleep 2; done;"]
           env:
             - name: POSTGRES_DBHOST

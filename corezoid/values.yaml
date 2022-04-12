@@ -44,6 +44,26 @@ global:
     ## set true if you choose storage: nfs
     enabled: false
 
+
+  ##############################################
+  ######## NetworkPolicy########################
+  networkPolicy:
+    enabled: false
+    labelsSelector:
+      ingress:
+        namespaceSelector:
+          # Selector for ingress namespace
+          name: alb-ingress-nginx-internal
+        podSelector:
+          # Selector for ingress deploymnets
+          app.kubernetes.io/name: ingress-nginx
+      monitoring:
+        # Selector for prometheus namespace
+        namespaceSelector:
+          name: monitoring
+        # Selector for prometheus deploymnets
+        podSelector:
+          release: prometheus-stack
   ########  Settings for stateful services  ########
 
   #######  PostgreSQL  ########
@@ -101,7 +121,7 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.9.0"
+      version: "5.9.2"
 
     rotation:
       ## enabled: true or false
@@ -193,6 +213,7 @@ global:
     memoryHighWatermark: 0.3
 
   ########  Settings for Corezoid services  ########
+  use_limits_from_server: false
   ## Settings for API Corezoid
   capi:
     tag: "7.10.0.1"
@@ -561,7 +582,7 @@ global:
 
   # merchant
   merchant:
-    tag: "v0.0.27.2"
+    tag: "v0.0.27.3"
     secret:
       ## true - secret will be created automaticaly with provided values
       ## false - secret should be created manualy
@@ -635,7 +656,7 @@ global:
 
   # web-superadm
   web_superadm:
-    tag: "1.6.1"
+    tag: "1.7.1"
     subdomain: "superadm-k8s-public"
     minReplicas: 1
 

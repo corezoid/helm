@@ -35,7 +35,7 @@ spec:
         fsGroup: 1000
       initContainers:
         - name: init-wait
-          image: docker-hub.middleware.biz/public/alpine
+          image: docker-hub.middleware.biz/public/alpine:3.15
           command: ["sh", "-c", "until  {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT} {{- end }}; do echo waiting for deps; sleep 2; done;"]
           env:
             - name: MQ_HOST
@@ -49,7 +49,7 @@ spec:
                   name: {{ .Values.global.mq.secret.name }}
                   key: port
         - name: init-wait-rmq
-          image: docker-hub.middleware.biz/public/alpine
+          image: docker-hub.middleware.biz/public/alpine:3.15
           command: ['sh']
           args:
             - "-c"
