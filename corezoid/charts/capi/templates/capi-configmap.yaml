@@ -261,43 +261,29 @@ data:
       {{- if eq .Values.global.capi.auth_providers_enable true }}
         {corezoid_auth_connector, [
           {auth_providers, [
-            {google_saml_1, [
+            {{- $local := dict "first" true -}}
+            {{- range $k, $v := $.Values.global.capi.saml_idp }}
+            {{- if not $local.first -}},{{ end }}
+            {{- $_ := set $local "first" false }}
+            { {{ $k }}, [
               {type, saml},
-              {show, true},
-              {name, "Google SAML"},
-              {login_path, "/auth2/saml/google_saml_1"},
-              {icon_url, "https://upload.wikimedia.org/wikipedia/commons/archive/5/53/20210618182605%21Google_%22G%22_Logo.svg"},
-              {idp_metadata, "/ebsmnt/conf/GoogleIDPMetadata.xml"},
-              {idp_signs_envelopes, false},
-              {idp_signs_assertions, true},
-              {idp_signs_metadata, false},
-              {sp_entity_id, "google_saml_1.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}"},
-              {sp_consume_url, "https://{{ .Values.global.subdomain}}.{{ .Values.global.domain }}/auth2/saml/google_saml_1/return"},
-              {userinfo_map, [
-                {id, subject},
-                {email, subject},
-                {name, [first_name, last_name]}
-              ]}
-            ]},
-
-            {support, [
-              {type, saml},
-              {show, {{ .Values.global.capi.capi_saml_secret_support_front_button | default false }} },
-              {name, "Google SAML Support"},
-              {login_path, "/auth2/saml/support"},
-              {icon_url, "https://upload.wikimedia.org/wikipedia/commons/archive/5/53/20210618182605%21Google_%22G%22_Logo.svg"},
-              {idp_metadata, "/ebsmnt/conf/GoogleIDPMetadataSupport.xml"},
-              {idp_signs_envelopes, false},
-              {idp_signs_assertions, true},
-              {idp_signs_metadata, false},
-              {sp_entity_id, "support.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}"},
-              {sp_consume_url, "https://{{ .Values.global.subdomain}}.{{ .Values.global.domain }}/auth2/saml/support/return"},
+              {show, {{ $v.front_button_show | default false }}},
+              {name, "{{ $v.name }}"},
+              {login_path, "{{ $v.login_path }}"},
+              {icon_url, "{{ $v.icon_url }}"},
+              {idp_metadata, "/ebsmnt/conf/{{ $k }}_metadata.xml"},
+              {idp_signs_envelopes, {{ $v.idp_signs_envelopes }}},
+              {idp_signs_assertions, {{ $v.idp_signs_assertions }}},
+              {idp_signs_metadata, {{ $v.idp_signs_metadata }}},
+              {sp_entity_id, "{{ $k }}.{{ $.Values.global.subdomain}}.{{ $.Values.global.domain }}"},
+              {sp_consume_url, "https://{{ $.Values.global.subdomain}}.{{ $.Values.global.domain }}{{ $v.sp_consume_url }}"},
               {userinfo_map, [
                 {id, subject},
                 {email, subject},
                 {name, [first_name, last_name]}
               ]}
             ]}
+            {{- end }}
           ]}
         ]},
         {{- end }}
