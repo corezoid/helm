@@ -216,7 +216,7 @@ global:
   use_limits_from_server: false
   ## Settings for API Corezoid
   capi:
-    tag: "7.10.0.1"
+    tag: "7.10.0.3"
     minReplicas: 2
     maxReplicas: 4
     resources:
