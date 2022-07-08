@@ -243,6 +243,10 @@ global:
     auth_providers_enable: false
     capi_saml_secret_name: "capi-saml-secret"
 
+    # User requests per second limits
+    user_limits_interface: "120"
+    user_limits_max_user_rate: "100"
+
     # SAML SSO configuration for multiple IdP
     saml_idp:
 #      # Sample SAML configuration for login page button SSO
@@ -578,6 +582,8 @@ global:
     tag: "2.3.3"
     minReplicas: 2
     maxReplicas: 4
+    # Max timeout to receive callbacks (milliseconds)
+    callback_max_timeout: "60000"
     resources:
       limits:
         cpu: 2

@@ -1054,6 +1054,12 @@ data:
             %%    %% DD move to table
             {super_admin_id, 1},
 
+            % api limit counters
+              {user_limits, [
+                {interface, {{ .Values.global.capi.user_limits_interface }}},
+                {max_user_rate, {{ .Values.global.capi.user_limits_max_user_rate }}}
+            ]},
+
             {logic_settings, [
                 {api, [
                     {max_threads, {{ .Values.global.capi.logic_settings.api_max_thread | default 200 }}}
