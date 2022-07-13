@@ -1,11 +1,13 @@
 apiVersion: v1
 name: corezoid
-version: "0.20.0"
-appVersion: "5.9.0"
+version: "0.20.1"
+appVersion: "5.9.4"
 description: Chart for Corezoid.
 home: https://corezoid.com/
 maintainers:
   - name: George Kozlitin
     email: george.kozlitin@corezoid.com
+  - name: Oleksandr Zaichenko
+    email: a.zaichenko@itoutposts.com
 engine: gotpl
 icon: https://corezoid.com/static/ce1da2c78726bb5ce1cf53b002dac519/62341/CorezoidProduct.png
