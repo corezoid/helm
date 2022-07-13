@@ -28,9 +28,12 @@ spec:
       terminationGracePeriodSeconds: 100
       serviceAccountName: {{ if .Values.rbac.create }}{{ template "nfs-provisioner.fullname" . }}{{ else }}{{ .Values.rbac.serviceAccountName | quote }}{{ end }}
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: nfs-server
+          image: "{{ .Values.nfs.image.repository }}:{{ .Values.nfs.image.tag}}"
+          imagePullPolicy: {{ .Values.nfs.image.pullPolicy }}
+          env:
+          - name: NFS_EXPORT_0
+            value: "{{ .Values.nfs.path }} *(rw,no_subtree_check,no_root_squash)"
           ports:
             - name: nfs
               containerPort: 2049
@@ -45,26 +48,33 @@ spec:
               containerPort: 111
               protocol: UDP
           securityContext:
-            capabilities:
-              add:
-                - DAC_READ_SEARCH
-                - SYS_RESOURCE
-          args:
-            - "-provisioner={{ template "nfs-provisioner.provisionerName" . }}"
+            privileged: true
+          volumeMounts:
+            - name: {{ .Values.nfs.volumeName }}
+              mountPath: {{ .Values.nfs.path }}
+            - name: lib-modules
+              mountPath: /lib/modules
+              readOnly: true
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: POD_IP
+            - name: PROVISIONER_NAME
+              value: {{ template "nfs-provisioner.provisionerName" . }}
+            - name: NFS_SERVER
+              # value:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name: SERVICE_NAME
-              value: {{ template "nfs-provisioner.fullname" . }}
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
+            - name: NFS_PATH
+              value: {{ .Values.nfs.path }}
+            {{- if eq .Values.leaderElection.enabled false }}
+            - name: ENABLE_LEADER_ELECTION
+              value: "false"
+            {{- end }}
           volumeMounts:
-            - name: data
-              mountPath: /export
+            - name: {{ .Values.nfs.volumeName }}
+              mountPath: /persistentvolumes
           resources:
         {{- with .Values.resources }}
           resources:
@@ -83,16 +93,20 @@ spec:
 {{ toYaml . | indent 8 }}
     {{- end }}
 
-{{- if not .Values.persistence.enabled }}
       volumes:
-        - name: data
+        - name: lib-modules
+          hostPath: # using hostpath to get modules from the host
+            path: /lib/modules
+            type: Directory
+{{- if not .Values.persistence.enabled }}    
+        - name: {{ .Values.nfs.volumeName }}
           emptyDir: {}
 {{- end }}
 
 {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:
-        name: data
+        name: {{ .Values.nfs.volumeName }}
       spec:
         accessModes: [ {{ .Values.persistence.accessMode | quote }} ]
       {{- if .Values.persistence.storageClass }}
