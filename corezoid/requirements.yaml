@@ -16,7 +16,7 @@ dependencies:
     condition: global.db.internal
 
   - name: nfs-provisioner
-    version: "4.0.16"
+    version: "0.3.0"
     condition: global.nfs.enabled
 
   - name: efs-provisioner

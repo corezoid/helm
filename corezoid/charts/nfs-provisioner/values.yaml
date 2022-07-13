@@ -1,19 +1,15 @@
+# Default values for nfs-provisioner.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
 replicaCount: 1
-strategyType: Recreate
+
+# imagePullSecrets:
 
 image:
-  repository: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner
-  tag: v4.0.2
+  repository: quay.io/kubernetes_incubator/nfs-provisioner
+  tag: v2.2.1-k8s1.12
   pullPolicy: IfNotPresent
-imagePullSecrets: []
-
-nfs:
-  path: /export
-  volumeName: data
-  image:
-    repository: erichough/nfs-server
-    tag: 2.2.1
-    pullPolicy: IfNotPresent
 
 service:
   type: ClusterIP
@@ -59,13 +55,15 @@ storageClass:
 
   # set to null to prevent expansion
   allowVolumeExpansion: true
+  ## StorageClass parameters
+  parameters: {}
+
+  mountOptions:
+    - vers=4.1
+    - noatime
 
   ## ReclaimPolicy field of the class, which can be either Delete or Retain
   reclaimPolicy: Delete
-
-leaderElection:
-  # When set to false leader election will be disabled
-  enabled: true
 
 ## For RBAC support:
 rbac:
