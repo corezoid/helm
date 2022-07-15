@@ -40,6 +40,9 @@ spec:
       labels:
         app: {{ template "efs-provisioner.name" . }}
         release: "{{ .Release.Name }}"
+      {{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels | indent 8 }}
+      {{- end }}
     spec:
       serviceAccount: {{ template "efs-provisioner.serviceAccountName" . }}
       {{- if .Values.priorityClassName }}
@@ -54,7 +57,7 @@ spec:
       containers:
       - name: {{ template "efs-provisioner.fullname" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         - name: FILE_SYSTEM_ID
           value: {{ .Values.global.efs.efsFileSystemId }}
@@ -65,6 +68,13 @@ spec:
         {{- if .Values.efsProvisioner.dnsName }}
         - name: DNS_NAME
           value: {{ .Values.efsProvisioner.dnsName }}
+        {{- end }}
+        {{- if .Values.extraEnv }}
+        {{ toYaml .Values.extraEnv | nindent 8 }}
+        {{- end }}
+        {{- if .Values.envFrom }}
+        envFrom:
+        {{ toYaml .Values.envFrom | nindent 8 }}
         {{- end }}
         resources:
           {{- toYaml .Values.resources | nindent 12 }}
@@ -78,6 +88,8 @@ spec:
         image: {{ .Values.busyboxImage.repository}}:{{ .Values.busyboxImage.tag}}
         imagePullPolicy: {{ .Values.busyboxImage.pullPolicy }}
         command: [ "sh", "-c", "mkdir -p /efs-vol-root/{{ (trimPrefix "/" .Values.efsProvisioner.path) }}" ]
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
         volumeMounts:
         - name: pv-volume
           mountPath: /efs-vol-root
