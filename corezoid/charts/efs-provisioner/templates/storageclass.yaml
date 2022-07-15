@@ -5,6 +5,7 @@ metadata:
   name: {{ .Values.global.storageClassName }}
   labels:
     app: {{ template "efs-provisioner.name" . }}
+    env: {{ .Values.global.deployEnv }}
     chart: {{ template "efs-provisioner.chartname" . }}
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"

@@ -6,7 +6,7 @@
 ## Deploy environment label, e.g. dev, test, prod
 ##
 global:
-  deployEnv: develop
+  deployEnv: dev
 
 ## Containers
 ##
@@ -14,7 +14,7 @@ replicaCount: 1
 revisionHistoryLimit: 10
 image:
   repository: quay.io/external_storage/efs-provisioner
-  tag: v2.2.0-k8s1.12
+  tag: v2.4.0
   pullPolicy: IfNotPresent
   # If specified, use these secrets to access the images
   # pullSecrets:
@@ -24,6 +24,11 @@ busyboxImage:
   repository: gcr.io/google_containers/busybox
   tag: 1.27
   pullPolicy: IfNotPresent
+
+## Extra env variables and envFrom
+extraEnv: []
+
+envFrom: []
 
 ## Deployment annotations
 ##
@@ -48,6 +53,17 @@ efsProvisioner:
       gidMax: 50000
     reclaimPolicy: Delete
     mountOptions: []
+    # Defaults based on k8s version (see apiVersionPolicy below), or can set explicitly.
+    apiVersion: null
+    apiVersionPolicy:
+      newestAvailable: false
+      # This is an ordered list of api versions that might serve
+      # StorageClass, ordered from oldest to newest. If
+      # newestAvailable is true, use the last one in the list that
+      # does serve StorageClass, otherwise, use the first that does.
+      candidateApiVersions:
+        - storage.k8s.io/v1beta1
+        - storage.k8s.io/v1
 
 ## Enable RBAC
 ##
@@ -63,11 +79,18 @@ serviceAccount:
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
+  annotations: {}
+   # eks.amazonaws.com/role-arn: arn:aws:iam::AWS_ACCOUNT_ID:role/IAM_ROLE_NAME
 
 ## Annotations to be added to deployment
 ##
 podAnnotations: {}
   # iam.amazonaws.com/role: efs-provisioner-role
+
+## Labels to be added to deployment
+##
+podLabels: {}
+  # environment: production
 
 ## Node labels for pod assignment
 ##
@@ -94,3 +117,9 @@ resources: {}
   #  memory: 128Mi
 
 priorityClassName: ""
+
+# Configure podsecuritypolicy
+# Ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
+podSecurityPolicy:
+  enabled: true
+  annotations: {}
