@@ -31,11 +31,11 @@ Don’t forget to enable service (mobileapp) on User access menu - enable status
 - See [ENIGMA.md](ENIGMA.md)
 
 #### Dependencies:
-#####Testing on Kubernetes version 1.19 and helm v3
+#####Testing on Kubernetes version 1.22 and helm v3
 #####Supported stateful versions:
 - Postgresql 13.3
 - Redis 3.2
-- Elasticsearch 6.7
-- RabbitMQ 3.8
+- Elasticsearch 7.17.5
+- RabbitMQ 3.9
 ---
 
