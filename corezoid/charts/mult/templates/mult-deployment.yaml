@@ -182,6 +182,7 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
+            runAsGroup: 1000
             capabilities:
               add: ["IPC_LOCK"]
       {{- if not  (eq .Values.global.repotype "public") }}

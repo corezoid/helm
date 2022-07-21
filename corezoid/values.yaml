@@ -29,7 +29,8 @@ global:
 
   ###########################################
   ######## Settings for filesystems #########
-  # Define global storage class: efs / nfs / manual
+  # Define global storage class: efs / nfs / manual (manual storage should support accessModes: - ReadWriteMany)
+
   storage: efs
   # Define global storageClass name
   storageClassName: "corezoid-storage-class-default"
