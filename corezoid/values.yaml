@@ -167,7 +167,7 @@ global:
 
 
   #######  Elasticsearch  ########
-  ## Supported version 6.7.*
+  ## Supported version 7.17.*
   elasticsearch:
     tag: "7.17.5"
     # if internal true - create and use internal elasticsearch container
@@ -192,7 +192,7 @@ global:
 
 
   #######  RabbitMQ  ########
-  ## Supported version  3.8.*
+  ## Supported version  3.9.*
   mq:
     # if internal true - create and use internal rmq container
     # if internal false - enable external rmq (on aws ec2 instances as example)
