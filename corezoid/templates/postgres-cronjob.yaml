@@ -21,7 +21,7 @@ spec:
       template:
         spec:
           containers:
-            - image: docker-hub.middleware.biz/public/postgres:9.6.2-alpine
+            - image: docker-hub.middleware.biz/public/postgres:13-alpine
               imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
               name: postgres-taskarchive-cron
               command:
