@@ -1055,9 +1055,9 @@ data:
             {super_admin_id, 1},
 
             % api limit counters
-              {user_limits, [
-                {interface, {{ .Values.global.capi.user_limits_interface }}},
-                {max_user_rate, {{ .Values.global.capi.user_limits_max_user_rate }}}
+            {user_limits, [
+                {interface, {{ .Values.global.capi.user_limits_interface | default 120 }}},
+                {max_user_rate, {{ .Values.global.capi.user_limits_max_user_rate | default 100 }}}
             ]},
 
             {logic_settings, [

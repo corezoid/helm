@@ -68,7 +68,7 @@ global:
   ########  Settings for stateful services  ########
 
   #######  PostgreSQL  ########
-  ## Supported version  from 9.6.* <
+  ## Supported version PostgreSQL-13.*
   ## for RDS minimum instance - db.t2.medium / master user set "postgres"
   db:
     # if internal true - create and use internal postgres container
