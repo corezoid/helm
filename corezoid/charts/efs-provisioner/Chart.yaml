@@ -6,6 +6,7 @@ appVersion: v2.4.0
 home: https://github.com/kubernetes-incubator/external-storage/tree/master/aws/efs
 sources:
  - https://github.com/kubernetes-incubator/external-storage/tree/master/aws/efs
+ - https://github.com/isotoma/charts/tree/main/charts/efs-provisioner
  - https://github.com/mirror/busybox
 maintainers:
  - name: plumdog
