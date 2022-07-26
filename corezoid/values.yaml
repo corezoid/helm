@@ -10,6 +10,8 @@ global:
   imagePullPolicy: "IfNotPresent"
   repotype: "public"
   product: "corezoid"
+  centos8Repo: public-corezoid-centos8
+  useCentos8: false
   # Ingress annotations
   ingress:
     annotations:
