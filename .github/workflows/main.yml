@@ -1,14 +1,33 @@
-name: Build & Push ecs-exporter chart
-on: push
+name: Build & Push chart
+on: 
+  push:
+    paths:
+     - 'corezoid'
+    tags:
+     - '*'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    container: alpine/helm
     steps:
     - uses: actions/checkout@master
-    - run: tar -zcvf corezoid-helm.tgz corezoid
-    - run: helm plugin install https://github.com/chartmuseum/helm-push
-    - run: helm repo add --username=mw-devops-3 --password=peq!qrt8jrk5dzm-JDE test-helm-github-action https://docker-hub.middleware.biz/chartrepo/test-helm-github-action
-    - run: helm cm-push corezoid-helm.tgz test-helm-github-action
+    - uses: goodsmileduck/helm-push-action@v2
+      env:
+#        SOURCE_DIR: '.'
+        CHART_FOLDER: 'corezoid'
+        FORCE: 'True'
+        CHARTMUSEUM_URL: 'https://docker-hub.middleware.biz/chartrepo/test-helm-github-action'
+        CHARTMUSEUM_USER: '${{ secrets.HARBOR_USER }}'
+        CHARTMUSEUM_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
+
+#jobs:
+#  deploy:
+#    runs-on: ubuntu-latest
+#    container: alpine/helm
+#    steps:
+#    - uses: actions/checkout@master
+#    - run: tar -zcvf corezoid.tgz corezoid
+#    - run: helm plugin install https://github.com/chartmuseum/helm-push
+#    - run: helm repo add --username=${{ secrets.HARBOR_USERNAME }} --password=${{ secrets.HARBOR_PASSWORD }} corezoid https://docker-hub.middleware.biz/chartrepo/test-helm-github-action
+#    - run: helm cm-push corezoid.tgz corezoid
 
