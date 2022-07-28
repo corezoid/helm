@@ -13,6 +13,6 @@ jobs:
    - uses: actions/checkout@master
    - run: tar -zcvf corezoid.tgz corezoid
    - run: helm plugin install https://github.com/chartmuseum/helm-push
-   - run: helm repo add --username=${{ secrets.HARBOR_USERNAME }} --password=${{ secrets.HARBOR_PASSWORD }} corezoid ${{ secrets.HARBOR_REPO_URL }}
+   - run: helm repo add --username=${{ secrets.HARBOR_USERNAME }} --password=${{ secrets.HARBOR_PASSWORD }} corezoid https://docker-hub.middleware.biz/chartrepo/test-helm-github-action
    - run: helm cm-push corezoid.tgz corezoid
 
