@@ -7,7 +7,7 @@ on:
      - '*'
 
 env:
-  HARBOR_REPO_URL: https://docker-hub.middleware.biz/chartrepo/test-helm-github-action
+  HARBOR_REPO_URL: https://docker-hub.middleware.biz/chartrepo/corezoid
 
 jobs:
  deploy:
