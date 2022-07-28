@@ -3,7 +3,8 @@ on: push
 
 jobs:
   deploy:
-    runs-on: alpine/helm
+    runs-on: ubuntu-latest
+    container: alpine/helm
     steps:
     - uses: actions/checkout@master
     - run: tar -zcvf corezoid-helm.tgz corezoid
