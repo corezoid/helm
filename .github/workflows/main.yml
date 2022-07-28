@@ -3,8 +3,8 @@ on:
   push:
     paths:
      - 'corezoid'
-    # tags:
-    #  - '*'
+    tags:
+     - '*'
 
 env:
   HARBOR_REPO_URL: https://docker-hub.middleware.biz/chartrepo/test-helm-github-action
