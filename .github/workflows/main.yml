@@ -10,5 +10,5 @@ jobs:
     - run: tar -zcvf corezoid-helm.tgz corezoid
     - run: helm plugin install https://github.com/chartmuseum/helm-push
     - run: helm repo add --username=mw-devops-3 --password=peq!qrt8jrk5dzm-JDE test-helm-github-action https://docker-hub.middleware.biz/chartrepo/test-helm-github-action
-    - run: helm push --username=mw-devops-3 --password=peq!qrt8jrk5dzm-JDE corezoid-helm.tgz test-helm-github-action
+    - run: helm push corezoid-helm.tgz test-helm-github-action
 
