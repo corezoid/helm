@@ -5,29 +5,14 @@ on:
      - 'corezoid'
     tags:
      - '*'
-
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - uses: goodsmileduck/helm-push-action@v2
-      env:
-#        SOURCE_DIR: '.'
-        CHART_FOLDER: 'corezoid'
-        FORCE: 'True'
-        CHARTMUSEUM_URL: 'https://docker-hub.middleware.biz/chartrepo/test-helm-github-action'
-        CHARTMUSEUM_USER: '${{ secrets.HARBOR_USER }}'
-        CHARTMUSEUM_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
-
-#jobs:
-#  deploy:
-#    runs-on: ubuntu-latest
-#    container: alpine/helm
-#    steps:
-#    - uses: actions/checkout@master
-#    - run: tar -zcvf corezoid.tgz corezoid
-#    - run: helm plugin install https://github.com/chartmuseum/helm-push
-#    - run: helm repo add --username=${{ secrets.HARBOR_USERNAME }} --password=${{ secrets.HARBOR_PASSWORD }} corezoid https://docker-hub.middleware.biz/chartrepo/test-helm-github-action
-#    - run: helm cm-push corezoid.tgz corezoid
+ deploy:
+   runs-on: ubuntu-latest
+   container: alpine/helm
+   steps:
+   - uses: actions/checkout@master
+   - run: tar -zcvf corezoid.tgz corezoid
+   - run: helm plugin install https://github.com/chartmuseum/helm-push
+   - run: helm repo add --username=${{ secrets.HARBOR_USERNAME }} --password=${{ secrets.HARBOR_PASSWORD }} corezoid ${{ secrets.HARBOR_REPO_URL }}
+   - run: helm cm-push corezoid.tgz corezoid
 
