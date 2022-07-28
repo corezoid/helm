@@ -3,8 +3,12 @@ on:
   push:
     paths:
      - 'corezoid'
-    tags:
-     - '*'
+    # tags:
+    #  - '*'
+
+env:
+  HARBOR_REPO_URL: https://docker-hub.middleware.biz/chartrepo/test-helm-github-action
+
 jobs:
  deploy:
    runs-on: ubuntu-latest
@@ -13,6 +17,6 @@ jobs:
    - uses: actions/checkout@master
    - run: tar -zcvf corezoid.tgz corezoid
    - run: helm plugin install https://github.com/chartmuseum/helm-push
-   - run: helm repo add --username="${{ secrets.HARBOR_USERNAME }}" --password="${{ secrets.HARBOR_PASSWORD }}" corezoid https://docker-hub.middleware.biz/chartrepo/test-helm-github-action
+   - run: helm repo add --username="${{ secrets.HARBOR_USERNAME }}" --password="${{ secrets.HARBOR_PASSWORD }}" corezoid ${{ env.HARBOR_REPO_URL }}
    - run: helm cm-push corezoid.tgz corezoid
 
