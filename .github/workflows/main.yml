@@ -9,7 +9,7 @@ jobs:
     - uses: actions/checkout@master
     - run: tar -zcvf corezoid-helm.tgz corezoid
     - run: helm plugin install https://github.com/chartmuseum/helm-push
-        #helm repo add --ca-file ca.crt --username=mw-devops-3 --password=peq!qrt8jrk5dzm-JDE test-helm-github-action ttps://docker-hub.middleware.biz/chartrepo/test-helm-github-action
+    - run: helm repo add --username=mw-devops-3 --password=peq!qrt8jrk5dzm-JDE test-helm-github-action https://docker-hub.middleware.biz/chartrepo/test-helm-github-action
         
         #helm push --ca-file=ca.crt --username=mw-devops-3 --password=peq!qrt8jrk5dzm-JDE corezoid-helm.tgz test-helm-github-action
 
