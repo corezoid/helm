@@ -1,0 +1,22 @@
+name: Build & Push chart
+on: 
+  push:
+    paths:
+     - 'corezoid'
+    tags:
+     - '*'
+
+env:
+  HARBOR_REPO_URL: https://docker-hub.middleware.biz/chartrepo/corezoid
+
+jobs:
+ deploy:
+   runs-on: ubuntu-latest
+   container: alpine/helm
+   steps:
+   - uses: actions/checkout@master
+   - run: tar -zcvf corezoid.tgz corezoid
+   - run: helm plugin install https://github.com/chartmuseum/helm-push
+   - run: helm repo add --username="${{ secrets.HARBOR_USERNAME }}" --password="${{ secrets.HARBOR_PASSWORD }}" corezoid ${{ env.HARBOR_REPO_URL }}
+   - run: helm cm-push corezoid.tgz corezoid
+
