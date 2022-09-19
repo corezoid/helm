@@ -5,7 +5,7 @@ appVersion: "5.9.4"
 description: Chart for Corezoid.
 home: https://corezoid.com/
 maintainers:
-  - name: George Kozlitin
-    email: george.kozlitin@corezoid.com
+  - name: Middleware DevOps
+    email: devops@corezoid.com
 engine: gotpl
 icon: https://corezoid.com/static/ce1da2c78726bb5ce1cf53b002dac519/62341/CorezoidProduct.png
