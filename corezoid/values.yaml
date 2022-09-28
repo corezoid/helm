@@ -247,8 +247,8 @@ global:
     capi_saml_secret_name: "capi-saml-secret"
 
     # User requests per second limits
-    user_limits_interface: "120"
-    user_limits_max_user_rate: "100"
+    user_limits_interface: "120"  # other requests (anything that is not create/modify task)
+    user_limits_max_user_rate: "100" # RPS in the environment
 
     # SAML SSO configuration for multiple IdP
     saml_idp:
