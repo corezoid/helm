@@ -118,6 +118,21 @@ global:
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
     default_pool_size: "5000"
+    # Maximum number of client connections allowed
+    maxDBConnections: 2500
+    # Do not allow more than this many server connections per user (regardless of database)
+    maxUserConnections: 10000
+    # How many additional connections to allow to a pool
+    reserve_pool_size: 400
+    # If a client has not been serviced in this many seconds, use additional connections from the reserve pool
+    reservePoolTimeout: 2
+    # The pooler will close an unused server connection that has been connected longer than this
+    serverLifetime: 1200
+    # If a server connection has been idle more than this many seconds it will be dropped
+    serverIdleTimeout: 15
+    # If connection and login won’t finish in this amount of time, the connection will be closed.
+    serverConnectTimeout: 15
+
     # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
     # transaction | session
     default_pool_mode: transaction

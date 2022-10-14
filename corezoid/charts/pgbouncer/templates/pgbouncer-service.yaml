@@ -1,0 +1,18 @@
+{{- if .Values.global.db.bouncer }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.appName }}-service
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName}}
+spec:
+  selector:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName}}
+  ports:
+  - name: pgbouncer
+    protocol: TCP
+    port: 5432
+    targetPort: 5432
+{{- end }}
