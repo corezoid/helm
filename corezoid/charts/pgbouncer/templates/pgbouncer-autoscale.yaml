@@ -1,0 +1,17 @@
+{{- if .Values.global.db.bouncer }}
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.appName }}-autoscale
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  minReplicas: {{ .Values.global.db.bouncer_minReplicas }}
+  maxReplicas: {{ .Values.global.db.bouncer_maxReplicas }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.appName }}-deployment
+  targetCPUUtilizationPercentage: 70
+{{- end }}

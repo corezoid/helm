@@ -1,54 +1,20 @@
 {{- if .Values.global.db.bouncer }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ .Values.appName }}-service
-  labels:
-    app: {{ .Values.global.product }}
-    tier: {{ .Values.appName}}
-spec:
-  selector:
-    app: {{ .Values.global.product }}
-    tier: {{ .Values.appName}}
-  ports:
-  - name: pgbouncer
-    protocol: TCP
-    port: 5432
-    targetPort: 5432
----
-apiVersion: autoscaling/v1
-kind: HorizontalPodAutoscaler
-metadata:
-  name: {{ .Values.appName }}-autoscale
-  labels:
-    app: {{ .Values.global.product }}
-    tier: {{ .Values.appName }}
-spec:
-  minReplicas: {{ .Values.global.db.bouncer_minReplicas }}
-  maxReplicas: {{ .Values.global.db.bouncer_maxReplicas }}
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: {{ .Values.appName }}-deployment
-  targetCPUUtilizationPercentage: 70
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.appName }}-deployment
   labels:
     app: {{ .Values.global.product }}
-    tier: {{ .Values.appName}}
+    tier: {{ .Values.appName }}
 spec:
   replicas: {{ .Values.global.db.bouncer_minReplicas }}
   selector:
     matchLabels:
-      tier: {{ .Values.appName}}
+      tier: {{ .Values.appName }}
   strategy:
+    type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1
+      maxSurge: {{ .Values.global.db.bouncer_minReplicas }}
       maxUnavailable: 0
   template:
     metadata:
@@ -93,19 +59,27 @@ spec:
               value: "extra_float_digits"
             - name: DB_NAME
               value: "*"
+            - name: MAX_USER_CONNECTIONS
+              value: {{ .Values.global.db.maxUserConnections | quote }}
+            - name: MAX_DB_CONNECTIONS
+              value: {{ .Values.global.db.maxDBConnections | quote }}
             - name: MAX_CLIENT_CONN
               value: {{ .Values.global.db.maxclientconn | quote }}
             - name: DEFAULT_POOL_SIZE
               value: {{ .Values.global.db.default_pool_size | quote }}
             - name: RESERVE_POOL_SIZE
-              value: "400"
+              value: {{ .Values.global.db.reserve_pool_size | quote }}
             - name: POOL_MODE
               value: {{ .Values.global.db.default_pool_mode }}
             - name: RESERVE_POOL_TIMEOUT
-              value: "2"
+              value: {{ .Values.global.db.reservePoolTimeout | quote }}
             - name: SERVER_IDLE_TIMEOUT
-              value: "15"
-            {{ $loglevel := .Values.global.log_level }}
+              value: {{ .Values.global.db.serverIdleTimeout | quote }}
+            - name: SERVER_LIFETIME
+              value: {{ .Values.global.db.serverLifetime | quote }}
+            - name: SERVER_CONNECT_TIMEOUT
+              value: {{ .Values.global.db.serverConnectTimeout | quote }}
+            {{- $loglevel := .Values.global.log_level -}}
             {{- if eq $loglevel "debug" }}
             - name: VERBOSE
               value: "2"
@@ -130,7 +104,6 @@ spec:
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
-
         - name: pgbouncer-exporter
           image: docker-hub.middleware.biz/public/prometheus-pgbouncer-exporter:2.1.1-python3.7.13-alpine3.15
           env:
@@ -152,6 +125,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbpwd
+          ports:
+          - containerPort: 9127
           resources:
             limits:
               cpu: "50m"
@@ -163,4 +138,8 @@ spec:
       imagePullSecrets:
         - name: corezoid-secret
       {{- end }}
+      {{ if .Values.global.db.bouncer_affinity }}
+      affinity:
+        {{ .Values.global.db.bouncer_affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
 {{- end }}
