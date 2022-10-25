@@ -74,6 +74,27 @@ data:
             ]}
         ]},
 
+        %% merge storage
+        {corezoid_merge_storage, [
+            {backend, redis}, %% maybe if future list will increase
+            {redis, [
+    {{- if eq .Values.global.redis.sentinel.enable  true }}
+                {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+    {{- else }}
+            {{- if eq .Values.global.redis.internal false }}
+                {host, "${REDIS_HOST}"},
+                {port, ${REDIS_PORT}},
+                {password,"${REDIS_PASSWORD}"},
+            {{- else }}
+                {host, "redis-master"},
+                {port, 6379},
+                {password,""},
+            {{- end }}
+    {{- end }}
+                {database, 9}
+            ]}
+        ]},
+
         {is_ready, [
           {port, 8383},
           {disabled, false}
@@ -389,6 +410,11 @@ data:
                 ]},
                 {{- end }}
 
+                {pg_fdw, [
+                  {username, "${FDW_POSTGRES_DBUSER}"},
+                  {password, "${FDW_POSTGRES_DBPWD}"}
+                ]},
+
                 {max_task_size_for_process_conv, 264000}, %% max task size for process conv
                 {max_task_size_for_st_diagramm_conv, 264000}, %% max task size for state diagramm conv
                 {origin_whitelist, [
@@ -457,6 +483,8 @@ data:
                     {api, <<"/api/2/json">>},   %% all apis POST queries
                     {upload, <<"/api/2/upload">>},  %% upload scheme, json, csv
                     {download, <<"/api/2/download">>},  %% download scheme, csv
+                    {compare, <<"/api/2/compare">>},
+                    {merge, <<"/api/2/merge">>},
                     {ws, <<"/api/1/sock_json">>},   %% events in real time
             	    {doc, [
                 	    {index, <<"{{ .Values.global.capi.front_setting.doc_index }}">>}
@@ -466,7 +494,7 @@ data:
                 	    %%{mask_values, <<"/task-parameters#masking-values">>}
             	    ]},
 
-                    {webhook, <<"/api/1/">>},    %% this one plus host.webhook = (http:https)://host.webhook/path.webhook/(xml|json|nvp)/...
+                    {webhook, <<"/api/2/">>},    %% this one plus host.webhook = (http:https)://host.webhook/path.webhook/(xml|json|nvp)/...
                     {auth, <<"/auth2/single_account">>}       %% account auth
                 ]},
                 {sender, [

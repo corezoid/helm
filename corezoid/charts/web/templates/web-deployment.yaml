@@ -76,7 +76,8 @@ spec:
             failureThreshold: 3
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
         - name: nginx-exporter
-          image: docker-hub.middleware.biz/public/nginx-prometheus-exporter:latest
+          # https://hub.docker.com/r/nginx/nginx-prometheus-exporter
+          image: nginx/nginx-prometheus-exporter
           resources:
             requests:
               cpu: 10m

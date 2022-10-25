@@ -84,6 +84,26 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+        - name: init-wait-elasticsearch
+          image: docker-hub.middleware.biz/public/alpine:3.15
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - until nc -zvw1 {{ .Values.global.elasticsearch.secret.data.host }} {{ .Values.global.elasticsearch.secret.data.port }};
+              do echo waiting for dependencies; sleep 2; done;
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        - name: init-wait-mult
+          image: docker-hub.middleware.biz/public/alpine:3.15
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - until nc -zvw1 mult-service 9082;
+              do echo waiting for dependencies; sleep 2; done;
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
@@ -227,6 +247,16 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.db.secret.name }}
                 key: dbpwd
+          - name: FDW_POSTGRES_DBUSER
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secret.name }}
+                key: dbuser_fdw
+          - name: FDW_POSTGRES_DBPWD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secret.name }}
+                key: dbpwd_fdw
           - name: POSTGRES_DBPORT
             valueFrom:
               secretKeyRef:
