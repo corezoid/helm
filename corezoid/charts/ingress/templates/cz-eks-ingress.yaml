@@ -42,6 +42,20 @@ spec:
                 name: mult-service-node
                 port:
                   number: 9082
+          - path: /api/2/compare
+            pathType: Prefix
+            backend:
+              service:
+                name: mult-service-node
+                port:
+                  number: 9082
+          - path: /api/2/merge
+            pathType: Prefix
+            backend:
+              service:
+                name: mult-service-node
+                port:
+                  number: 9082
           - path: /api
             pathType: Prefix
             backend:

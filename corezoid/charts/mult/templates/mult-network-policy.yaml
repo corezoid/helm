@@ -14,11 +14,14 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-
     - from:
         - podSelector:
             matchLabels:
               tier: capi
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: mult
     - from:
         - namespaceSelector:
             matchLabels:

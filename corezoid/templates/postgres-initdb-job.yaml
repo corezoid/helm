@@ -59,6 +59,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbpwd
+            - name: FDW_POSTGRES_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbuser_fdw
+            - name: FDW_POSTGRES_DBPWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.db.secret.name }}
+                  key: dbpwd_fdw
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret

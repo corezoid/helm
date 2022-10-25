@@ -25,6 +25,10 @@ spec:
     - from:
         - podSelector:
             matchLabels:
+              tier: syncapi
+    - from:
+        - podSelector:
+            matchLabels:
               tier: mult
     - from:
         - podSelector:

@@ -136,7 +136,7 @@ data:
             proxy_send_timeout        300;
         }
 
-        location ~ ^/api/2/(download|upload|copy) {
+        location ~ ^/api/2/(download|upload|copy|compare|merge) {
             add_header X-Content-Type-Options "nosniff";
             proxy_pass http://mult-service:9082;
             proxy_set_header Host $host;

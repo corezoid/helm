@@ -151,6 +151,21 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: host
+            - name: REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: port
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: password
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           lifecycle:

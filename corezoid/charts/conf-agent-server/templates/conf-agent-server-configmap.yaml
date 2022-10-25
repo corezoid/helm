@@ -72,6 +72,7 @@ data:
         [
             {port, 8585},                            % port for listen api requests (8585 by default)
             {encrypt_decrypt, []},                   % for enable encrypt rabbit msgs need set to {encrypt_decrypt, [queue]}
+            {is_clean_old_components_versions, true},
 
          {pgsql, [
           {{- if .Values.global.db.bouncer }}
