@@ -11,4 +11,4 @@ maintainers:
 name: docker-registry
 sources:
 - https://github.com/docker/distribution-library-image
-version: 1.9.4
+version: 1.9.7
