@@ -14,7 +14,6 @@ spec:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-  replicas: {{ .Values.global.mult.minReplicas }}
   template:
     metadata:
       annotations:
@@ -31,6 +30,9 @@ spec:
         {{ .Values.global.mult.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
       terminationGracePeriodSeconds: 300
+      {{ if .Values.global.mult.schedulerName }}
+      schedulerName: {{ .Values.global.mult.schedulerName }}
+      {{- end }}
       securityContext:
         fsGroup: 1000
       initContainers:

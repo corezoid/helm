@@ -7,7 +7,6 @@ metadata:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
-  replicas: {{ .Values.global.db.bouncer_minReplicas }}
   selector:
     matchLabels:
       tier: {{ .Values.appName }}

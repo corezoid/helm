@@ -15,6 +15,10 @@ spec:
         app: {{ .Values.global.product }}
         tier: postgres-job
     spec:
+      {{- if .Values.global.db.bouncer_affinity -}}
+      affinity:
+        {{ .Values.global.db.bouncer_affinity | toYaml | nindent 8 | trim }}
+      {{- end -}}
       restartPolicy: OnFailure
       containers:
         - image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repotype}}/pg_schema:{{ .Values.global.db.postgres_schema.version }}"

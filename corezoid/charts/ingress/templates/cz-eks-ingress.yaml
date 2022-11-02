@@ -128,7 +128,7 @@ spec:
                 name: dump-service-node
                 port:
                   number: 80
-  {{- end }}
+    {{- end }}
   {{- if .Values.global.ingress_tls }}
   tls:
     - hosts:

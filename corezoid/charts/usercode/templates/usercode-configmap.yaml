@@ -164,7 +164,7 @@ data:
         {light_cnode_watchdog_wakeup,  1000}, %% time when watchdog wakes up and kills "longlive" codes in light nodes
         {heavy_cnode_watchdog_wakeup, 800}, %% time when watchdog wakes up and kills "longlive" codes in heavy nodes
 
-        {cnode_max_exec_code_time, 1000}, %% max time for each execution of code, kill process after this time
+        {cnode_max_exec_code_time, {{ .Values.global.usercode.max_exec_code_time | default 1000 }}}, %% max time for each execution of code, kill process after this time
         %% if code not used for that time - the compiled code and internal related  data will be cleaned up
         {cnode_code_no_usage_ttl_ms, 60000},
 
