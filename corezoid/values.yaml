@@ -164,7 +164,8 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.10.0"
+      version: "5.10.0.3"
+      db_schema_rds: true  # if RDS base then set to true, if standard PostgreSQL then false
 
     rotation:
       ## enabled: true or false
