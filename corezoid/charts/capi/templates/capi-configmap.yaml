@@ -519,6 +519,7 @@ data:
                     {search, true },                   %% process search
                     {send_invite, true },              %% send an invite or not
                     {health, false },                  %% Show health_check menu
+                    {features, {{ .Values.global.capi.front_setting.ui.features }} },                               %% enabled merge by default if true
                     {billing, {{ .Values.global.capi.front_setting.ui.billing }} },                                 %% billing button display
                     {git_call, {{ .Values.global.capi.front_setting.ui.git_call }}},                                %% display of the git_call button
                     {tab_name, <<{{ .Values.global.capi.front_setting.ui.tab_name | quote }}>>},
