@@ -142,7 +142,7 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
-      version: "5.10.0.3"
+      version: "5.10.0.4"
       db_schema_rds: true  # if RDS base then set to true, if standard PostgreSQL then false
 
     rotation:
@@ -335,6 +335,8 @@ global:
         market: false
         # button Create -> Bot platform
         bot_platform: false
+        # enabled merge by default
+        features: true
         # billing button display
         billing: false
         # display of the git_call button
