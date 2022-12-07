@@ -89,8 +89,19 @@ spec:
           command:
             - sh
             - -c
-            - until nc -zvw1 {{ .Values.global.elasticsearch.secret.data.host }} {{ .Values.global.elasticsearch.secret.data.port }};
+            - until nc -zvw1 ${ELASTICSEARCH_HOST} ${ELASTICSEARCH_PORT};
               do echo waiting for dependencies; sleep 2; done;
+          env:
+            - name: ELASTICSEARCH_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.elasticsearch.secret.name }}
+                  key: host
+            - name: ELASTICSEARCH_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.elasticsearch.secret.name }}
+                  key: port
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         - name: init-wait-mult
