@@ -367,7 +367,7 @@ data:
                 {check_2fa, {{ .Values.global.capi.check_2fa | default "false" }} },
                 {init_password, <<"{{ .Values.global.capi.init_admin_password }}">>},
                 {login_attempts, {{ .Values.global.capi.login_attempts | default "5" }} },
-                {share_api_keys_in_company, false},
+                {share_api_keys_in_company, {{ .Values.global.capi.share_api_keys_in_company | default "false" }} },
                 {prometheus_metrics, {{ .Values.global.prometheus_metrics | default false }}  },
                 {use_limits_from_server, {{ .Values.global.use_limits_from_server | default false }}},
                 {redis_users, [[
@@ -415,8 +415,8 @@ data:
                   {password, "${FDW_POSTGRES_DBPWD}"}
                 ]},
 
-                {max_task_size_for_process_conv, 264000}, %% max task size for process conv
-                {max_task_size_for_st_diagramm_conv, 264000}, %% max task size for state diagramm conv
+                {max_task_size_for_process_conv, {{ .Values.global.capi.max_task_size_for_process_conv | default 264000 }} }, %% max task size for process conv
+                {max_task_size_for_st_diagramm_conv, {{ .Values.global.capi.max_task_size_for_st_diagramm_conv | default 264000 }} }, %% max task size for state diagramm conv
                 {origin_whitelist, [
                     "{{ .Values.global.subdomain}}.{{ .Values.global.domain }}","{{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}","{{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}"
                 ]},

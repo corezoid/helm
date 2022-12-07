@@ -9,6 +9,10 @@ metadata:
   labels:
     tier: postgres
 spec:
+  {{ if .Values.global.db.bouncer_affinity }}
+  affinity:
+    {{ .Values.global.db.bouncer_affinity | toYaml | nindent 4 | trim }}
+  {{- end}}
   containers:
     - image: postgres:13-alpine
       imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}

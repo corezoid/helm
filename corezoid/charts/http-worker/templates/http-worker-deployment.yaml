@@ -9,7 +9,6 @@ spec:
   selector:
     matchLabels:
       tier: {{ .Values.appName }}
-  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:

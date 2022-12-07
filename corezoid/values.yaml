@@ -117,6 +117,28 @@ global:
       requests:
         cpu: "500m"
         memory: "500Mi"
+    bouncer_affinity: {}
+    #    # hard AZ-based affinity
+    #      podAntiAffinity:
+    #        requiredDuringSchedulingIgnoredDuringExecution:
+    #          - labelSelector:
+    #              matchExpressions:
+    #              - key: tier
+    #                operator: In
+    #                values:
+    #                  - pgbouncer
+    #            topologyKey: failure-domain.beta.kubernetes.io/zone
+    #    # soft AZ-based affinity
+    #      podAntiAffinity:
+    #        preferredDuringSchedulingIgnoredDuringExecution:
+    #          - labelSelector:
+    #              matchExpressions:
+    #                - key: tier
+    #                  operator: In
+    #                  values:
+    #                    - pgbouncer
+    #            topologyKey: failure-domain.beta.kubernetes.io/zone
+
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
@@ -361,6 +383,10 @@ global:
     ldap_bind_user_pass: ""
     ldap_user_nick_entry: "cn"
     ldap_tls: false
+    # max task size for process conv
+    max_task_size_for_process_conv: 264000
+    # max task size for state diagramm conv
+    max_task_size_for_st_diagramm_conv: 264000
     logic_settings:
       # max allowed threads for api logic
       api_max_thread: 50000
@@ -465,6 +491,8 @@ global:
         memory: 1000Mi
     # enigma private_key_id
     enigma_pk_id: ""
+    # max time for each execution of code, kill process after this time
+    max_exec_code_time: 1000
 
     affinity: {}
   #    # hard AZ-based affinity
@@ -536,6 +564,8 @@ global:
     ## true if pvc for mult should be created automaticaly
     ## false if you already have pvc
     persistantVolumeClaimCreate: true
+    # Support for explicit storage scheduler (eg: Stork)
+    schedulerName: ""
     # application resources limits and requests
     resources:
       limits:
@@ -652,6 +682,8 @@ global:
         # login/secret for corezoid-merchant communications
         merchant_login: apiLogin1
         merchant_secret: I9EmB170XUbe
+    minReplicas: 1
+    maxReplicas: 1
     # application resources limits and requests
     resources:
       limits:
@@ -713,6 +745,28 @@ global:
       requests:
         cpu: 1000m
         memory: 1000Mi
+    affinity: {}
+  #    # hard AZ-based affinity
+  #      podAntiAffinity:
+  #        requiredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #              - key: tier
+  #                operator: In
+  #                values:
+  #                  - conf-agent-server
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+  #    # soft AZ-based affinity
+  #      podAntiAffinity:
+  #        preferredDuringSchedulingIgnoredDuringExecution:
+  #          - labelSelector:
+  #              matchExpressions:
+  #                - key: tier
+  #                  operator: In
+  #                  values:
+  #                    - conf-agent-server
+  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+
 
   # web-superadm
   web_superadm:

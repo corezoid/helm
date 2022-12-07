@@ -323,10 +323,10 @@ data:
         { max_task_size, 512000 },
 
         %% max task size for process conv
-        {max_task_size_for_process_conv, 512000},
+        {max_task_size_for_process_conv, {{ .Values.global.capi.max_task_size_for_process_conv | default 512000 }} },
 
         %% max task size for state diagramm conv
-        {max_task_size_for_st_diagramm_conv, 512000},
+        {max_task_size_for_st_diagramm_conv, {{ .Values.global.capi.max_task_size_for_st_diagramm_conv | default 512000 }} },
 
         %% sequence of shard numbers
         %% if you want to distribute the workload

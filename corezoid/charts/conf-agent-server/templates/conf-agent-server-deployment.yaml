@@ -14,7 +14,6 @@ spec:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-  replicas: {{ .Values.global.conf_agent_server.minReplicas }}
   template:
     metadata:
       annotations:
@@ -179,3 +178,7 @@ spec:
           hostPath:
             path: /var/dumps
         {{- end }}
+      {{ if .Values.global.conf_agent_server.affinity }}
+      affinity:
+        {{ .Values.global.conf_agent_server.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}

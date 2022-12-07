@@ -15,7 +15,6 @@ spec:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 25%
-  replicas: {{ .Values.global.enigma.key_manager.minReplicas }}
   template: # create pods using pod definition in this template
     metadata:
       annotations:
