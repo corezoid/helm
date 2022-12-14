@@ -75,7 +75,7 @@ data:
         ]},
 
         %% merge storage
-        {corezoid_merge_storage, [
+        {corezoid_global_storage, [
             {backend, redis}, %% maybe if future list will increase
             {redis, [
     {{- if eq .Values.global.redis.sentinel.enable  true }}
@@ -427,7 +427,7 @@ data:
                 {shards_count, {{ .Values.global.db.shards_count | default 10 }} },
 
                 %% merchant api module that provides synchronization of the company through the middleware systems (Deepmemo, Corezoid and others)
-                {companies_manager, mapi }, %% mapi
+                {companies_manager, {{ .Values.global.capi.companies_manager | default "mapi" }} }, %% if "mapi" then the merchant is used, if "corezoid_internal" then the merchant is not used. We recommend using corezoid_internal for the new installation, if the old installation then use only mapi
 
                 %% Clearing old processes from the trash in days
                 %% {ttl, 0} - keep forever

@@ -112,11 +112,14 @@ data:
         {{- end }}
     {{- end }}
               {database, 10}
+          ]},
+          {interconnect_with, [
+              capi
           ]}
       ]},
 
       %% merge storage
-      {corezoid_merge_storage, [
+      {corezoid_global_storage, [
         {backend, redis}, %% maybe if future list will increase
         {redis, [
     {{- if eq .Values.global.redis.sentinel.enable  true }}

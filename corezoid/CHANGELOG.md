@@ -1,5 +1,24 @@
 ## Changelog
 
+### Chart 0.21.6 [ Corezoid 5.11.0 ]
+- The “conv_title” method was removed from Corezoid API 
+- The Aliases tab was moved to the Folders section of the workspace menu 
+- Fixed a bug in the process Activity Monitor, which caused data not displaying for the finish date of a selected date range 
+- jQuery library was updated to version 1.12.4, fixed the vulnerability of missing tokens to prevent CSRF attacks 
+- Changed the logic of the "create","obj":"invite" API method for inviting users to a company 
+- When going through an API Call node, an empty task is passed as an object, not an array 
+- The “Parent REF” task field that contains a parent process ref was added to the task info view in the process editor 
+- In the Trash now displays a side panel with the object’s parent object info
+
+### Chart 0.21.5 [ Corezoid 5.10.1 ]
+- Merge functionality is available 
+- Add support of “map” and “filter” Erlang functions for Set Parameters nodes 
+- Code editor was updated and now supports a correct display and work with code written in the following programming languages: JS, Python, Go, PHP, Java, Erlang, XML, MySQL, Microsoft SQL Server и PostgreSQL 
+- Moment.js library was updated. The library has backward compatibility with the old version 
+- Compatibility: elasticsearch 7, Centos 8
+- fix сontent- type xml with parameters
+- added new key db_schema_rds in values.yaml (to work with base in AWS RDS)
+
 ### Chart 0.19.5 [ Corezoid 5.9.0 ]
 - cookie secure flag for api 
 - avalible enable 2fa with check_2fa env in capi block
