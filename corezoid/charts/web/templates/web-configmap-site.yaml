@@ -194,7 +194,48 @@ data:
         }
 
         location /superadmin {
-        rewrite ^/superadmin(.*)$ https://{{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }} redirect;
+            proxy_pass http://corezoid-web-superadm;
+    {{/*        proxy_set_header Host $host;*/}}
+            proxy_http_version 1.1;
+            proxy_ssl_server_name on;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /superadmin/api {
+            proxy_pass http://conf-agent-server-service:8585/api;
+    {{/*        proxy_set_header Host $host;*/}}
+            proxy_http_version 1.1;
+            proxy_ssl_server_name on;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /superadmin/api/1/sock_json {
+            proxy_pass http://conf-agent-server-service:8585/api/1/sock_json;
+    {{/*        proxy_set_header Host $host;*/}}
+            proxy_http_version 1.1;
+            proxy_ssl_server_name on;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /superadmin/auth {
+            proxy_pass http://capi-service:9080;
+    {{/*        proxy_set_header Host $host;*/}}
+            proxy_http_version 1.1;
+            proxy_ssl_server_name on;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location /superadmin/system {
+            proxy_pass http://capi-service:9080;
+    {{/*        proxy_set_header Host $host;*/}}
+            proxy_http_version 1.1;
+            proxy_ssl_server_name on;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
         }
 
     }
