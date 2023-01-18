@@ -1,4 +1,4 @@
-[![N|Corezoid](https://corezoid.com/static/logo_.png)](https://corezoid.com/)  
+[![N|Corezoid](https://api.corezoid.com/logo/logo_big_small.png)](https://corezoid.com/)  
 
 Corezoid Docs - https://doc.corezoid.com/  
 
