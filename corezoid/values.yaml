@@ -54,19 +54,25 @@ global:
     enabled: false
     labelsSelector:
       ingress:
-        namespaceSelector:
-          # Selector for ingress namespace
-          name: alb-ingress-nginx-internal
-        podSelector:
-          # Selector for ingress deploymnets
-          app.kubernetes.io/name: ingress-nginx
+        - from:
+          - namespaceSelector:
+              matchLabels:
+                # Selector for ingress namespace
+                name: alb-ingress-nginx-internal
+          - podSelector:
+              matchLabels:
+                # Selector for ingress deployments
+                app.kubernetes.io/name: ingress-nginx
       monitoring:
-        # Selector for prometheus namespace
-        namespaceSelector:
-          name: monitoring
-        # Selector for prometheus deploymnets
-        podSelector:
-          release: prometheus-stack
+        - from:
+            # Selector for prometheus namespace
+            - namespaceSelector:
+                matchLabels:
+                  name: monitoring
+            # Selector for prometheus deployments
+            - podSelector:
+                matchLabels:
+                  release: prometheus-stack
   ########  Settings for stateful services  ########
 
   #######  PostgreSQL  ########
