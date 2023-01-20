@@ -34,10 +34,6 @@ spec:
             - name: {{ .Values.appName }}-claim
               mountPath: {{ .Values.postgresqlDataDir }}
               subPath: pgdata
-      volumes:
-        - name: {{ .Values.appName }}-claim
-          persistentVolumeClaim:
-            claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
       containers:
         - image: "postgres:13-alpine"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
@@ -100,6 +96,9 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Values.global.db.persistantVolumeClaimName }}
             readOnly: false
+        - name: {{ .Values.appName }}-claim
+          persistentVolumeClaim:
+            claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
       {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
         - name: corezoid-secret
