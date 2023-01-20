@@ -253,7 +253,7 @@ spec:
             name: {{ .Values.appName }}-config-vm
         - name: corezoid-license
           secret:
-            secretName: license-share-new
+            secretName: {{ .Values.global.licenseSecretName | default "license-share-new" }}
         {{- if .Values.global.store_dumps.enabled }}
         - name: dumps-volume
           hostPath:

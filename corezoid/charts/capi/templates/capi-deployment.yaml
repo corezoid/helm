@@ -341,7 +341,7 @@ spec:
             name: {{ .Values.appName }}-config-vm
         - name: corezoid-license
           secret:
-            secretName: license-share-new
+            secretName: {{ .Values.global.licenseSecretName | default "license-share-new" }}
         {{- if eq .Values.global.capi.auth_providers_enable true }}
         - name: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret" }}
           secret:
