@@ -429,7 +429,7 @@ global:
 
   # http-worker
   http:
-    tag: "3.11.0.1"
+    tag: "3.11.0.2"
     minReplicas: 2
     maxReplicas: 4
     resources:
