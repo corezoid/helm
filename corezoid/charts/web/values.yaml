@@ -1,4 +1,9 @@
 appName: corezoid-web-adm
 image:
   registry: docker-hub.middleware.biz
-  repository: /conveyor_adm_web
+  repository: conveyor_adm_web
+
+nginxExporter:
+  registry: nginx
+  repository: nginx-prometheus-exporter
+  tag: latest

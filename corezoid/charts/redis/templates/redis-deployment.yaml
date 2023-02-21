@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
       - name: master
-        image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         resources:
           limits:
             cpu: 300m
@@ -72,10 +72,12 @@ spec:
             mountPath: /usr/local/etc/redis
           - name: {{ .Values.appName }}-claim
             mountPath: /ebsmnt/data
-      {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
+{{- end }}
       volumes:
         - name: redisconfig
           configMap:

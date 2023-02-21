@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: {{ .Values.appName }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype}}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           env:
             - name: DB_USER
               valueFrom:
@@ -114,7 +114,7 @@ spec:
             successThreshold: 1
             failureThreshold: 3
         - name: pgbouncer-exporter
-          image: docker-hub.middleware.biz/public/prometheus-pgbouncer-exporter:2.1.1-python3.7.13-alpine3.15
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.exporterImage.repository }}:{{ .Values.exporterImage.tag }}"
           env:
             - name: PGBOUNCER_EXPORTER_HOST
               value: 0.0.0.0
@@ -153,10 +153,12 @@ spec:
             requests:
               cpu: "50m"
               memory: "50Mi"
-      {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
+{{- end }}
       {{ if .Values.global.db.bouncer_affinity }}
       affinity:
         {{ .Values.global.db.bouncer_affinity | toYaml | nindent 8 | trim }}

@@ -25,7 +25,7 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: docker-hub.middleware.biz/public/postgresql-client:alpine3.15
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.postgresqlClientImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.postgresqlClientImage.repository }}:{{ .Values.postgresqlClientImage.tag }}"
           command: ["sh", "-c", "until PGPASSWORD=${POSTGRES_DBPWD} psql -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBUSER} -d settings -c \"select 1\" > /dev/null 2>&1 ; do echo Waiting while postgres created settings db ...; sleep 3; done"]
           env:
             - name: MQ_HOST
@@ -66,7 +66,7 @@ spec:
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          image: "{{ .Values.global.imageRegistry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}{{ else }}{{ .Values.global.repotype | default "public" }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.conf_agent_server.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.conf_agent_server.tag }}"
           env:
             - name: POD_NAME
               valueFrom:
@@ -162,10 +162,12 @@ spec:
             {{- end }}
           resources:
             {{ .Values.global.conf_agent_server.resources | toYaml | indent 12 | trim }}
-      {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
+{{- end }}
       volumes:
         - name: {{ .Values.appName }}config
           configMap:

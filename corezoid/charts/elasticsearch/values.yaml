@@ -2,4 +2,8 @@ appName: elasticsearch
 
 image:
   registry: docker-hub.middleware.biz
-  repository: /elasticsearch
+  repository: elasticsearch
+
+busyboxImage:
+  registry: docker-hub.middleware.biz
+  repository: hub.docker.com/library/busybox

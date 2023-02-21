@@ -56,7 +56,7 @@ spec:
 {{- end }}
       containers:
       - name: {{ template "efs-provisioner.fullname" . }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         - name: FILE_SYSTEM_ID
@@ -85,7 +85,7 @@ spec:
       {{- if ne .Values.efsProvisioner.path "/" }}
       initContainers:
       - name: "init-path"
-        image: {{ .Values.busyboxImage.repository}}:{{ .Values.busyboxImage.tag}}
+        image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.busyboxImage.repository }}:{{ .Values.busyboxImage.tag }}"
         imagePullPolicy: {{ .Values.busyboxImage.pullPolicy }}
         command: [ "sh", "-c", "mkdir -p /efs-vol-root/{{ (trimPrefix "/" .Values.efsProvisioner.path) }}" ]
         resources:

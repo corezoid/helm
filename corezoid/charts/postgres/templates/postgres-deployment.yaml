@@ -21,7 +21,7 @@ spec:
       initContainers:
         #### https://github.com/docker-library/postgres/issues/563
         - name: pgsql-data-permission-fix
-          image: busybox
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.busyboxImage.repository }}:{{ .Values.busyboxImage.tag }}"
           command:
             - sh
             - -c
@@ -35,7 +35,7 @@ spec:
               mountPath: {{ .Values.postgresqlDataDir }}
               subPath: pgdata
       containers:
-        - image: "postgres:13-alpine"
+        - image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           name: {{ .Values.appName }}
           securityContext:
@@ -99,8 +99,10 @@ spec:
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
             claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
-      {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
+{{- end }}
 {{- end }}

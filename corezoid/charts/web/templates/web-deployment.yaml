@@ -33,7 +33,7 @@ spec:
       {{- end}}
       containers:
         - name: {{ .Values.appName }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
           ports:
             - containerPort: 80
           lifecycle:
@@ -77,7 +77,7 @@ spec:
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
         - name: nginx-exporter
           # https://hub.docker.com/r/nginx/nginx-prometheus-exporter
-          image: nginx/nginx-prometheus-exporter
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.nginxExporter.registry }}/{{ .Values.nginxExporter.repository }}:{{ .Values.nginxExporter.tag }}"
           resources:
             requests:
               cpu: 10m
@@ -90,10 +90,12 @@ spec:
             - -nginx.scrape-uri=http://localhost/nginx_status
             #A number of retries the exporter will make on start to connect to the NGINX stub_status page
             - -nginx.retries=2
-      {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
+{{- end }}
       volumes:
         - name: web-config-nginx
           configMap:

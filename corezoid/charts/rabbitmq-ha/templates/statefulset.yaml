@@ -42,19 +42,19 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8 }}
 {{- end }}
     spec:
-      {{- if .Values.image.pullSecrets }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-      {{- range .Values.image.pullSecrets }}
-        - name: {{ . }}
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
-      {{- end }}
+{{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       securityContext:
 {{ toYaml .Values.securityContext | indent 10 }}
       serviceAccountName: {{ template "rabbitmq-ha.serviceAccountName" . }}
       initContainers:
         - name: bootstrap
-          image: {{ .Values.busyboxImage.repository}}:{{ .Values.busyboxImage.tag}}
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.busyboxImage.repository}}:{{ .Values.busyboxImage.tag}}"
           imagePullPolicy: {{ .Values.busyboxImage.pullPolicy }}
           command: ['sh']
           args:
@@ -95,7 +95,7 @@ spec:
 {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: epmd
@@ -203,7 +203,7 @@ spec:
             {{- end }}
         {{ if .Values.prometheus.exporter.enabled }}
         - name: {{ .Chart.Name }}-exporter
-          image: {{ .Values.prometheus.exporter.image.repository }}:{{ .Values.prometheus.exporter.image.tag }}
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.prometheus.exporter.image.repository }}:{{ .Values.prometheus.exporter.image.tag }}"
           imagePullPolicy: {{ .Values.prometheus.exporter.image.pullPolicy }}
           ports:
           - name: exporter

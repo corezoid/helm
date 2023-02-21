@@ -119,10 +119,12 @@ spec:
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
-      {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
+{{- end }}
       volumes:
         - name: {{ .Values.appName }}config
           configMap:

@@ -30,7 +30,7 @@ spec:
       {{- end}}
       containers:
         - name: {{ .Values.appName }}
-          image: "{{ .Values.image.registry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.web_superadm.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.web_superadm.tag }}" 
           ports:
           - containerPort: 80
           volumeMounts:
@@ -64,10 +64,12 @@ spec:
             successThreshold: 1
             failureThreshold: 3
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-      {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
+{{- end }}
       volumes:
         - name: web-superadm-config-nginx
           configMap:

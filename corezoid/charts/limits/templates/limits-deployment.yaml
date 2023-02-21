@@ -30,7 +30,7 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: docker-hub.middleware.biz/public/alpine:3.15
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
           command: ["sh", "-c", "apk add postgresql-client; until PGPASSWORD=${POSTGRES_DBPWD} psql -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBUSER} -d settings -c \"select 1\" > /dev/null 2>&1 ;  {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672  {{- else }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}  {{- end }}; do echo waiting for dependences; sleep 3; done;"]
           env:
             - name: MQ_HOST
@@ -68,7 +68,7 @@ spec:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbpwd
         - name: init-wait-rmq
-          image: docker-hub.middleware.biz/public/alpine:3.15
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
           command: ['sh']
           args:
             - "-c"
@@ -94,7 +94,7 @@ spec:
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          image: "{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}{{ else }}{{ .Values.global.repotype | default "public" }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.limits.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.limits.tag }}"
           env:
             {{- if .Values.global.store_dumps.enabled }}
             - name: ERL_CRASH_DUMP
@@ -182,10 +182,12 @@ spec:
             - name: dumps-volume
               mountPath: /var/dumps
             {{- end }}
-      {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
+{{- end }}
       volumes:
         - name: {{ .Values.appName }}config
           configMap:
