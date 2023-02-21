@@ -199,7 +199,7 @@ spec:
             name: {{ .Values.appName }}-config
         - name: corezoid-license
           secret:
-            secretName: license-share-new
+            secretName: {{ .Values.global.licenseSecretName | default "license-share-new" }}
         {{- if .Values.global.mult.persistantVolumeClaimCreate }}
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:
