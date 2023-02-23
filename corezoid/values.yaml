@@ -603,7 +603,7 @@ global:
 
   # webadm
   webadm:
-    tag: "5.11.0"
+    tag: "5.11.3"
     minReplicas: 1
     resources:
       limits:
