@@ -8,6 +8,10 @@ global:
   imageRegistry: "docker-hub.middleware.biz"
   #IfNotPresent | Always | Never
   imagePullPolicy: "IfNotPresent"
+  # If specified, use these secrets to access the images, this can be used on mCloud.
+  # imagePullSecrets:
+  #   - ecr-registry
+  #   - gitlab-registry
   repotype: "public"
   product: "corezoid"
   centos8Repo: public-corezoid-centos8
@@ -170,6 +174,9 @@ global:
 
     # Postgres corezoid schema version
     postgres_schema:
+      image:
+        registry: docker-hub.middleware.biz
+        repository: pg_schema
       version: "5.10.0.4"
       db_schema_rds: true  # if RDS base then set to true, if standard PostgreSQL then false
 

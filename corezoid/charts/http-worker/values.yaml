@@ -2,4 +2,9 @@ appName: http-worker
 
 image:
   registry: docker-hub.middleware.biz
-  repository: /http-worker
+  repository: http-worker
+
+alpineImage:
+  registry: docker-hub.middleware.biz
+  repository: alpine
+  tag: 3.15

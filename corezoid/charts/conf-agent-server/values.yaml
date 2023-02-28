@@ -1,7 +1,12 @@
 appName: conf-agent-server
 image:
   registry: docker-hub.middleware.biz
-  repository: /conf_agent_server
+  repository: conf_agent_server
+
+postgresqlClientImage:
+  registry: docker-hub.middleware.biz
+  repository: postgresql-client
+  tag: alpine3.15
 
 containers:
   containerPort: 8585

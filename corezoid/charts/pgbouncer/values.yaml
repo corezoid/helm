@@ -1,5 +1,10 @@
 appName: pgbouncer
 image:
   registry: docker-hub.middleware.biz
-  repository: /pgbouncer
+  repository: pgbouncer
   tag: 1.17.0-alpine3.16-2
+
+exporterImage:
+  registry: docker-hub.middleware.biz
+  repository: prometheus-pgbouncer-exporter
+  tag: 2.1.1-python3.7.13-alpine3.15

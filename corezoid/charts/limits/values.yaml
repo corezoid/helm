@@ -1,7 +1,12 @@
 appName: limits
 image:
   registry: docker-hub.middleware.biz
-  repository: /corezoid_limits
+  repository: corezoid_limits
+
+alpineImage:
+  registry: docker-hub.middleware.biz
+  repository: alpine
+  tag: 3.15
 
 containers:
   containerPort: 8585

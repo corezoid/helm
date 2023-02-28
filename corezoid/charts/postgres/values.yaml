@@ -1,4 +1,10 @@
 appName: postgresql
 postgresqlDataDir: /var/lib/pgsql/data
 image:
-  registry: docker-hub.middleware.biz
+  #registry: docker-hub.middleware.biz
+  repository: postgres
+  tag: 13-alpine
+
+busyboxImage:
+  repository: busybox
+  tag: latest

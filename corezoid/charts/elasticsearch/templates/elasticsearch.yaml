@@ -21,19 +21,19 @@ spec:
     spec:
       initContainers:
         - name: increase-vm-max-map
-          image: docker-hub.middleware.biz/hub.docker.com/library/busybox
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.busyboxImage.registry }}/{{ .Values.busyboxImage.repository }}"
           command: ["sysctl", "-w", "vm.max_map_count=262144"]
           securityContext:
             privileged: true
         - name: increase-fd-ulimit
-          image: docker-hub.middleware.biz/hub.docker.com/library/busybox
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.busyboxImage.registry }}/{{ .Values.busyboxImage.repository }}"
           command: ["sh", "-c", "ulimit -n 65536"]
           securityContext:
             privileged: true
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          image: "{{ .Values.global.imageRegistry }}/{{ .Values.global.repotype | default "public" }}{{ .Values.image.repository }}:{{ .Values.global.elasticsearch.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ .Values.image.repository }}:{{ .Values.global.elasticsearch.tag }}"
           env:
             - name: discovery.type
               value: single-node
@@ -60,10 +60,12 @@ spec:
               path: /_cluster/health?local=true
               port: 9200
             initialDelaySeconds: 90
-       {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
-        {{- end }}
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
+      {{- end }}
+{{- end }}
 
 ---
 apiVersion: v1

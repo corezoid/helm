@@ -33,7 +33,7 @@ spec:
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-wait-rmq
-          image: docker-hub.middleware.biz/public/alpine:3.15
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
           command: ['sh']
           args:
             - "-c"
@@ -58,7 +58,7 @@ spec:
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
-          image: "{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}{{ else }}{{ .Values.global.repotype | default "public" }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.syncapi.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.syncapi.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           env:
             - name: NODE_COOKIE
@@ -156,10 +156,12 @@ spec:
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
-      {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
+{{- end }}
       volumes:
         - name: {{ .Values.appName }}-config
           configMap:

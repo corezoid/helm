@@ -33,7 +33,7 @@ spec:
       terminationGracePeriodSeconds: 60
       initContainers:
         - name: init-wait
-          image: docker-hub.middleware.biz/public/alpine:3.15
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- end }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}; do echo waiting for deps; sleep 2; done;"]
           env:
             - name: MQ_HOST
@@ -61,7 +61,7 @@ spec:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
         - name: init-wait-rmq
-          image: docker-hub.middleware.biz/public/alpine:3.15
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
           command: ['sh']
           args:
             - "-c"
@@ -84,7 +84,7 @@ spec:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
         - name: init-wait-elasticsearch
-          image: docker-hub.middleware.biz/public/alpine:3.15
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -105,7 +105,7 @@ spec:
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         - name: init-wait-mult
-          image: docker-hub.middleware.biz/public/alpine:3.15
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -118,7 +118,7 @@ spec:
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          image: "{{ .Values.global.imageRegistry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}{{ else }}{{ .Values.global.repotype | default "public" }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.capi.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.capi.tag }}"
           env:
           - name: POD_NAME
             valueFrom:
@@ -328,10 +328,12 @@ spec:
             runAsUser: 1000
             capabilities:
               add: ["IPC_LOCK"]
-      {{- if not  (eq .Values.global.repotype "public") }}
+{{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
-        - name: corezoid-secret
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
       {{- end }}
+{{- end }}
       volumes:
         - name: {{ .Values.appName }}config
           configMap:
