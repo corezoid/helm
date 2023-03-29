@@ -35,7 +35,7 @@ Don’t forget to enable service (mobileapp) on User access menu - enable status
 #####Supported stateful versions:  
 - Postgresql 13.3  
 - Redis 3.2  
-- Elasticsearch 7.17.5  
+- Elasticsearch 8.6.0
 - RabbitMQ 3.9  
 ---
 

@@ -1,3 +1,4 @@
+{{- if eq .Values.global.merchant.enabled true }}
 apiVersion: v1
 data:
   callback.properties: |
@@ -11,3 +12,4 @@ data:
 kind: ConfigMap
 metadata:
   name: {{ .Values.appName }}-callback-properties
+  {{- end }}

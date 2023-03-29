@@ -19,6 +19,7 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/limits-configmap.yaml") . | sha256sum }}
+        checksum/config_vm: {{ include (print $.Template.BasePath "/limits-configmap-vm.yaml") . | sha256sum }}
       labels:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
@@ -100,6 +101,8 @@ spec:
             - name: ERL_CRASH_DUMP
               value: "/var/dumps/$(POD_NAME)-erl.dump"
             {{- end }}
+            - name: NODE_COOKIE
+              value: {{ .Values.appName }}-{{ .Release.Namespace }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
             - name: MQ_HOST

@@ -21,7 +21,7 @@ spec:
       initContainers:
         #### https://github.com/docker-library/postgres/issues/563
         - name: pgsql-data-permission-fix
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.busyboxImage.repository }}:{{ .Values.busyboxImage.tag }}"
+          image: busybox
           command:
             - sh
             - -c
@@ -34,8 +34,12 @@ spec:
             - name: {{ .Values.appName }}-claim
               mountPath: {{ .Values.postgresqlDataDir }}
               subPath: pgdata
+      volumes:
+        - name: {{ .Values.appName }}-claim
+          persistentVolumeClaim:
+            claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
       containers:
-        - image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        - image: "postgres:13-alpine"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           name: {{ .Values.appName }}
           securityContext:
@@ -96,13 +100,8 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Values.global.db.persistantVolumeClaimName }}
             readOnly: false
-        - name: {{ .Values.appName }}-claim
-          persistentVolumeClaim:
-            claimName: {{ .Values.appName }}-{{ .Values.global.storage}}-claim
-{{- if .Values.global.imagePullSecrets }}
+      {{- if not  (eq .Values.global.repotype "public") }}
       imagePullSecrets:
-      {{- range $pullSecret := .Values.global.imagePullSecrets }}
-        - name: {{ $pullSecret }}
+        - name: corezoid-secret
       {{- end }}
-{{- end }}
 {{- end }}

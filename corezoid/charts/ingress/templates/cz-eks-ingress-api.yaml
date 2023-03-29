@@ -1,0 +1,29 @@
+{{- if .Values.global.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.appName }}-api-{{ .Release.Namespace }}
+  annotations:
+    {{- include "corezoid-api.ingressAnnotations" . | nindent 4 }}
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  rules:
+    - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: capi-service-node
+                port:
+                  number: 9080
+  {{- if .Values.global.ingress_tls }}
+  tls:
+    - hosts:
+        - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+      secretName: tls-{{ .Values.appName }}-{{ .Release.Namespace }}
+  {{- end }}
+{{- end -}}
