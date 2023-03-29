@@ -1,3 +1,4 @@
+{{- if eq .Values.global.merchant.enabled true }}
 apiVersion: v1
 data:
   data.sql: |
@@ -7,3 +8,4 @@ data:
 kind: ConfigMap
 metadata:
   name: {{ .Values.appName }}-datasource
+  {{- end }}

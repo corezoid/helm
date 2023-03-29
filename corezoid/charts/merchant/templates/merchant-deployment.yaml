@@ -1,3 +1,4 @@
+{{- if eq .Values.global.merchant.enabled true }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -147,3 +148,4 @@ spec:
         - name: {{ .Values.appName }}log4j2-spring
           configMap:
             name: {{ .Values.appName }}-log4j2-spring
+  {{- end }}

@@ -1,3 +1,4 @@
+{{- if eq .Values.global.merchant.enabled true }}
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
@@ -13,3 +14,4 @@ spec:
     kind: Deployment
     name: {{ .Values.appName }}-deployment
   targetCPUUtilizationPercentage: 80
+  {{- end }}

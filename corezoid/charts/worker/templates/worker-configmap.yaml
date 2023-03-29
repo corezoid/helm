@@ -41,8 +41,15 @@ data:
         ]},
 
        {corezoid_license_client, [
-         {path_to_license, "/ebsmnt/certs/corezoid_license"}
-       ]},
+          {driver, "{{ .Values.global.capi.licensepath | default "db" }}" },
+          {pgsql, [
+              {host, "${POSTGRES_DBHOST}"},
+              {user, "${POSTGRES_DBUSER}"},
+              {dbname, "settings"},
+              {password, "${POSTGRES_DBPWD}"}
+          ]},
+          {path_to_license, "/ebsmnt/certs/corezoid_license"}
+        ]},
 
        {corezoid_global_stats, [
          {disabled, true}
@@ -217,13 +224,12 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["worker.ctrl", "to_worker_.*.cce.*","to_worker_.*.es_call.*","to_worker_.*.git_call.*","settings.worker"]}
+          {gc_queues_regexp, [
+            "settings", "worker.ctrl",
+            "^to_worker_[0-9]{1,3}\.(?:cce\\(|git_call\\(|es_call\\()\(?:.[^\)]+\).+$",
+            "conf_agent_client_queue_worker", "ermql_license_distributor_request_worker", "mw_component_version_client_queue_worker", "env_vars_queue_worker", "limits_client_queue_worker"
+          ]}
         ]},
-
-      {conv_params, [
-          {min_version, 2} %% application should deny creating task (copy/rpc) if params are not valid
-                           %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
-      ]},
 
       %% Envirement Variable
       {env_var, [
@@ -312,6 +318,9 @@ data:
         ]},
         {{- end }}
 
+        %% temporary
+        {copy_task_validate_ref, true},
+
         {nodes, [
           ''
         ]},
@@ -319,8 +328,6 @@ data:
         %% max allowed task_size in bytes
         %% if you what increase this limit
         %% be careful, you'll do it at your own risk
-        %% deprecated
-        { max_task_size, 512000 },
 
         %% max task size for process conv
         {max_task_size_for_process_conv, {{ .Values.global.capi.max_task_size_for_process_conv | default 512000 }} },
@@ -1453,70 +1460,7 @@ data:
           {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
           {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
           {messages_prefetch_size_per_channel, 50}    %% The number of queues within the channel
-        ]},
-
-        %% logic git call
-        %% producer
-        {publish_git_call_request, [
-                {servers, [
-          {{- if eq .Values.global.mq.internal false }}
-                      [
-                        {host, "${MQ_HOST}"},
-                        {port, ${MQ_PORT}},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
-                ]},
-            {build_dep_queues_count, 1},
-            {remove_dep_queues_count, 1},
-            {get_script_queues_count, 1},
-            {remove_script_queues_count, 1},
-            {validate_script_queues_count, 1},
-            {compile_script_queues_count, 1},
-            {run_script_queues_count, 10},
-            {min_size, 5},
-            {max_size, 5},
-            {start_size, 5}
-
-        ]},
-
-        %% concierge answers git_call
-        {consumer_git_call_response, [
-                {servers, [
-          {{- if eq .Values.global.mq.internal false }}
-                      [
-                        {host, "${MQ_HOST}"},
-                        {port, ${MQ_PORT}},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- else }}
-                      [
-                        {host, "rabbit-service"},
-                        {port, 5672},
-                        {username, <<"${MQ_USERNAME}">>},
-                        {password, <<"${MQ_PASSWORD}">>},
-                        {vhost, <<"${MQ_VHOST}">>}
-                    ]
-          {{- end }}
-                ]},
-          {queues_count, 10},
-          {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
-          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 50}    %% The number of queues within the channel
         ]}
-
       ]},
       %% Billing
         %% If you don't use billing or don't want to store any information
@@ -1526,7 +1470,7 @@ data:
         {billing, []},
         {lager, [
           {log_root, "/ebsmnt/erlang/worker/log"},
-          {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
+          {handlers, [ {lager_console_backend, [{level, {{ .Values.global.log_level | default "info" }} }] } ]},
 
           %% What colors to use with what log levels
           {colored, true},

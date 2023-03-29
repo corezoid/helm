@@ -14,8 +14,15 @@ data:
         ]},
 
         {corezoid_license_client, [
-          {path_to_license, "/ebsmnt/certs/corezoid_license"}
-        ]},
+           {driver, "{{ .Values.global.capi.licensepath | default "db" }}" },
+           {pgsql, [
+               {host, "${POSTGRES_DBHOST}"},
+               {user, "${POSTGRES_DBUSER}"},
+               {dbname, "settings"},
+               {password, "${POSTGRES_DBPWD}"}
+           ]},
+           {path_to_license, "/ebsmnt/certs/corezoid_license"}
+         ]},
 
         {corezoid_global_stats, [
             {disabled, true}
@@ -100,7 +107,10 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["cce.ctrl", "settings.cce"]}
+          {gc_queues_regexp, [
+            "cce.ctrl", "settings",
+            "ermql_license_distributor_request_cce", "mw_component_version_client_queue_cce"
+          ]}
         ]},
     {{- if eq .Values.global.redis.sentinel.enable true }}
       {redis_sentinel, [
@@ -172,16 +182,13 @@ data:
         {max_exec_time_to_change_cnode_type, 0.1}, %% max exec piece of codes to change them to heavy node
 
         {cnode_max_ram_available_mb, 31999}, %% in Mb
-        {cnode_min_av_ram_to_clean_isolates, 26400}, %% for supporting 2.2.1 version
+        {cnode_min_av_ram_to_clean_isolates, 26400}, %% // 25% from 10 Gb in Kb
         {cnode_min_av_ram_to_clean_isolates_mb, 1024}, %% in Mb
-        {cnode_max_used_per_isolate, 10}, %% for supporting 2.2.1 version
+        {cnode_max_used_per_isolate, 20}, %% // in Mb
         {cnode_max_used_per_isolate_mb, 20}, %% in Mb
 
         {show_err_resps, false},     %% If true, then more logs are displayed
         {show_ok_resps, false},      %% If true, then more logs are displayed
-
-        {cnode_min_av_ram_to_clean_isolates, 2621440}, %% // 25% from 10 Gb in Kb
-        {cnode_max_used_per_isolate, 20}, %% // in Mb
 
         % postgresql settings
         {pgsql, [
@@ -314,7 +321,7 @@ data:
       {lager, [
           {log_root, "/ebsmnt/erlang/usercode/log"},
           %% What handlers to install with what arguments (wrapped by middleman)
-          {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
+          {handlers, [ {lager_console_backend, [{level, {{ .Values.global.log_level | default "info" }} }] } ]},
             %% What colors to use with what log levels
             {colored, true},
             {colors, [
@@ -361,9 +368,8 @@ data:
             {disabled, true}, %% true by default
             {send_interval_sec, 30}, %% by default 10 sec
             {send_system_counters, true} %% memory processes etc, false by default
-        ]},
+        ]}
 
-      {sasl, [{sasl_error_logger, false}]}
     ].
 
 kind: ConfigMap

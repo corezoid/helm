@@ -27,7 +27,14 @@ data:
                 ]}
             ]},
 
-        {corezoid_license_client, [
+       {corezoid_license_client, [
+          {driver, "{{ .Values.global.capi.licensepath | default "db" }}" },
+          {pgsql, [
+              {host, "${POSTGRES_DBHOST}"},
+              {user, "${POSTGRES_DBUSER}"},
+              {dbname, "settings"},
+              {password, "${POSTGRES_DBPWD}"}
+          ]},
           {path_to_license, "/ebsmnt/certs/corezoid_license"}
         ]},
 
@@ -276,7 +283,11 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["api.ctrl","settings.capi"]}
+          {gc_queues_regexp, [
+              "api.ctrl", "settings",
+              "conf_agent_client_queue_capi", "ermql_license_distributor_request_capi", "env_vars_queue_capi", "limits_client_queue_capi",
+              "mq_cache_queue_capi", "mw_component_version_client_queue_capi", "mw_dunderdbcall_response_queue_capi"
+          ]}
         ]},
 
       {{- if eq .Values.global.capi.auth_providers_enable true }}
@@ -427,7 +438,7 @@ data:
                 {shards_count, {{ .Values.global.db.shards_count | default 10 }} },
 
                 %% merchant api module that provides synchronization of the company through the middleware systems (Deepmemo, Corezoid and others)
-                {companies_manager, {{ .Values.global.capi.companies_manager | default "mapi" }} }, %% if "mapi" then the merchant is used, if "corezoid_internal" then the merchant is not used. We recommend using corezoid_internal for the new installation, if the old installation then use only mapi
+                {companies_manager, {{ .Values.global.capi.companies_manager | default "corezoid_internal" }} }, %% if "mapi" then the merchant is used, if "corezoid_internal" then the merchant is not used. We recommend using corezoid_internal for the new installation, if the old installation then use only mapi
 
                 %% Clearing old processes from the trash in days
                 %% {ttl, 0} - keep forever
@@ -452,6 +463,11 @@ data:
                 %% It is used for create direct url in viber, telegram link
                 %% And for confirm registration
                 {api_host, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/api"},
+
+                %% hash_algorithm
+                %% One of
+                %% sha (by default) | sha256 | sha512
+                {password_salt_algo, {{ .Values.global.capi.password_salt_algo | default "sha256" }}},
 
                 %% it is solt for password when we use corezoid auth method(login+password)
 
@@ -1153,15 +1169,11 @@ data:
 
           ]},
 
-
-
-
-
         {lager, [
             %% What handlers to install with what arguments
 
             {log_root, "/ebsmnt/erlang/capi/log"},
-            {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
+            {handlers, [ {lager_console_backend, [{level, {{ .Values.global.log_level | default "info" }} }] } ]},
             %% What colors to use with what log levels
             {colored, true},
             {colors, [

@@ -10,6 +10,7 @@ global:
   imagePullPolicy: "IfNotPresent"
   # If specified, use these secrets to access the images, this can be used on mCloud.
   # imagePullSecrets:
+  #   - corezoid-secret
   #   - ecr-registry
   #   - gitlab-registry
   repotype: "public"
@@ -18,8 +19,8 @@ global:
   useCentos8: false
   # Ingress annotations
   ingress:
-    annotations:
-      kubernetes.io/ingress.class: "nginx"
+    enabled: true
+    className: "nginx"
 
 #      kubernetes.io/ingress.class: alb
 #      alb.ingress.kubernetes.io/scheme: internet-facing
@@ -101,10 +102,9 @@ global:
       ## password - for dbsuperuser
       dbsuperuserpwd: "Corezoid1234!b"
       data:
-        #dbhost: "postgresql.postgresql.svc.cluster.local"
         dbhost: "pg-postgresql" # if internal=true
         dbport: "5432"
-        dbuser: "internal_user"
+        dbuser: "dbuser"
         dbpwd: "8hhgasdgiufghrtrnr4"
         dbuser_fdw: "fdw_user"
         dbpwd_fdw: "fdw_user_passwd123"
@@ -177,8 +177,8 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "5.10.0.4"
-      db_schema_rds: true  # if RDS base then set to true, if standard PostgreSQL then false
+      version: "6.0.0"
+      db_schema_rds: false  # ATTENTION! if RDS base OR if external PostgreSQL(on external server) then set to true, if internal in namespase PostgreSQL then false
 
     rotation:
       ## enabled: true or false
@@ -194,12 +194,12 @@ global:
   redis:
     # if internal true - create and use internal k8s redis container
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
-    internal: false
+    internal: true
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
     sentinel:
-      enable: true
+      enable: false
       master_name: "mymaster"
     secret:
       ## true - secret will be created automatically with provided values
@@ -208,27 +208,27 @@ global:
       name: "redis-secret"
       # you can specify different servers for redis for counters, cache and timers  - or specify the same server in variables
       data:
-        host: "redis-sentinel.redis-sentinel.svc.cluster.local"
-        port: "26379"
+        host: "redis-master"
+        port: "6379"
         password: "redispassword"
         # default redis for cache
-        host_cache: "redis-sentinel.redis-sentinel.svc.cluster.local"
-        port_cache: "26379"
+        host_cache: "redis-master"
+        port_cache: "6379"
         password_cache: "redispassword"
         # default redis for timers
-        host_timers: "redis-sentinel.redis-sentinel.svc.cluster.local"
-        port_timers: "26379"
+        host_timers: "redis-master"
+        port_timers: "6379"
         password_timers: "redispassword"
 
 
 
   #######  Elasticsearch  ########
-  ## Supported version 7.17.*
+  ## Supported version 8.6.0
   elasticsearch:
-    tag: "7.17.5"
+    tag: "8.6.0"
     # if internal true - create and use internal elasticsearch container
     # if internal false - enable external elasticsearch, like aws elasticsearch service
-    internal: false
+    internal: true
     ## secret configuration for elasticsearch
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -236,8 +236,7 @@ global:
       create: true
       name: "elasticsearch-secret"
       data:
-        host: "elasticsearch-service.elasticsearch.svc.cluster.local"
-        #host: "elasticsearch-service" # if internal=true
+        host: "elasticsearch-service"  # if internal=true
         ## be careful with port - in internal install used 9200, in aws uses 443
         port: "9200"
         schema: "http"
@@ -253,7 +252,7 @@ global:
   mq:
     # if internal true - create and use internal rmq container
     # if internal false - enable external rmq (on aws ec2 instances as example)
-    internal: false
+    internal: true
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values
@@ -261,8 +260,7 @@ global:
       create: true
       name: "rabbitmq-secret"
       data:
-        host: "rabbitmq.rabbitmq.svc.cluster.local"
-#        host: "rabbit-service" # if internal=true
+        host: "rabbit-service" # if internal=true
         port: "5672"
         vhost: "/conveyor"
         username: "rabbituser"
@@ -271,10 +269,10 @@ global:
     memoryHighWatermark: 0.3
 
   ########  Settings for Corezoid services  ########
-  use_limits_from_server: false
+  use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "7.12.0.2"
+    tag: "8.0.0.3"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -304,6 +302,9 @@ global:
     # User requests per second limits
     user_limits_interface: "120"  # other requests (anything that is not create/modify task)
     user_limits_max_user_rate: "100" # RPS in the environment
+
+    #Password hash algorithm
+#    password_salt_algo: sha512
 
     # SAML SSO configuration for multiple IdP
     saml_idp:
@@ -361,7 +362,9 @@ global:
     # cookie expire time in sec (default 900)
     cookie_expr_time: 7200
     # For create company. We recommend using corezoid_internal for the new installation, if the old installation then use only mapi
-    companies_manager: "mapi"
+    companies_manager: "corezoid_internal"
+    # If `fs` gets a license from a file, if `db` gets a license from a database. For new installation use only db
+    licensepath: "fs"
     ## Setting for configure frontend
     front_setting:
       # documentation (navigate by clicking on DOCS link)
@@ -442,7 +445,7 @@ global:
 
   # http-worker
   http:
-    tag: "3.11.0.2"
+    tag: "4.0.0.2"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -493,7 +496,7 @@ global:
 
   # usercode
   usercode:
-    tag: "7.4.0"
+    tag: "8.0.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -533,7 +536,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "4.11.0.1"
+    tag: "5.0.0.3"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -571,7 +574,7 @@ global:
 
   # mult
   mult:
-    tag: "2.11.0.1"
+    tag: "3.0.0.2"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -585,7 +588,7 @@ global:
     resources:
       limits:
         cpu: 4
-        memory: 4000Mi
+        memory: 2000Mi
       requests:
         cpu: 1
         memory: 500Mi
@@ -616,7 +619,7 @@ global:
 
   # webadm
   webadm:
-    tag: "5.11.0"
+    tag: "6.0.0"
     minReplicas: 1
     resources:
       limits:
@@ -650,7 +653,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-public"
-    tag: "2.3.6"
+    tag: "3.0.1"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
@@ -685,8 +688,9 @@ global:
   #                    - syncapi
   #            topologyKey: failure-domain.beta.kubernetes.io/zone
 
-  # merchant
+  # merchant (deprecated)
   merchant:
+    enabled: false
     tag: "v0.0.27.3"
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -750,7 +754,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "1.9.1"
+    tag: "2.0.2"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -785,12 +789,12 @@ global:
 
   # web-superadm
   web_superadm:
-    tag: "1.7.1"
+    tag: "2.0.1"
     subdomain: "superadm-k8s-public"
     minReplicas: 1
 
   limits:
-    tag: "1.4.1"
+    tag: "2.0.1"
     minReplicas: 2
 
   prometheus_metrics: false
@@ -825,4 +829,3 @@ global:
       interval: daily
       # number of rotation
       copies: 7
-

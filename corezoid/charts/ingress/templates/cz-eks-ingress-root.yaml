@@ -1,11 +1,10 @@
+{{- if .Values.global.ingress.enabled -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.appName }}-{{ .Release.Namespace }}
-{{- if .Values.global.ingress.annotations }}
+  name: {{ .Values.appName }}-root-{{ .Release.Namespace }}
   annotations:
-{{ toYaml .Values.global.ingress.annotations | indent 4 }}
-{{- end }}
+    {{- include "corezoid-root.ingressAnnotations" . | nindent 4 }}
   labels:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
@@ -14,69 +13,6 @@ spec:
     - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
       http:
         paths:
-          - path: /api/2/upload
-            pathType: Prefix
-            backend:
-              service:
-                name: mult-service-node
-                port:
-                  number: 9082
-          - path: /api/2/copy
-            pathType: Prefix
-            backend:
-              service:
-                name: mult-service-node
-                port:
-                  number: 9082
-          - path: /user_downloads
-            pathType: Prefix
-            backend:
-              service:
-                name: mult-service-node
-                port:
-                  number: 9082
-          - path: /api/2/download
-            pathType: Prefix
-            backend:
-              service:
-                name: mult-service-node
-                port:
-                  number: 9082
-          - path: /api/2/compare
-            pathType: Prefix
-            backend:
-              service:
-                name: mult-service-node
-                port:
-                  number: 9082
-          - path: /api/2/merge
-            pathType: Prefix
-            backend:
-              service:
-                name: mult-service-node
-                port:
-                  number: 9082
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: capi-service-node
-                port:
-                  number: 9080
-          - path: /auth
-            pathType: Prefix
-            backend:
-              service:
-                name: capi-service-node
-                port:
-                  number: 9080
-          - path: /system
-            pathType: Prefix
-            backend:
-              service:
-                name: capi-service-node
-                port:
-                  number: 9080
           - path: /
             pathType: Prefix
             backend:
@@ -84,7 +20,6 @@ spec:
                 name: corezoid-web-adm
                 port:
                   number: 80
-
     - host: {{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
       http:
         paths:
@@ -143,3 +78,4 @@ spec:
       {{- end }}
       secretName: tls-{{ .Values.appName }}-{{ .Release.Namespace }}
   {{- end }}
+{{- end -}}

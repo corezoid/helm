@@ -1,5 +1,24 @@
 ## Changelog
 
+### Chart 0.22.0 [ Corezoid 6.0.0 ]
+- Starting from version 6.0, Corezoid uses a new license. When upgrading to Corezoid 6.0 or newer from an older version you must use a new license file for Corezoid (Before upgrading, request a new license file).
+- Erlang was updated to version 24.3 for Corezoid components, increasing data exchange speed between components; 
+- Group owners can now transfer ownership of their user groups. 
+- All newly created API Call nodes will be called API Call v2. The new API Call version will allow users to specify custom Content-type for any data format selected 
+- The current progress will now be displayed when copying large objects in the main menu 
+- Updated alpine version to 3.17 
+- Redesigned ingress to fine-tune annotations for headers  
+  If you have ingress `enabled: true` in `values.yaml` then, before updating, you need to delete the old ingress in your Corezoid namespace (instead of it there will be new separate ingresses)
+- Elasticsearch was updated to version 8.6.0  
+   After updating Elasticsearch, when the new Elasticsearch starts up, you need to go to one of the capi pods.  
+   Go to remote_console  
+   `/ebsmnt/erlang/capi/bin/capi remote_console`  
+   Execute without interrupting commands:  
+   `capi_elasticsearch:migrate().`  
+   It is enough to perform these actions on one capi pod  
+- Added disable merchant-api  
+   You no longer need to use the merchant-api application to create companies in Corezoid 6.0.0. It is enough to set the `companies_manager: "corezoid_internal"` flag in values.yaml and disable the merchant-api for the creation of companies to work.
+
 ### Chart 0.21.6 [ Corezoid 5.11.0 ]
 - The “conv_title” method was removed from Corezoid API 
 - The Aliases tab was moved to the Folders section of the workspace menu 

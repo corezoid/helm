@@ -19,8 +19,15 @@ data:
         ]},
 
         {corezoid_license_client, [
-          {path_to_license, "/ebsmnt/certs/corezoid_license"}
-        ]},
+           {driver, "{{ .Values.global.capi.licensepath | default "db" }}" },
+           {pgsql, [
+               {host, "${POSTGRES_DBHOST}"},
+               {user, "${POSTGRES_DBUSER}"},
+               {dbname, "settings"},
+               {password, "${POSTGRES_DBPWD}"}
+           ]},
+           {path_to_license, "/ebsmnt/certs/corezoid_license"}
+         ]},
 
       {ermql, [
 
@@ -142,7 +149,7 @@ data:
         {corezoid_queues_gc, [
           {disabled, false},
           {{- if eq .Values.global.mq.internal false }}
-           {host, "${MQ_HOST}"},
+          {host, "${MQ_HOST}"},
           {port, 15672},
           {login, "${MQ_USERNAME}"},
           {password, "${MQ_PASSWORD}"},
@@ -153,7 +160,11 @@ data:
           {password, "${MQ_PASSWORD}"},
           {{- end }}
           {vhost, "${MQ_VHOST}"},
-          {gc_queues_regexp, ["mult.ctrl", "settings.conveyor_api_multipart"]}
+          {gc_queues_regexp, [
+              "mult.ctrl", "settings",
+              "conf_agent_client_queue_conveyor_api_multipart", "ermql_license_distributor_request_conveyor_api_multipart",
+              "mw_component_version_client_queue_conveyor_api_multipart"
+          ]}
         ]},
 
         {enigma, [
@@ -414,7 +425,7 @@ data:
         [
           %% What handlers to install with what arguments (wrapped by middleman)
           {log_root, "/ebsmnt/erlang/conveyor_api_multipart/log"},
-          {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
+          {handlers, [ {lager_console_backend, [{level, {{ .Values.global.log_level | default "info" }} }] } ]},
 
           %% What colors to use with what log levels
           {colored, true},

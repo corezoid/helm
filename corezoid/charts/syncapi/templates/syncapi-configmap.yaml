@@ -17,6 +17,17 @@ data:
         {port, 9100}
       ]},
 
+      {corezoid_license_client, [
+         {driver, "{{ .Values.global.capi.licensepath | default "db" }}" },
+         {pgsql, [
+             {host, "${POSTGRES_DBHOST}"},
+             {user, "${POSTGRES_DBUSER}"},
+             {dbname, "settings"},
+             {password, "${POSTGRES_DBPWD}"}
+         ]},
+         {path_to_license, "/ebsmnt/certs/corezoid_license"}
+       ]},
+
       {{- if eq .Values.global.redis.sentinel.enable true }}
       {redis_sentinel, [
             {servers, [
@@ -53,6 +64,25 @@ data:
           {{- end }}
   {{- end }}
               {database, 10}
+          ]}
+      ]},
+
+      {corezoid_queues_gc, [
+          {disabled, false},
+          {{- if eq .Values.global.mq.internal false }}
+          {host, "${MQ_HOST}"},
+          {port, 15672 },
+          {login, "${MQ_USERNAME}"},
+          {password, "${MQ_PASSWORD}"},
+          {{- else }}
+          {host, "rabbit-service"},
+          {port, 15672},
+          {login, "${MQ_USERNAME}"},
+          {password, "${MQ_PASSWORD}"},
+          {{- end }}
+          {vhost, "${MQ_VHOST}"},
+          {gc_queues_regexp, [
+              "conf_agent_client_queue_corezoid_api_sync", "mw_component_version_client_queue_corezoid_api_sync"
           ]}
       ]},
 
@@ -131,7 +161,7 @@ data:
       {lager, [
         %% What handlers to install with what arguments
         {log_root, "/ebsmnt/erlang/corezoid_api_sync/log"},
-        {handlers, [ {lager_console_backend, {{ .Values.global.log_level | default "info" }} } ]},
+        {handlers, [ {lager_console_backend, [{level, {{ .Values.global.log_level | default "info" }} }] } ]},
         {extra_sinks,
                 [
                 {error_logger_lager_event,

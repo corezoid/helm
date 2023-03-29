@@ -1,3 +1,4 @@
+{{- if eq .Values.global.merchant.enabled true }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -18,3 +19,4 @@ spec:
     name: managment
     port: 7980
     targetPort: 7980
+  {{- end }}

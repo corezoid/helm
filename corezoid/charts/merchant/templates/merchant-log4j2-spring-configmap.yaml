@@ -1,3 +1,4 @@
+{{- if eq .Values.global.merchant.enabled true }}
 apiVersion: v1
 data:
   log4j2-spring.xml: |
@@ -46,3 +47,4 @@ data:
 kind: ConfigMap
 metadata:
   name: {{ .Values.appName }}-log4j2-spring
+  {{- end }}

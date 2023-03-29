@@ -39,22 +39,26 @@ spec:
               value: single-node
             - name: ES_JAVA_OPTS
               value: "-Xmx1g -Xms1g -Dlog4j2.formatMsgNoLookups=true"
+            - name: xpack.security.enabled
+              value: "false"
+            - name: action.auto_create_index
+              value: "false"
           ports:
             - name: es
               protocol: TCP
               containerPort: 9200
           resources:
             requests:
-              cpu: 500m
+              cpu: 1000m
               memory: 1Gi
             limits:
-              cpu: 500m
+              cpu: 1000m
               memory: 2Gi
           readinessProbe:
             httpGet:
               path: /_cluster/health
               port: 9200
-            initialDelaySeconds: 15
+            initialDelaySeconds: 20
           livenessProbe:
             httpGet:
               path: /_cluster/health?local=true
