@@ -211,14 +211,14 @@ global:
         host: "redis-master"
         port: "6379"
         password: "redispassword"
-        # default redis for cache
-        host_cache: "redis-master"
-        port_cache: "6379"
-        password_cache: "redispassword"
-        # default redis for timers
-        host_timers: "redis-master"
-        port_timers: "6379"
-        password_timers: "redispassword"
+        # redis for cache (defaults to above redis values if empty ^)
+        host_cache: ""
+        port_cache: ""
+        password_cache: ""
+        # redis for timers (defaults to above redis values if empty ^)
+        host_timers: ""
+        port_timers: ""
+        password_timers: ""
 
 
 
