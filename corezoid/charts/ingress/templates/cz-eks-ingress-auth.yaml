@@ -9,6 +9,7 @@ metadata:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
+  {{- include "ingress.className" . | nindent 2 }}
   rules:
     - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
       http:
