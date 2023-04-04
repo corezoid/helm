@@ -67,3 +67,30 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 
 
 
+# redis
+
+## cache
+{{- define "redis.host_cache" -}}
+{{- .Values.global.redis.secret.data.host_cache | default .Values.global.redis.secret.data.host -}}
+{{- end -}}
+
+{{- define "redis.port_cache" -}}
+{{- .Values.global.redis.secret.data.port_cache | default .Values.global.redis.secret.data.port -}}
+{{- end -}}
+
+{{- define "redis.password_cache" -}}
+{{- .Values.global.redis.secret.data.password_cache | default .Values.global.redis.secret.data.password -}}
+{{- end -}}
+
+## timers
+{{- define "redis.host_timers" -}}
+{{- .Values.global.redis.secret.data.host_timers | default .Values.global.redis.secret.data.host -}}
+{{- end -}}
+
+{{- define "redis.port_timers" -}}
+{{- .Values.global.redis.secret.data.port_timers | default .Values.global.redis.secret.data.port -}}
+{{- end -}}
+
+{{- define "redis.password_timers" -}}
+{{- .Values.global.redis.secret.data.password_timers | default .Values.global.redis.secret.data.password -}}
+{{- end -}}
