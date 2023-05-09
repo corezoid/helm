@@ -272,7 +272,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.0.0.3"
+    tag: "8.0.0.6"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -445,7 +445,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.0.0.2"
+    tag: "4.0.0.3"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -574,7 +574,7 @@ global:
 
   # mult
   mult:
-    tag: "3.0.0.2"
+    tag: "3.0.0.3"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
