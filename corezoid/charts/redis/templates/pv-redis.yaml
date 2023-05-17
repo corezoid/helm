@@ -1,0 +1,25 @@
+{{- if  eq .Values.global.storage "manual" }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.appName }}-{{ .Values.global.storage}}-{{ .Release.Name }}
+  labels:
+{{- include "redis.labels" . | nindent 4 }}
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ .Values.global.storageClassName }}
+  {{- if eq .Values.global.efs.enabled true }}
+  claimRef:
+    name: {{ .Values.global.redis.persistantVolumeClaimName }}
+    namespace: {{ .Release.Namespace }}
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: {{ .Values.global.efs.efsFileSystemId }}
+  {{- end }}
+{{- end }}

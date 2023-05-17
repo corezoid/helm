@@ -1,0 +1,16 @@
+{{- if eq .Values.global.redis.internal true }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.appName }}-master
+  labels:
+{{- include "redis.labels" . | nindent 4 }}
+    role: master
+spec:
+  ports:
+  - port: {{ .Values.appPort }}
+    targetPort: {{ .Values.appPort }}
+  selector:
+{{- include "redis.labels" . | nindent 4 }}
+    role: master
+{{- end }}

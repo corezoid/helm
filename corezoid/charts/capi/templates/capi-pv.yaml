@@ -1,4 +1,4 @@
-{{- if  eq .Values.global.storage "manual" }}
+{{- if eq .Values.global.storage "manual" }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -8,11 +8,11 @@ metadata:
 spec:
   storageClassName: {{ .Values.global.storageClassName }}
   capacity:
-    storage: 1Gi
+    storage: 100Mi
   volumeMode: Filesystem
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   persistentVolumeReclaimPolicy: Delete
   hostPath:
-    path: /ebsmnt/{{ .Release.Name }}/{{ .Values.appName }}
+    path: /ebsmnt/conf/auth_providers
 {{- end }}

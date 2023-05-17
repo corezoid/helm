@@ -27,15 +27,43 @@ And move downloaded file to ./templates folder with name GoogleIDPMetadata.xml f
 Don’t forget to enable service (mobileapp) on User access menu - enable status service: enable for all  
 
 
+#### SAML auth_providers:
+
+In this release, the `auth_providers` parameter has been moved to separate configuration files. The following additions have been made to `values.yaml`:  
+- `auth_providers_enable`: Previously responsible for enabling SAML, this parameter now controls Corezoid authentication (login/pass).  
+- `auth_providers_saml_enable`: Enables or disables the SAML provider.  
+- `sp_entity_id`: Requires a value that was previously in the `capi` config (in the `capi` pod, the config can be found at `/ebsmnt/conf/capi.config.2.config`).  
+- `persistentVolumeClaimName`: Specifies the location for the `auth_providers` config files.  
+- `persistentVolumeClaimCreate`: Specifies the location for the `auth_providers` config files.  
+
+
+The `auth_providers_enable` and `auth_providers_saml_enable` parameters can be enabled separately or together. To install providers for each company during an update, enable the provider that was previously active in the environment and disable the other one. By default, two config files are created, and their management (enabling and disabling) is only possible through `helm upgrade`. These configs cannot be managed via the UI.
+You can add separate new SAML providers via the UI. Management (enabling, disabling, editing) of providers newly added via the UI can be done in the UI itself.
+
+
 #### Enabling Enigma encryption:  
 - See [ENIGMA.md](ENIGMA.md)  
 
 #### Dependencies:  
-#####Testing on Kubernetes version 1.22 and helm v3  
+#####Testing on Kubernetes version 1.26 and helm v3  
 #####Supported stateful versions:  
 - Postgresql 13.3  
-- Redis 3.2  
+- Redis 7.0.8  
 - Elasticsearch 8.6.0
-- RabbitMQ 3.9  
+- RabbitMQ 3.8/3.9  
+
+### SYSTEM REQUIREMENTS:
+
+#### Recommended minimum system requirements for a cluster:
+- 3 instances with 4 CPUs and 8GB RAM
+
+#### Recommended system requirements for a PROD cluster:
+- 3 to 5+ instances with 8 CPUs and 16GB RAM
+
+#### Recommendations for backend applications (PostgreSQL, RabbitMQ, Redis, Elasticsearch):
+- For deployments on test (introductory) environments, Corezoid can be run with the internal:true flag, and the application backend can be hosted within the cluster
+- For production environments, we recommend moving all application backend components to separate servers outside the cluster.
+
+
 ---
 

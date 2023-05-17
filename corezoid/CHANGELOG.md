@@ -1,5 +1,11 @@
 ## Changelog
 
+### Chart 0.22.2 [ Corezoid 6.1.0 ]
+
+- For each Multitenant environment, the ability to assign SAML providers for each Tenant has been added (if you have used SAML before, we recommend reading SAML auth_providers in the README file)
+- Starting from Corezoid version 6.1, support for Redis 7.0 has been added
+
+
 ### Chart 0.22.0 [ Corezoid 6.0.0 ]
 - Starting from version 6.0, Corezoid uses a new license. When upgrading to Corezoid 6.0 or newer from an older version you must use a new license file for Corezoid (Before upgrading, request a new license file).
 - Erlang was updated to version 24.3 for Corezoid components, increasing data exchange speed between components; 

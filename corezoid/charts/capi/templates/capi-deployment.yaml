@@ -276,12 +276,25 @@ spec:
           - containerPort: {{ .Values.containers.containerPort }}
           - containerPort: 8585
           volumeMounts:
-            {{- if eq .Values.global.capi.auth_providers_enable true }}
+            {{- if eq .Values.global.capi.auth_providers_saml_enable true }}
             {{- range $k, $v := $.Values.global.capi.saml_idp }}
             - name: {{ $.Values.global.capi.capi_saml_secret_name }}
-              mountPath: /ebsmnt/conf/{{ $k }}_metadata.xml
-              subPath: {{ $k }}_metadata.xml
+              mountPath: /ebsmnt/conf/auth_providers/support_metadata.xml
+              subPath: support_metadata.xml
             {{- end }}
+            {{- end }}
+            {{- if .Values.global.capi.persistantVolumeClaimCreate }}
+            - name: {{ .Values.appName }}-claim
+              mountPath: /ebsmnt/conf/auth_providers
+              readOnly: false
+            - name: corezoidauth-config-file
+              mountPath: /ebsmnt/conf/auth_providers/corezoid_auth.config
+              subPath: corezoid_auth.config
+              readOnly: false
+            - name: corezoidauth-config-file
+              mountPath: /ebsmnt/conf/auth_providers/support_auth.config
+              subPath: support_auth.config
+              readOnly: false
             {{- end }}
             - name: {{ .Values.appName }}config
               mountPath: /ebsmnt/conf/capi.config
@@ -326,6 +339,7 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
+            runAsGroup: 1000
             capabilities:
               add: ["IPC_LOCK"]
 {{- if .Values.global.imagePullSecrets }}
@@ -341,10 +355,14 @@ spec:
         - name: {{ .Values.appName }}-config-vm
           configMap:
             name: {{ .Values.appName }}-config-vm
+        - name: corezoidauth-config-file
+          configMap:
+            name: corezoidauth-config-file
+#            defaultMode: 511
         - name: corezoid-license
           secret:
             secretName: {{ .Values.global.licenseSecretName | default "license-share-new" }}
-        {{- if eq .Values.global.capi.auth_providers_enable true }}
+        {{- if eq .Values.global.capi.auth_providers_saml_enable true }}
         - name: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret" }}
           secret:
             secretName: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret" }}
@@ -354,8 +372,15 @@ spec:
             secretName: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret" }}
           {{- end }}
         {{- end }}
+        {{- if .Values.global.capi.persistantVolumeClaimCreate }}
+        - name: {{ .Values.appName }}-claim
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.capi.persistantVolumeClaimName }}
+            readOnly: false
+        {{- end }}
         {{- if .Values.global.store_dumps.enabled }}
         - name: dumps-volume
           hostPath:
             path: /var/dumps
         {{- end }}
+

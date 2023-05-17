@@ -1,0 +1,19 @@
+{{- if .Values.global.mult.persistantVolumeClaimCreate }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Values.global.capi.persistantVolumeClaimName }}
+{{- if eq .Values.global.storage "efs" }}
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{ .Values.global.storageClassName }}
+{{- end }}
+  labels:
+    tier: {{ .Values.appName }}
+spec:
+  storageClassName: {{ .Values.global.storageClassName }}
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi
+{{- end }}
