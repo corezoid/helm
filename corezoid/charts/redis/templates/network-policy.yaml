@@ -1,0 +1,40 @@
+{{- if .Values.global.networkPolicy.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Values.appName }}-policy
+  labels:
+{{- include "redis.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      tier: {{ .Values.appName }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: server
+
+        - podSelector:
+            matchLabels:
+              tier: cron
+
+        - podSelector:
+            matchLabels:
+              tier: realtime
+
+        - namespaceSelector:
+            matchLabels:
+              {{ .Values.global.networkPolicy.labelsSelector.monitoring.namespaceSelector | toYaml }}
+
+        - podSelector:
+            matchLabels:
+              {{ .Values.global.networkPolicy.labelsSelector.monitoring.podSelector | toYaml }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.appPort }}
+{{- end}}

@@ -1,8 +1,8 @@
 global:
   # second level domain only! / core domain (example: corezoid.com)
-  domain: "devops.corezoid.com"
+  domain: "dev-devops.corezoid.com"
   # subdomain / sitename - dev.mpo.corezoid.com (example: dev.mpo)
-  subdomain: "corezoid-k8s-public"
+  subdomain: "corezoid-k8s"
 
   # docker image registry
   imageRegistry: "docker-hub.middleware.biz"
@@ -20,7 +20,7 @@ global:
   # Ingress annotations
   ingress:
     enabled: true
-    className: "nginx"
+    className: "private-nginx"
 
 #      kubernetes.io/ingress.class: alb
 #      alb.ingress.kubernetes.io/scheme: internet-facing
@@ -44,7 +44,7 @@ global:
   ######## Settings AWS EFS filesystem   ########
   efs:
     awsRegion: "eu-west-1"
-    efsFileSystemId: "fs-3de75409"
+    efsFileSystemId: "fs-00b8a4b9489e767a1"
     ## set true if you choose storage: efs
     enabled: false
   ######## Settings NFS filesystem   ########
@@ -102,7 +102,7 @@ global:
       ## password - for dbsuperuser
       dbsuperuserpwd: "Corezoid1234!b"
       data:
-        dbhost: "pg-postgresql" # if internal=true
+        dbhost: "pg-postgresql"
         dbport: "5432"
         dbuser: "dbuser"
         dbpwd: "8hhgasdgiufghrtrnr4"
@@ -177,7 +177,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.0.0"
+      version: "6.1.0"
       db_schema_rds: false  # ATTENTION! if RDS base OR if external PostgreSQL(on external server) then set to true, if internal in namespase PostgreSQL then false
 
     rotation:
@@ -210,7 +210,7 @@ global:
       data:
         host: "redis-master"
         port: "6379"
-        password: "redispassword"
+        password: ""
         # redis for cache (defaults to above redis values if empty ^)
         host_cache: ""
         port_cache: ""
@@ -236,7 +236,7 @@ global:
       create: true
       name: "elasticsearch-secret"
       data:
-        host: "elasticsearch-service"  # if internal=true
+        host: "elasticsearch-service"
         ## be careful with port - in internal install used 9200, in aws uses 443
         port: "9200"
         schema: "http"
@@ -260,7 +260,7 @@ global:
       create: true
       name: "rabbitmq-secret"
       data:
-        host: "rabbit-service" # if internal=true
+        host: "rabbit-service"
         port: "5672"
         vhost: "/conveyor"
         username: "rabbituser"
@@ -272,7 +272,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.0.0.3"
+    tag: "8.1.0.6"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -292,11 +292,17 @@ global:
       allowed_domains:
         - "gmail.com"
         - "yahoo.com"
-    check_2fa: true
+    check_2fa: false
     # Enable cookie secure for api
     secure: true
+    ## pvc name if it already exist or was created manualy
+    persistantVolumeClaimName: "capi-pvc"
+    ## true if pvc for capi should be created automaticaly
+    ## false if you already have pvc
+    persistantVolumeClaimCreate: true
     # Auth provider
     auth_providers_enable: false
+    auth_providers_saml_enable: false
     capi_saml_secret_name: "capi-saml-secret"
 
     # User requests per second limits
@@ -329,6 +335,7 @@ global:
         idp_signs_envelopes: false
         idp_signs_assertions: true
         idp_signs_metadata: false
+        sp_entity_id: "support"
         sp_consume_url: "/auth2/saml/support/return"
         # IdP SAML Metadata file content for SSO authentication
         auth_metadata_content:
@@ -337,7 +344,7 @@ global:
           .................
           </EntityDescriptor>
 
-    # Сaptcha when login in UI enable/disable
+    # Captcha when login in UI enable/disable
     capi_front_captcha_disabled: true
     # after fail  login_attempts show capcha or block ( can choose in superadmin )
     login_attempts: "2"
@@ -445,7 +452,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.0.0.2"
+    tag: "4.0.1.0"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -496,14 +503,14 @@ global:
 
   # usercode
   usercode:
-    tag: "8.0.1"
+    tag: "8.0.3"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
     resources:
       limits:
-        cpu: 4
-        memory: 2000Mi
+        cpu: 2
+        memory: 1000Mi
       requests:
         cpu: 1
         memory: 1000Mi
@@ -536,7 +543,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "5.0.0.3"
+    tag: "5.0.1.0"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -574,7 +581,7 @@ global:
 
   # mult
   mult:
-    tag: "3.0.0.2"
+    tag: "3.1.0.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -619,7 +626,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.0.0"
+    tag: "6.1.0"
     minReplicas: 1
     resources:
       limits:
@@ -652,8 +659,8 @@ global:
 
   # syncapi
   syncapi:
-    subdomain: "syncapi-k8s-public"
-    tag: "3.0.1"
+    subdomain: "syncapi-k8s"
+    tag: "3.0.2"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
@@ -754,7 +761,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "2.0.2"
+    tag: "2.1.0"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -789,12 +796,12 @@ global:
 
   # web-superadm
   web_superadm:
-    tag: "2.0.1"
-    subdomain: "superadm-k8s-public"
+    tag: "2.1.0"
+    subdomain: "superadm-k8s"
     minReplicas: 1
 
   limits:
-    tag: "2.0.1"
+    tag: "2.0.2"
     minReplicas: 2
 
   prometheus_metrics: false

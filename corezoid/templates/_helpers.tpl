@@ -66,6 +66,13 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 {{- end -}}
 
 
+{{/*
+  Create application name label.
+  */}}
+{{- define "corezoid.appLabels" -}}
+app: {{ .Values.global.product | quote }}
+{{- end }}
+
 
 # redis
 

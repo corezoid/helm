@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: corezoidauth-config-file
+data:
+  corezoid_auth.config: |
+    %% -*- mode: erlang;  -*-
+    {corezoid, [
+        {type, corezoid_auth},
+        {name, "Corezoid Auth Internal"},
+        {enabled, {{ $.Values.global.capi.auth_providers_enable}} },
+        {show, true},
+        {login_path, "/auth/corezoid/auth"}
+    ]}.
+  support_auth.config: |
+    %% -*- mode: erlang;  -*-
+    {support, [
+        {type, saml},
+        {enabled, {{ $.Values.global.capi.auth_providers_saml_enable }} },
+        {show, {{ $.Values.global.capi.saml_idp.support.front_button_show | default false }}},
+        {name, "{{ $.Values.global.capi.saml_idp.support.name }}"},
+        {login_path, "{{ $.Values.global.capi.saml_idp.support.login_path }}"},
+        {icon_url, "{{ $.Values.global.capi.saml_idp.support.icon_url }}"},
+        {idp_metadata, "/ebsmnt/conf/auth_providers/support_metadata.xml"},
+        {idp_signs_envelopes, {{ $.Values.global.capi.saml_idp.support.idp_signs_envelopes }}},
+        {idp_signs_assertions, {{ $.Values.global.capi.saml_idp.support.idp_signs_assertions }}},
+        {idp_signs_metadata, {{ $.Values.global.capi.saml_idp.support.idp_signs_metadata }}},
+        {sp_entity_id, "{{ $.Values.global.capi.saml_idp.support.sp_entity_id }}.{{ $.Values.global.subdomain}}.{{ $.Values.global.domain }}"},
+        {sp_consume_url, "https://{{ $.Values.global.subdomain}}.{{ $.Values.global.domain }}{{ $.Values.global.capi.saml_idp.support.sp_consume_url }}"},
+        {userinfo_map, [
+          {id, subject},
+          {email, subject},
+          {name, [first_name, last_name]}
+        ]}
+    ]}.

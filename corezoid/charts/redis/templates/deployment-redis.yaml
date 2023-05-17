@@ -1,0 +1,76 @@
+{{- if eq .Values.global.redis.internal true }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}-master
+  labels:
+{{- include "redis.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+{{- include "redis.labels" . | nindent 6 }}
+      role: master
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-redis.yaml") . | sha256sum }}
+      labels:
+{{- include "redis.labels" . | nindent 8 }}
+        role: master
+    spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range $pullSecret := .Values.global.imagePullSecrets }}
+        - name: {{ $pullSecret }}
+      {{- end }}
+      {{- end }}
+      serviceAccountName: ""
+      containers:
+      - name: master
+      {{- if .Values.global.arm64 }}
+        image: "{{ .Values.image.registry }}/public/arm64/redis:{{ .Values.image.tag }}"
+      {{- else }}
+        image: "{{ .Values.image.registry }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+      {{- end }}
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 300m
+            memory: 700Mi
+          requests:
+            cpu: 50m
+            memory: 600Mi
+        readinessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - "redis-cli -h localhost ping"
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - "redis-cli -h localhost ping"
+          initialDelaySeconds: 20
+          periodSeconds: 3
+        ports:
+        - containerPort: {{ .Values.appPort }}
+        volumeMounts:
+          - name: redisconfig
+            mountPath: /usr/local/etc/redis
+          - name: {{ .Values.appName }}-claim
+            mountPath: /ebsmnt/data
+      volumes:
+        - name: redisconfig
+          configMap:
+            name: {{ .Values.appName }}-config
+        - name: {{ .Values.appName }}-claim
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.redis.persistantVolumeClaimName }}
+            readOnly: false
+
+{{- end }}
