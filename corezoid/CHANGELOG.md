@@ -1,5 +1,10 @@
 ## Changelog
 
+### Chart 0.22.3 [ Corezoid 6.1.0 ]
+
+- Correcting typos in capi pvc and Chart Version
+
+
 ### Chart 0.22.2 [ Corezoid 6.1.0 ]
 
 - For each Multitenant environment, the ability to assign SAML providers for each Tenant has been added (if you have used SAML before, we recommend reading SAML auth_providers in the README file)
