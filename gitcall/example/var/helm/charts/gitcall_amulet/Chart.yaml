@@ -1,5 +1,0 @@
-apiVersion: v1
-appVersion: 1.0.4
-description: The Gitcall Amulet service provides post deployment tests
-name: gitcall_amulet
-version: 2.0.0

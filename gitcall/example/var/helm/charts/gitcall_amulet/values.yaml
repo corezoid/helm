@@ -1,9 +1,0 @@
-component_name: gitcall_amulet
-helm:
-  enabled: true
-  app: gitcall
-  tier: gitcall_amulet
-  chart:
-    version: "2.0.0"
-    description: "The Gitcall Amulet service provides post deployment tests"
-image: docker-hub.middleware.biz/public/gitcall/gitcall-amulet
