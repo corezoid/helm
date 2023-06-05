@@ -1,9 +1,0 @@
-component_name: kube_goodies
-helm:
-  enabled: true
-  app: "none"
-  tier: kube_goodies
-  global: true
-  chart:
-    version: "0.1.1"
-    description: The component provides generic stuff for deployment to k8s with helm.
