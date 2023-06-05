@@ -1,5 +1,10 @@
 ## Changelog
 
+### Chart 0.22.4 [ Corezoid 6.1.1 ]
+
+- bugfix in mult
+- changed section dbcall\gitcall in config capi\worker
+
 ### Chart 0.22.3 [ Corezoid 6.1.0 ]
 
 - Correcting typos in capi pvc and Chart Version
