@@ -558,7 +558,7 @@ global:
 
   # mult
   mult:
-    tag: "2.11.0.1"
+    tag: "2.11.0.2"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
