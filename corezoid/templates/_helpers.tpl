@@ -5,7 +5,9 @@ ingressClassName: {{ .Values.global.ingress.className }}
 {{- end -}}
 
 {{- define "corezoid-auth.ingressAnnotations" -}}
+{{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
+{{ end -}}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
       more_set_headers "Cache-Control: no-cache";
@@ -18,7 +20,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 
 
 {{- define "corezoid-root.ingressAnnotations" -}}
+{{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
+{{ end -}}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
@@ -33,7 +37,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 
 
 {{- define "corezoid-api.ingressAnnotations" -}}
+{{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
+{{ end -}}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
@@ -45,7 +51,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 
 
 {{- define "corezoid-api-2.ingressAnnotations" -}}
+{{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
+{{ end -}}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
@@ -55,7 +63,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 
 
 {{- define "corezoid-system.ingressAnnotations" -}}
+{{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
+{{ end -}}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
@@ -65,7 +75,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 
 
 {{- define "corezoid-user-download.ingressAnnotations" -}}
+{{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
+{{ end -}}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
