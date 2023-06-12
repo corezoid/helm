@@ -1,20 +1,19 @@
 ## Changelog
 
-### Chart 0.22.4 [ Corezoid 6.1.1 ]
+### Chart 0.22.5 [ Corezoid 6.2.0 ]
+- The new variables feature has been added. Variables are Stage objects in which you can store data in RAW and JSON formats.
+- Variables enable you to store certificates and use them in API Call nodes by calling a variable by ID or short name.
 
+### Chart 0.22.4 [ Corezoid 6.1.1 ]
 - bugfix in mult
 - changed section dbcall\gitcall in config capi\worker
 
 ### Chart 0.22.3 [ Corezoid 6.1.0 ]
-
 - Correcting typos in capi pvc and Chart Version
 
-
 ### Chart 0.22.2 [ Corezoid 6.1.0 ]
-
 - For each Multitenant environment, the ability to assign SAML providers for each Tenant has been added (if you have used SAML before, we recommend reading SAML auth_providers in the README file)
 - Starting from Corezoid version 6.1, support for Redis 7.0 has been added
-
 
 ### Chart 0.22.0 [ Corezoid 6.0.0 ]
 - Starting from version 6.0, Corezoid uses a new license. When upgrading to Corezoid 6.0 or newer from an older version you must use a new license file for Corezoid (Before upgrading, request a new license file).
