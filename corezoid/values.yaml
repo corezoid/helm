@@ -16,7 +16,7 @@ global:
   repotype: "public"
   product: "corezoid"
   centos8Repo: public-corezoid-centos8
-  useCentos8: false
+  useCentos8: true
   # Ingress annotations
   ingress:
     enabled: true
@@ -177,7 +177,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.1.0"
+      version: "6.2.0"
       db_schema_rds: false  # ATTENTION! if RDS base OR if external PostgreSQL(on external server) then set to true, if internal in namespase PostgreSQL then false
 
     rotation:
@@ -272,7 +272,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.1.0.6"
+    tag: "8.2.0.2"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -301,7 +301,7 @@ global:
     ## false if you already have pvc
     persistantVolumeClaimCreate: true
     # Auth provider
-    auth_providers_enable: false
+    auth_providers_enable: true
     auth_providers_saml_enable: false
     capi_saml_secret_name: "capi-saml-secret"
 
@@ -452,7 +452,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.0.1.0"
+    tag: "4.0.2.0"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -581,7 +581,7 @@ global:
 
   # mult
   mult:
-    tag: "3.1.0.1"
+    tag: "3.1.0.2"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -626,7 +626,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.1.0"
+    tag: "6.2.1"
     minReplicas: 1
     resources:
       limits:
@@ -749,15 +749,11 @@ global:
   gitcall:
     # true or false
     enabled: false
-    mq_vhost: "/gitcall"
-    dunder_mq_vhost: "/dundergitcall"
+    mq_vhost: "/conveyor"
+    dunder_mq_vhost: "/conveyor"
 
   dbcall:
     enabled: false
-    host: "dbcall-k8s-public.devops.corezoid.com"
-    schema: "https"
-
-
 
   # conf-agent-server
   conf_agent_server:

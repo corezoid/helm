@@ -135,9 +135,9 @@ data:
 
     {{- if eq .Values.global.dbcall.enabled true }}
           {mw_db_call, [
+              {version, 2},
               {enabled, true},
-              {db_call_host, "{{ .Values.global.dbcall.schema }}://{{ .Values.global.dbcall.host }}"},
-              {request_amqp, [
+              {request_amqp_v2, [
     {{- if eq .Values.global.mq.internal false }}
                 {host, <<"${MQ_HOST}">>},
                 {port, ${MQ_PORT}},
@@ -151,29 +151,8 @@ data:
                 {password, <<"${MQ_PASSWORD}">>},
                 {vhost, <<"${MQ_VHOST}">>},
     {{- end }}
-                {exchange, <<"db-call">>},
-                {is_durable_exchange, true},
-                {is_auto_delete_exchange, false},
-                {prefetch, 100},
-                {is_auto_delete_queue, false},
-                {is_durable_queue, true}
-              ]},
-              {response_amqp, [
-    {{- if eq .Values.global.mq.internal false }}
-                {host, <<"${MQ_HOST}">>},
-                {port, ${MQ_PORT}},
-                {username, <<"${MQ_USERNAME}">>},
-                {password, <<"${MQ_PASSWORD}">>},
-                {vhost, <<"${MQ_VHOST}">>}
-    {{- else }}
-                {host, <<"rabbit-service">>},
-                {port, 5672},
-                {username, <<"${MQ_USERNAME}">>},
-                {password, <<"${MQ_PASSWORD}">>},
-                {vhost, <<"${MQ_VHOST}">>}
-    {{- end }}
-              ]},
-              {response_queue, <<"mw_dunderdbcall_response_queue_">>}
+                {exchange, <<"">>}
+              ]}
           ]},
     {{- end }}
 
@@ -375,13 +354,16 @@ data:
                   {max_size, 50},
                   {database, 1}
             ]]},
-    {{- if .Values.global.gitcall.enabled }}
-                {components, [<<"git_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
-                {{- end }}
+        {{- if and .Values.global.dbcall.enabled .Values.global.gitcall.enabled }}
+                {components, [<<"git_call">>, <<"db_call">>]}, %% Enabling/disabling components. Used mostly by frontend
+                {{- else if and (not .Values.global.dbcall.enabled) (not .Values.global.gitcall.enabled) }}
+                %%{components, [<<"git_call">>, <<"db_call">>]}, %% Enabling/disabling components. Used mostly by frontend
+                {{- else if and (not .Values.global.dbcall.enabled) .Values.global.gitcall.enabled }}
+                {components, [<<"git_call">>]}, %% Enabling/disabling components. Used mostly by frontend
+                {{- else if and .Values.global.dbcall.enabled (not .Values.global.gitcall.enabled) }}
+                {components, [<<"db_call">>]}, %% Enabling/disabling components. Used mostly by frontend
+        {{- end }}
 
-                {{- if .Values.global.dbcall.enabled }}
-                {components, [<<"db_call">>]}, %% Enabling/disabling components. Uses mostly by frontend
-                {{- end }}
                 %% It must be changed to unique name for every api node. It's personal
                 %% queue where will come messages from others api nodes.
                 {api_id, <<"">>},
