@@ -249,7 +249,7 @@ data:
         ]},
 
         {corezoid_queues_gc, [
-          {disabled, false},
+          {enabled, true},
           {{- if eq .Values.global.mq.internal false }}
           {host, "${MQ_HOST}"},
           {port, 15672 },
