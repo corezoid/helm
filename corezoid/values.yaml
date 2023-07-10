@@ -22,7 +22,6 @@ global:
     enabled: true
     className: "private-nginx"
     annotations: {}
-
 #      kubernetes.io/ingress.class: alb
 #      alb.ingress.kubernetes.io/scheme: internet-facing
 #      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
