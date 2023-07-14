@@ -203,6 +203,7 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.mq.secret.name }}
                 key: password
+          {{- if eq .Values.global.merchant.enabled true }}
           - name: MERCHANT_LOGIN
             valueFrom:
               secretKeyRef:
@@ -213,6 +214,7 @@ spec:
               secretKeyRef:
                 name: merchant-secret
                 key: merchant_secret
+          {{- end }}
           - name: ELASTICSEARCH_HOST
             valueFrom:
               secretKeyRef:
