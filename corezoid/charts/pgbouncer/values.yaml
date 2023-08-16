@@ -2,7 +2,7 @@ appName: pgbouncer
 image:
   registry: docker-hub.middleware.biz
   repository: pgbouncer
-  tag: 1.17.0-alpine3.16-2
+  tag: 1.17.0-alpine3.18-2
 
 exporterImage:
   registry: docker-hub.middleware.biz

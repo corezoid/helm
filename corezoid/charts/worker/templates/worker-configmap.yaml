@@ -249,7 +249,7 @@ data:
 
       {enigma, [
         {is_enabled, {{ .Values.global.enigma.enabled }}},
-        {private_key_id, "{{ .Values.global.worker.enigma_pk_id }}"},
+        {private_key_id, "{{ .Values.global.enigma.key_manager.enigma_pk_id }}"},
         {key_manager_host, "http://enigma-key-manager-service:8080"},
         {rotors_pool, [
           {min_size, 3},
@@ -286,6 +286,11 @@ data:
         %% server id
         %% It's important to be unique
         { worker_id, <<"">> },
+    {{- if eq .Values.global.worker.worker_write_history_task false }}
+        {worker_write_history_task, false},
+    {{- else }}
+        {worker_write_history_task, true},
+    {{- end }}
         {prometheus_metrics, {{ .Values.global.prometheus_metrics | default false }}  },
         {use_limits_from_server, {{ .Values.global.use_limits_from_server | default false }}},
         {{- if .Values.global.enigma.encryption }}

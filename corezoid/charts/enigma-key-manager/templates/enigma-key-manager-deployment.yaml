@@ -24,13 +24,35 @@ spec:
         tier: {{ .Values.appName }}
     spec:
       terminationGracePeriodSeconds: 40
-      {{- if .Values.global.enigma.key_manager.aws_kms_role }}
-      serviceAccountName: enigma-kms-service
-      {{- end }}
       initContainers:
-        - name: init-wait
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
-          command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- end }} nc -zvw1 postgresql 5432 {{- if not .Values.global.db.internal }} && nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} {{- end }} ; do echo waiting for dependences; sleep 2; done;"]
+        - name: init-wait-postgres
+          image: docker-hub.middleware.biz/public/pgbouncer:1.17.0-alpine3.18-2
+          command: 
+            - sh
+            - -c
+            - |
+              export PGPASSWORD={{ .Values.global.db.secret.dbsuperuserpwd }}
+              cd /etc/pgbouncer/  
+              psql -h {{ .Values.global.db.secret.data.dbhost }} -U {{ .Values.global.db.secret.dbsuperuser }} -p {{ .Values.global.db.secret.data.dbport }} -d enigma -Atc '\dt' > 1
+              base=$(cat 1 | cut -c8-10| head -1)
+              if [[ "$base" == "cpk" ]]; then
+              echo "alredy create"
+              else
+              psql -h {{ .Values.global.db.secret.data.dbhost }} -U {{ .Values.global.db.secret.dbsuperuser }} -p {{ .Values.global.db.secret.data.dbport }} -d enigma -Atc '
+              CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+              CREATE TABLE cpk (
+                   id                     UUID PRIMARY KEY DEFAULT uuid_generate_v1(),
+                   master_key_id          VARCHAR(100) NOT NULL,
+                   encrypted_private_key  bytea NOT NULL,
+                   algorithm              VARCHAR(100) NOT NULL,
+                   expire_time            int NOT NULL,
+                   note                   VARCHAR(1000) NOT NULL,
+                   kms_type               VARCHAR(100) NOT NULL,
+                   created_at             TIMESTAMP DEFAULT now(),
+                   deleted_at             TIMESTAMP DEFAULT NULL);
+                   GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO appusers;
+                   GRANT SELECT,UPDATE ON ALL SEQUENCES IN SCHEMA public TO appusers;'
+              fi
           env:
             - name: POSTGRES_DBHOST
               {{- if .Values.global.db.bouncer }}
@@ -45,11 +67,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
-                  key: postgres_dbport
+                  key: dbport 
+      
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.enigma.key_manager.tag }}"
+          image: docker-hub.middleware.biz/public/enigma-key-manager:latest
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           env:
           - name: POSTGRES_DBHOST
@@ -59,30 +82,30 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: {{ .Values.global.db.secret.name }}
-                key: postgres_dbhost
+                key: dbhost
           {{- end }}
           - name: POSTGRES_DBPORT
             valueFrom:
               secretKeyRef:
                 name: {{ .Values.global.db.secret.name }}
-                key: postgres_dbport
+                key: dbport
           - name: POSTGRES_DBUSER
             valueFrom:
               secretKeyRef:
                 name: {{ .Values.global.db.secret.name }}
-                key: postgres_dbuser
+                key: dbuser
           - name: POSTGRES_DBPWD
             valueFrom:
               secretKeyRef:
                 name: {{ .Values.global.db.secret.name }}
-                key: postgres_dbpwd
+                key: dbpwd
           ports:
           - containerPort: 8080
           resources:
             {{ .Values.global.enigma.key_manager.resources | toYaml | indent 12 | trim }}
           volumeMounts:
             - name: {{ .Values.appName }}-config
-              mountPath: /ebsmnt/enigma-key-manager/config/production.json
+              mountPath: /ebsmnt/conf/production.json
               subPath: production.json
 {{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:

@@ -35,7 +35,7 @@ spec:
         - name: {{ .Values.appName }}
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.repotype }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           lifecycle:
             preStop:
               exec:
@@ -49,17 +49,23 @@ spec:
               mountPath: /etc/nginx/conf.d/corezoid.conf
               subPath: corezoid.conf
             - name: web-config-logo
-              mountPath: /usr/share/nginx/html/logo/logo.svg
+              mountPath: /app/logo/logo.svg
               subPath: logo.svg
             - name: web-config-logo
-              mountPath: /usr/share/nginx/html/logo/logo_auth.svg
+              mountPath: /app/logo/logo_auth.svg
               subPath: logo_auth.svg
+            {{- if eq .Values.global.sa.enabled true }}
+            {{- if .Values.global.sa.persistantVolumeClaimCreate }}
+            - name: {{ .Values.appName }}-claim
+              mountPath: {{ .Values.global.sa.persistantVolumeClaimShareDir }}
+            {{- end }}
+            {{- end }}
           resources:
             {{ .Values.global.webadm.resources | toYaml | indent 12 | trim }}
           readinessProbe:
             httpGet:
               path: /nginx_status
-              port: 80
+              port: 8080
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -68,7 +74,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /nginx_status
-              port: 80
+              port: 8080
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -87,7 +93,7 @@ spec:
               containerPort: 9113
           args:
             #A URI or unix domain socket path for scraping NGINX
-            - -nginx.scrape-uri=http://localhost/nginx_status
+            - -nginx.scrape-uri=http://localhost:8080/nginx_status
             #A number of retries the exporter will make on start to connect to the NGINX stub_status page
             - -nginx.retries=2
 {{- if .Values.global.imagePullSecrets }}
@@ -106,3 +112,11 @@ spec:
         - name: web-config-logo
           configMap:
             name: {{ .Values.appName }}-config-logo
+        {{- if eq .Values.global.sa.enabled true }}
+        {{- if .Values.global.sa.persistantVolumeClaimCreate }}
+        - name: {{ .Values.appName }}-claim
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.sa.persistantVolumeClaimName }}
+            readOnly: false
+        {{- end }}
+        {{- end }}
