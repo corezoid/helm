@@ -32,7 +32,7 @@ spec:
         - name: {{ .Values.appName }}
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.repotype }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.web_superadm.tag }}"
           ports:
-          - containerPort: 80
+          - containerPort: 8081
           volumeMounts:
             - name: web-superadm-config-nginx
               mountPath: /etc/nginx/nginx.conf
@@ -49,7 +49,7 @@ spec:
               memory: 100Mi
           readinessProbe:
             tcpSocket:
-              port: 80
+              port: 8081
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -57,7 +57,7 @@ spec:
             failureThreshold: 3
           livenessProbe:
             tcpSocket:
-              port: 80
+              port: 8081
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5

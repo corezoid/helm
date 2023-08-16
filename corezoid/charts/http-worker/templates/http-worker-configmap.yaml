@@ -138,7 +138,7 @@ data:
 
       {enigma, [
              {is_enabled, {{ .Values.global.enigma.enabled }}},
-             {private_key_id, "{{ .Values.global.http.enigma_pk_id }}"},
+             {private_key_id, "{{ .Values.global.enigma.key_manager.enigma_pk_id }}"},
              {key_manager_host, "http://enigma-key-manager-service:8080"},
              {rotors_pool, [
                {min_size, 3},
@@ -366,7 +366,11 @@ data:
             ]}
     {{- else }}
             {info, [
+        {{- if .Values.global.http_worker_log_level }}
+              {status, on},      % off by default
+        {{- else }}
               {status, off},      % off by default
+        {{- end }}
               {headers, on},    % on by default (For disable Request and Response headers in logs)
               {body, on}        % on by default (For disable Request and Response body in logs)
             ]},

@@ -84,7 +84,7 @@ data:
 
         {enigma, [
           {is_enabled, {{ .Values.global.enigma.enabled }}},
-          {private_key_id, "{{ .Values.global.usercode.enigma_pk_id }}"},
+          {private_key_id, "{{ .Values.global.enigma.key_manager.enigma_pk_id }}"},
           {key_manager_host, "http://enigma-key-manager-service:8080"},
           {rotors_pool, [
             {min_size, 3},
