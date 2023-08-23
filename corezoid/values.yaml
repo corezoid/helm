@@ -167,7 +167,8 @@ global:
     serverIdleTimeout: "15"
     # If connection and login won’t finish in this amount of time, the connection will be closed.
     serverConnectTimeout: "15"
-
+    # Pgbouncer -> PostgreSQL connection mode. TLS connection is always requested first from PostgreSQL. If refused, the connection will be established over plain TCP. Server certificate is not validated. http://www.pgbouncer.org/config.html
+    serverTlsSslmode: "prefer"
     # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
     # transaction | session
     default_pool_mode: transaction

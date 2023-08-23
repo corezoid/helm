@@ -88,6 +88,8 @@ spec:
               value: {{ .Values.global.db.serverLifetime | quote }}
             - name: SERVER_CONNECT_TIMEOUT
               value: {{ .Values.global.db.serverConnectTimeout | quote }}
+            - name: SERVER_TLS_SSLMODE
+              value: {{ .Values.global.db.serverTlsSslmode | quote }}
             {{- $loglevel := .Values.global.log_level -}}
             {{- if eq $loglevel "debug" }}
             - name: VERBOSE
