@@ -83,6 +83,28 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
 {{- end -}}
 
+{{- define "sa.ingressAnnotations" -}}
+{{ if .Values.global.ingress.annotations -}}
+{{ toYaml .Values.global.ingress.annotations }}
+{{ end -}}
+nginx.ingress.kubernetes.io/ssl-redirect: "true"
+nginx.ingress.kubernetes.io/configuration-snippet: |
+  more_set_headers X-Content-Type-Options "nosniff" always;
+  more_set_headers "Cache-Control: no-store, no-cache, must-revalidate";
+  more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains";
+  add_header X-Frame-Options "SAMEORIGIN";
+  add_header Content-Security-Policy "default-src 'self' https://*.gravatar.com https://upload.wikimedia.org https://*.gstatic.com https://www.google.com https://www.google-analytics.com https://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }} wss://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}/* wss://{{ .Values.global.subdomain}}.{{ .Values.global.domain }}/* 'unsafe-inline'; frame-src 'self' https://*.gravatar.com https://*.google.com https://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}; script-src 'self' https://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }} https://*.gravatar.com https://*.gstatic.com https://www.google.com https://www.googletagmanager.com https://ajax.googleapis.com https://www.google-analytics.com 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://www.google-analytics.com https://stats.g.doubleclick.net wss://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }}; img-src 'self' data: https://*.gravatar.com https://upload.wikimedia.org https://www.google.com https://www.google.com.ua https://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }} https://www.google-analytics.com  https://*.gstatic.com data:; object-src 'self'; font-src 'self' https://*.gravatar.com https://*.gstatic.com https://www.google.com https://fonts.gstatic.com https://fonts.googleapis.com data:; style-src * blob: 'self' https://*.gravatar.com https://*.gstatic.com https://www.google.com https://*.{{ .Values.global.subdomain}}.{{ .Values.global.domain }} https://fonts.gstatic.com https://fonts.googleapis.com 'unsafe-inline';";
+{{- end -}}
+
+{{- define "saDomain" -}}
+{{- if and .Values.global .Values.global.sa .Values.global.sa.enabled -}}
+  {{- if .Values.global.sa.subDomain -}}
+    {{ .Values.global.sa.subDomain }}.{{ .Values.global.domain }}
+  {{- else -}}
+    {{ .Values.global.domain }}/account
+  {{- end }}
+{{- end }}
+{{- end -}}
 
 {{/*
   Create application name label.
@@ -118,4 +140,35 @@ app: {{ .Values.global.product | quote }}
 
 {{- define "redis.password_timers" -}}
 {{- .Values.global.redis.secret.data.password_timers | default .Values.global.redis.secret.data.password -}}
+{{- end -}}
+
+{{- define "common.imagePullSecrets" -}}
+{{- if not (eq .Values.global.repotype "public") }}
+imagePullSecrets:
+- name: {{ .Values.global.imagePullSecrets.name }}
+{{- end }}
+{{- end -}}
+
+{{- define "common.labels" -}}
+app: {{ .Values.global.product }}
+{{- end -}}
+
+{{- define "common.spec.strategy.type" -}}
+{{ .Values.global.deploymentStrategy.type }}
+{{- end -}}
+
+{{- define "common.ingressName" -}}
+{{ .Values.appName }}-{{ .Release.Namespace }}
+{{- end -}}
+
+{{- define "common.ingressGitcallName" -}}
+{{ .Values.appName }}-gitcall-{{ .Release.Namespace }}
+{{- end -}}
+
+{{- define "common.ServiceMonitor.apiVersion" -}}
+monitoring.coreos.com/v1
+{{- end -}}
+
+{{- define "common.ServiceMonitor.metadata.labes" -}}
+simulator.observability/scrape: "true"
 {{- end -}}

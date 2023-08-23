@@ -17,12 +17,21 @@ global:
   product: "corezoid"
   centos8Repo: public-corezoid-centos8
   useCentos8: true
+
+  deploymentStrategy:
+    type: RollingUpdate
+
+  imageInit:
+    repository: docker-hub.middleware.biz/public/alpine
+    pullPolicy: IfNotPresent
+    tag: "3.17"
+
   # Ingress annotations
   ingress:
     enabled: true
     className: "private-nginx"
-    annotations: {}
-#      kubernetes.io/ingress.class: alb
+    annotations:
+      ingress.class: private-nginx
 #      alb.ingress.kubernetes.io/scheme: internet-facing
 #      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
 #      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
@@ -88,7 +97,6 @@ global:
     # if internal false - enable external db, like aws rds
     internal: true
     ## secret configuration for postgresql
-
     ## pvc name
     persistantVolumeClaimName: "postgresql-pvc"
     secret:
@@ -178,8 +186,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.2.0"
-      db_schema_rds: false  # ATTENTION! if RDS base OR if external PostgreSQL(on external server) then set to true, if internal in namespase PostgreSQL then false
+      version: "6.2.2"
 
     rotation:
       ## enabled: true or false
@@ -273,7 +280,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.2.0.2"
+    tag: "8.2.1.2"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -331,13 +338,13 @@ global:
       support:
         name: "Google SAML2"
         front_button_show: true
-        login_path: "/auth2/saml/support"
+        login_path: "/auth2/saml/corezoid-support"
         icon_url: "https://upload.wikimedia.org/wikipedia/commons/archive/5/53/20210618182605%21Google_%22G%22_Logo.svg"
         idp_signs_envelopes: false
         idp_signs_assertions: true
         idp_signs_metadata: false
         sp_entity_id: "support"
-        sp_consume_url: "/auth2/saml/support/return"
+        sp_consume_url: "/auth2/saml/corezoid-support/return"
         # IdP SAML Metadata file content for SSO authentication
         auth_metadata_content:
           <?xml version="1.0" encoding="UTF-8"?>
@@ -410,16 +417,14 @@ global:
     ldap_user_nick_entry: "cn"
     ldap_tls: false
     # max task size for process conv
-    max_task_size_for_process_conv: 264000
+    max_task_size_for_process_conv: "264000"
     # max task size for state diagramm conv
-    max_task_size_for_st_diagramm_conv: 264000
+    max_task_size_for_st_diagramm_conv: "264000"
     logic_settings:
       # max allowed threads for api logic
       api_max_thread: 50000
       sender_max_threads: 25
       timer_default: 1 # 30
-    # enigma private_key_id
-    enigma_pk_id: ""
     # clean trash config
     scraper:
       scrap_interval: "1"
@@ -453,7 +458,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.0.2.0"
+    tag: "4.0.2.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -515,8 +520,6 @@ global:
       requests:
         cpu: 1
         memory: 1000Mi
-    # enigma private_key_id
-    enigma_pk_id: ""
     # max time for each execution of code, kill process after this time
     max_exec_code_time: 1000
 
@@ -544,7 +547,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "5.0.1.0"
+    tag: "5.0.1.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -555,9 +558,8 @@ global:
       requests:
         cpu: 1
         memory: 500M
-    # enigma private_key_id
     write_data_to_history: false
-    enigma_pk_id: ""
+    worker_write_history_task: true
     affinity: {}
   #    # hard AZ-based affinity
   #      podAntiAffinity:
@@ -600,8 +602,6 @@ global:
       requests:
         cpu: 1
         memory: 500Mi
-    # enigma private_key_id
-    enigma_pk_id: ""
 
     affinity: {}
   #    # hard AZ-based affinity
@@ -627,7 +627,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.2.1"
+    tag: "6.2.2"
     minReplicas: 1
     resources:
       limits:
@@ -699,36 +699,19 @@ global:
   # merchant (deprecated)
   merchant:
     enabled: false
-    tag: "v0.0.27.3"
-    secret:
-      ## true - secret will be created automaticaly with provided values
-      ## false - secret should be created manualy
-      create: true
-      name: "merchant-secret"
-      data:
-        # login/secret for corezoid-merchant communications
-        merchant_login: apiLogin1
-        merchant_secret: I9EmB170XUbe
-    minReplicas: 1
-    maxReplicas: 1
-    # application resources limits and requests
-    resources:
-      limits:
-        cpu: 500m
-        memory: 800Mi
-      requests:
-        cpu: 100m
-        memory: 500Mi
 
   # enigma global settings
   enigma:
     enabled: false
     encryption: false
     key_manager:
-      tag: "1.1.0"
-      aws_kms_role: ""
+      aws_region: "eu-west-1"
+      accessKeyId: ""
+      secretAccessKey: ""
       minReplicas: 1
       maxReplicas: 1
+      # enigma private_key_id
+      enigma_pk_id: ""
       resources:
         limits:
           cpu: 1000m
@@ -793,7 +776,7 @@ global:
 
   # web-superadm
   web_superadm:
-    tag: "2.1.0"
+    tag: "2.1.1"
     subdomain: "superadm-k8s"
     minReplicas: 1
 

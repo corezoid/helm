@@ -2,7 +2,7 @@ apiVersion: v1
 data:
   superadm.conf: |
     server {
-        listen       80;
+        listen       8081;
         server_name  superadm-{{ .Values.global.subdomain}}.{{ .Values.global.domain }};
 
         add_header "Cache-Control" "no-store";
@@ -16,15 +16,15 @@ data:
         client_body_buffer_size 16k;
         client_max_body_size 16m;
 
-        set $superadmin_root    "/usr/share/nginx/html";
+        set $superadmin_root    "/app/superadmin";
 
         location / {
-    	    root   /usr/share/nginx/html;
+    	    root   /app;
             index  index.html index.htm;
         }
 
         location /f {
-            root   /usr/share/nginx/html;
+            root   /app;
             try_files $uri $uri/ /index.html;
         }
 
@@ -105,7 +105,7 @@ data:
 
             error_page   500 502 503 504  /50x.html;
             location = /50x.html {
-                root   /usr/share/nginx/html;
+                root   /app;
             }
     }
 

@@ -2,16 +2,22 @@
 *************** Please be patient while the chart is being deployed ***************
 
 Corezoid url    https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}
-Superadmin url  https://{{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
 Syncapi url     https://{{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
 {{- if .Values.global.sa.enabled }}
-SingleAccount:  https://{{ .Values.global.sa_web.subdomain}}.{{ .Values.global.domain }}
+SingleAccount:  https://{{ .Values.global.sa.subDomain}}.{{ .Values.global.domain }}
 {{- end }}
 {{- if .Values.global.store_dumps.enabled }}
 Dumps url:      https://{{ .Values.global.store_dumps.subdomain}}.{{ .Values.global.domain }}
 {{- end }}
 Default login : admin@corezoid.loc
 Init password : {{ .Values.global.capi.init_admin_password  }}
+{{- if eq .Values.global.enigma.enabled true }}
+*****************************************************************************************************
+You have activated enigma, for correct operation it is necessary go to Pod capi and run in terminal cat /ebsmnt/conf/enigma_pk_id/enigma_pk_id
+after that, add enigma_pk_id to all components in the values   global
+then do it helm upgrade --install {{ .Release.Name }} .
+*****************************************************************************************************
+{{- end }}
 
 Uninstall:  helm uninstall   {{ .Release.Name }}
 Upgrade:    helm upgrade --install  {{ .Release.Name }} .

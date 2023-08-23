@@ -249,7 +249,7 @@ data:
         ]},
 
         {corezoid_queues_gc, [
-          {disabled, false},
+          {enabled, true},
           {{- if eq .Values.global.mq.internal false }}
           {host, "${MQ_HOST}"},
           {port, 15672 },
@@ -314,7 +314,7 @@ data:
 
         {enigma, [
           {is_enabled, {{ .Values.global.enigma.enabled }}},
-          {private_key_id, "{{ .Values.global.capi.enigma_pk_id }}"},
+          {private_key_id, "{{ .Values.global.enigma.key_manager.enigma_pk_id }}"},
           {key_manager_host, "http://enigma-key-manager-service:8080"},
           {rotors_pool, [
             {min_size, 3},
@@ -379,6 +379,8 @@ data:
                 {{- end }}
 
                 {pg_fdw, [
+                  {host, "localhost"}, %% by default host will get from pgsql.host
+                  {reinit_if_changed, true}, %% by default false ( it will drop foreign server and create again )
                   {username, "${FDW_POSTGRES_DBUSER}"},
                   {password, "${FDW_POSTGRES_DBPWD}"}
                 ]},
@@ -450,7 +452,7 @@ data:
                     {ws, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},                    %% websocket
                     {webhook, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},               %% corezoid domain
                     {auth, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},                  %% account auth
-                    {single_account, <<"{{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }}">>}          %% for single account
+                    {single_account, <<"{{ .Values.global.sa.subDomain }}.{{ .Values.global.domain }}">>}          %% for single account
                 ]},
                 {path, [
                     {api, <<"/api/2/json">>},   %% all apis POST queries
@@ -470,6 +472,7 @@ data:
                     {webhook, <<"/api/2/">>},    %% this one plus host.webhook = (http:https)://host.webhook/path.webhook/(xml|json|nvp)/...
                     {auth, <<"/auth2/single_account">>}       %% account auth
                 ]},
+
                 {sender, [
                     %% Interaction with the sender to create Sender forms, Sender action...
                     {host, <<"builder.sender.mobi">>},
@@ -1086,44 +1089,37 @@ data:
         ]},
 
           {corezoid_fs, [
-
             {profiles, [
-
-              %% profile name for maret schemas
-              [
-                {name, schemas}, %% Storage for process schemas, stored in marketplace
-
-                %% switch between storages
-                {default_file_storage, file_f3},
-
-                %% f3 file storage settings
-                {file_f3,[
-                  {allowed_namespaces, ["avatars"]},
-                  {path_to_dir, "/tmp"}, %% todo
-                  {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
-                  {ttl_file, 60}                 %% file ttl in seconds
-                ]}
-              ],
-
               %% profile name for avatars
               [
                 {name, avatars}, %% Storage for users avatars
                 %% switch between storages
                 {default_file_storage, file_f3},
 
+                %% s3 settings
+                %%{amazon_s3, [
+                %%    {s3_profile, scheme},
+                %%    {opts, [{acl, public_read}, {meta, [{"Cache-Control", "max-age=86400"}]}]},
+                %%    {type, <<"role">>}, %% <<"credentials">> (by default) | <<"env">> | <<"role">>
+                %%    {bucket, "corezoid-bucket"}
+                %%]},
+
                 %% f3 file storage settings
                 {file_f3,[
+        {{- if .Values.global.sa.enabled }}
                   {allowed_namespaces, ["avatars"]},
-                  {path_to_dir, "/tmp"}, %% todo
+                  {path_to_dir, "{{ .Values.global.sa.persistantVolumeClaimShareDir }}" },
+                  {network_partition, false}     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
+                  %%{ttl_file, 60}                 %% file ttl in seconds
+        {{- else }}
+                  {allowed_namespaces, ["avatars"]},
+                  {path_to_dir, "/tmp"},
                   {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
                   {ttl_file, 60}                 %% file ttl in seconds
+        {{- end }}
                 ]}
-
               ]
-
-              %% maybe more profiles ...
             ]}
-
           ]},
 
         {lager, [
@@ -1169,22 +1165,22 @@ data:
 
         {account_sdk, [
         {{- if not .Values.global.sa.enabled }}
-            {disabled, true}
+          {disabled, true}
         {{- else }}
-            {pool, [
-                {host, "{{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }}"},
-                {port, 443},
-                {start_size, 10},
-                {min_size, 10},
-                {max_size, 10}
-            ]},
-            {disabled, false},
-            {client_id, "5dca7de57837d70001000006"},
-            {client_secret, "ZY8bwLJDYouuApi2ENxlup6kqShnhk3U"},
-            {return_url, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/auth2/single_account/return/"},
-            {oauth_url, "https://{{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }}/oauth2/authorize"},
-            {token_url, "https://{{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }}/oauth2/token"},
-            {userinfo_url, "https://{{ .Values.global.sa_web.subdomain }}.{{ .Values.global.domain }}/oauth2/userinfo?access_token="}
+          {pool, [
+            {host, "{{ include "saDomain" . }}"},
+            {port, 443},
+            {start_size, 10},
+            {min_size, 10},
+            {max_size, 10}
+          ]},
+          {disabled, false},
+          {client_id, "{{ .Values.global.sa.config.client_id }}"},
+          {client_secret, "{{ .Values.global.sa.config.client_secret }}"},
+          {return_url, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/auth2/single_account/return/"},
+          {oauth_url, "https://{{ .Values.global.sa.subDomain }}.{{ .Values.global.domain }}/oauth2/authorize"},
+          {token_url, "https://{{ .Values.global.sa.subDomain }}.{{ .Values.global.domain }}/oauth2/token"},
+          {userinfo_url, "https://{{ .Values.global.sa.subDomain }}.{{ .Values.global.domain }}/oauth2/userinfo?access_token="}
         {{- end }}
         ]}
 

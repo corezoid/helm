@@ -12,27 +12,34 @@ data:
                 "port": 8080
             },
             "logger": {
-                "level": {{ .Values.global.log_level | default "info" }},
-                "transports": [ "console" ],
-                "path": "/tmp/"
+            "level": "warn",
+            "transports": [ "file" ],
+            "path": "/ebsmnt/enigma/enigma-key-manager/log",
+            "maxSizeInMb": 100,
+            "maxFiles": 10
             },
             "storage": {
-                "database": "enigma",
-                "ssl": false,
-                "min": 2,
-                "max": 5,
-                "connectionTimeoutMillis": 5000,
-                "idleTimeoutMillis": 5000
+            "host": "{{ .Values.global.db.secret.data.dbhost }}",
+            "port": 5432,
+            "database": "enigma",
+            "user": "{{ .Values.global.db.secret.data.dbuser }}",
+            "password": "{{ .Values.global.db.secret.data.dbpwd }}",
+            "ssl": false,
+            "min": 2,
+            "max": 5,
+            "connectionTimeoutMillis": 5000,
+            "idleTimeoutMillis": 5000
             },
             "kms": {
                 "preferred": "amazon",
-                "vault": {
-                    "host": "enigma-vault-kms.service.consul",
-                    "port": 8888
-                },
                 "amazon": {
-                    "type": {{- if .Values.global.enigma.key_manager.aws_kms_role }} "env" {{- else }} "ec2" {{- end }}
-                }
+                    "type": "config-credentials",
+                    "config-credentials": {
+                        "region": "{{ .Values.global.enigma.key_manager.aws_region }}",
+                        "accessKeyId": "{{ .Values.global.enigma.key_manager.accessKeyId }}",
+                        "secretAccessKey": "{{ .Values.global.enigma.key_manager.secretAccessKey }}"
+                    }
+                }  
             }
         }
 {{- end }}

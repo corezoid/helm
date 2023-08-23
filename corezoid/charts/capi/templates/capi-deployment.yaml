@@ -104,6 +104,19 @@ spec:
                   key: port
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
+        {{- if eq .Values.global.enigma.enabled true }}
+        - name: init-wait-enigma
+          image: docker-hub.middleware.biz/public/enigma-init-conteiner:latest
+          imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+          command:
+            - sh
+            - -c
+            - bash -x enigma_generate_key.sh
+          volumeMounts:
+            - name: enigma-key
+              mountPath: /ebsmnt/conf/
+              subPath: enigma_pk_id
+        {{- end }}
         - name: init-wait-mult
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
           imagePullPolicy: IfNotPresent
@@ -203,6 +216,7 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.mq.secret.name }}
                 key: password
+          {{- if eq .Values.global.merchant.enabled true }}
           - name: MERCHANT_LOGIN
             valueFrom:
               secretKeyRef:
@@ -213,6 +227,7 @@ spec:
               secretKeyRef:
                 name: merchant-secret
                 key: merchant_secret
+          {{- end }}
           - name: ELASTICSEARCH_HOST
             valueFrom:
               secretKeyRef:
@@ -283,6 +298,11 @@ spec:
               subPath: support_metadata.xml
             {{- end }}
             {{- end }}
+            {{- if eq .Values.global.enigma.enabled true }}
+            - name: enigma-key
+              mountPath: /ebsmnt/conf/enigma_pk_id
+              subPath: enigma_pk_id
+            {{- end }}
             {{- if .Values.global.capi.persistantVolumeClaimCreate }}
             - name: {{ .Values.appName }}-claim
               mountPath: /ebsmnt/conf/auth_providers
@@ -295,6 +315,13 @@ spec:
               mountPath: /ebsmnt/conf/auth_providers/support_auth.config
               subPath: support_auth.config
               readOnly: false
+            {{- end }}
+            {{- if eq .Values.global.sa.enabled true }}
+            {{- if .Values.global.sa.persistantVolumeClaimCreate }}
+            - name: {{ .Values.appName }}-claim-sa
+              mountPath: {{ .Values.global.sa.persistantVolumeClaimShareDir }}
+              readOnly: false
+            {{- end }}
             {{- end }}
             - name: {{ .Values.appName }}config
               mountPath: /ebsmnt/conf/capi.config
@@ -355,6 +382,18 @@ spec:
         - name: {{ .Values.appName }}-config-vm
           configMap:
             name: {{ .Values.appName }}-config-vm
+        {{- if eq .Values.global.enigma.enabled true }}
+        - name: enigma-key
+          emptyDir: {}
+        {{- end }}
+        {{- if eq .Values.global.sa.enabled true }}
+        {{- if .Values.global.sa.persistantVolumeClaimCreate }}
+        - name: {{ .Values.appName }}-claim-sa
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.sa.persistantVolumeClaimName }}
+            readOnly: false
+        {{- end }}
+        {{- end }}
         - name: corezoidauth-config-file
           configMap:
             name: corezoidauth-config-file

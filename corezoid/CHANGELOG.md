@@ -1,4 +1,14 @@
 ## Changelog
+https://doc.corezoid.com/docs/release-notes
+
+### Chart 0.22.7 [ Corezoid 6.2.2 ]
+- removed key db_schema_rds in values.yaml (implemented on the application side)
+- fixed enigma subchart
+- security update images web_adm and web_superadm (now it doesn't run as root)
+- pgbouncer image update
+
+### Chart 0.22.6 [ Corezoid 6.2.0 ]
+- fixed gc in applications config file
 
 ### Chart 0.22.5 [ Corezoid 6.2.0 ]
 - The new variables feature has been added. Variables are Stage objects in which you can store data in RAW and JSON formats.

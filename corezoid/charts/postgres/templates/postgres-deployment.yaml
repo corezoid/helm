@@ -57,6 +57,10 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}-root
                   key: dbsuperuserpwd
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: "md5"
+            - name: POSTGRES_INITDB_ARGS
+              value: "--auth-host=md5"
           ports:
             - containerPort: 5432
               name: {{ .Values.appName }}
