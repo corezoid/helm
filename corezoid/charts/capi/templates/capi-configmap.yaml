@@ -441,6 +441,22 @@ data:
                 %% user is binded to corezoid system
                 {email_confirm, false},
 
+            %% User password strength policy
+            {password_policy, [
+              %% Min/max password length
+              {min_length, {{ .Values.global.capi.password_policy.min_length | default 10 }}},
+              {max_length, {{ .Values.global.capi.password_policy.max_length | default 35 }}},
+              %% Enforce symbol types in password
+              %% [a-z]
+              {lowercase, {{ .Values.global.capi.password_policy.lowercase | default "true" }}},
+              %% [A-Z]
+              {uppercase, {{ .Values.global.capi.password_policy.uppercase | default "true" }}},
+              %% [0-9]
+              {number, {{ .Values.global.capi.password_policy.number | default "true" }}},
+              %% [\\!"#$%&'()*+,-./:;<=>?@^_`{|}~\[\]]
+              {special, {{ .Values.global.capi.password_policy.special | default "true" }}}
+            ]},
+
             %% FRONT SETTINGS
             {front_settings, [
                 {is_single_account, {{- .Values.global.sa.enabled }}},	%% enable SingleAccount auth

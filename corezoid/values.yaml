@@ -380,6 +380,14 @@ global:
     companies_manager: "corezoid_internal"
     # If `fs` gets a license from a file, if `db` gets a license from a database. For new installation use only db
     licensepath: "fs"
+    ## User password strength policy
+    password_policy:
+      min_length: 10     # Min password length
+      max_length: 35     # Max password length
+      lowercase: true    # [a-z]
+      uppercase: true    # [A-Z]
+      number: true       # [0-9]
+      special: true      # [\\!"#$%&'()*+,-./:;<=>?@^_`{|}~\[\]]
     ## Setting for configure frontend
     front_setting:
       # documentation (navigate by clicking on DOCS link)
