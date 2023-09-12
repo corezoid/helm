@@ -140,6 +140,7 @@ spec:
                   key: dbpwd
           ports:
             - containerPort: 8090
+            - containerPort: {{ .Values.containers.prometheusMetricsPort }}
           lifecycle:
             preStop:
               exec:

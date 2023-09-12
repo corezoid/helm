@@ -168,6 +168,7 @@ spec:
                   key: dbport
           ports:
           - containerPort: 9080
+          - containerPort: {{ .Values.containers.prometheusMetricsPort }}
           lifecycle:
             preStop:
               exec:
