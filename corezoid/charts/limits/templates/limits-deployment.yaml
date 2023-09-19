@@ -96,6 +96,9 @@ spec:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.limits.tag }}"
+          envFrom:
+            - configMapRef:
+                name: timezone-config
           env:
             {{- if .Values.global.store_dumps.enabled }}
             - name: ERL_CRASH_DUMP

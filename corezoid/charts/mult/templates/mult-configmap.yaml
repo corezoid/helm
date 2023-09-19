@@ -5,29 +5,29 @@ data:
 
       {is_ready, [
         {port, 8383},
-        {disabled, false}
+        {disabled, true}
       ]},
 
-        {mw_metrics, [
-          {is_enabled, true},
-          {subsystems, [erlprometheus]}
-        ]},
+      {mw_metrics, [
+        {is_enabled, true},
+        {subsystems, [erlprometheus]}
+      ]},
 
-        {erlprometheus, [
-          {host, {0,0,0,0}},
-          {port, 9100}
-        ]},
+      {erlprometheus, [
+        {host, {0,0,0,0}},
+        {port, 9100}
+      ]},
 
-        {corezoid_license_client, [
-           {driver, "{{ .Values.global.capi.licensepath | default "db" }}" },
-           {pgsql, [
-               {host, "${POSTGRES_DBHOST}"},
-               {user, "${POSTGRES_DBUSER}"},
-               {dbname, "settings"},
-               {password, "${POSTGRES_DBPWD}"}
-           ]},
-           {path_to_license, "/ebsmnt/certs/corezoid_license"}
+      {corezoid_license_client, [
+         {driver, "{{ .Values.global.capi.licensepath | default "db" }}" },
+         {pgsql, [
+             {host, "${POSTGRES_DBHOST}"},
+             {user, "${POSTGRES_DBUSER}"},
+             {dbname, "settings"},
+             {password, "${POSTGRES_DBPWD}"}
          ]},
+         {path_to_license, "/ebsmnt/certs/corezoid_license"}
+       ]},
 
       {ermql, [
 

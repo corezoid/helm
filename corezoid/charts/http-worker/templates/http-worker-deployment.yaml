@@ -89,6 +89,9 @@ spec:
         - name: {{ .Values.appName}}
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.http.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+          envFrom:
+            - configMapRef:
+                name: timezone-config
           env:
             - name: IPNODEDOMAIN
               valueFrom:

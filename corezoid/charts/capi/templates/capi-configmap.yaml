@@ -3,31 +3,31 @@ data:
   {{ .Values.appName }}.config: |
     %% -*- mode: erlang;  -*-
     [
-            {limits_client, [
-                {redis, [
-                    [
-            {{- if eq .Values.global.redis.sentinel.enable  true }}
-                        {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
-            {{- else }}
-                        {{- if eq .Values.global.redis.internal false }}
-                        {host, "${REDIS_HOST}"},
-                        {port, ${REDIS_PORT}},
-                        {password,"${REDIS_PASSWORD}"},
-                        {{- else }}
-                        {host, "redis-master"},
-                        {port, 6379},
-                        {password,""},
-                        {{- end }}
-            {{- end }}
-                        {database, 9},
-                        {start_size, 1},
-                        {min_size, 1},
-                        {max_size, 50}
-                    ]
-                ]}
-            ]},
+        {limits_client, [
+            {redis, [
+                [
+        {{- if eq .Values.global.redis.sentinel.enable  true }}
+                    {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+        {{- else }}
+                    {{- if eq .Values.global.redis.internal false }}
+                    {host, "${REDIS_HOST}"},
+                    {port, ${REDIS_PORT}},
+                    {password,"${REDIS_PASSWORD}"},
+                    {{- else }}
+                    {host, "redis-master"},
+                    {port, 6379},
+                    {password,""},
+                    {{- end }}
+        {{- end }}
+                    {database, 9},
+                    {start_size, 1},
+                    {min_size, 1},
+                    {max_size, 50}
+                ]
+            ]}
+        ]},
 
-       {corezoid_license_client, [
+        {corezoid_license_client, [
           {driver, "{{ .Values.global.capi.licensepath | default "db" }}" },
           {pgsql, [
               {host, "${POSTGRES_DBHOST}"},
@@ -39,26 +39,26 @@ data:
         ]},
 
         {corezoid_global_stats, [
-            {disabled, true}
+          {disabled, true}
         ]},
 
-    {{- if eq .Values.global.redis.sentinel.enable true }}
-    {redis_sentinel, [
-          {servers, [
-            [
-              {master_name, "{{ .Values.global.redis.sentinel.master_name }}"},     %% name of master redis santinel
-              {redis_password, "${REDIS_PASSWORD}"},        %% Used for connect to redis          (optional) if empty can remove
-              {sentinel_password, "${REDIS_PASSWORD}"},  %% Used for connect to redis sentinel (optional) if empty can remove
-              {sentinels, [
+        {{- if eq .Values.global.redis.sentinel.enable true }}
+        {redis_sentinel, [
+              {servers, [
                 [
-                  {host, "${REDIS_HOST}"},
-                  {port, ${REDIS_PORT}}
+                  {master_name, "{{ .Values.global.redis.sentinel.master_name }}"},     %% name of master redis santinel
+                  {redis_password, "${REDIS_PASSWORD}"},        %% Used for connect to redis          (optional) if empty can remove
+                  {sentinel_password, "${REDIS_PASSWORD}"},  %% Used for connect to redis sentinel (optional) if empty can remove
+                  {sentinels, [
+                    [
+                      {host, "${REDIS_HOST}"},
+                      {port, ${REDIS_PORT}}
+                    ]
+                  ]}
                 ]
               ]}
-            ]
-          ]}
-        ]},
-    {{- end }}
+            ]},
+        {{- end }}
 
         %% for clustering components
         {corezoid_cluster, [
@@ -104,56 +104,56 @@ data:
 
         {is_ready, [
           {port, 8383},
-          {disabled, false}
+          {disabled, true}
         ]},
 
-      {mw_metrics, [
-        {is_enabled, true},
-        {subsystems, [erlprometheus]}
-      ]},
+        {mw_metrics, [
+          {is_enabled, true},
+          {subsystems, [erlprometheus]}
+        ]},
 
-      {erlprometheus, [
-        {host, {0,0,0,0}},
-        {port, 9100}
-      ]},
+        {erlprometheus, [
+          {host, {0,0,0,0}},
+          {port, 9100}
+        ]},
 
-          %% Envirement Variable
-          {env_var, [
-              %% - psql pool -
-              {psql, [
-                  {host,        "${POSTGRES_DBHOST}"},
-                  {dbname, "conveyor"},
-                  {user, "${POSTGRES_DBUSER}"},
-                  {port,        5432},
-                  {password, "${POSTGRES_DBPWD}"},
-                  %% pool size
-                  {start_size,  3},
-                  {min_size,    3},
-                  {max_size,    10}
-              ]}
-          ]},
+        %% Envirement Variable
+        {env_var, [
+            %% - psql pool -
+            {psql, [
+                {host,        "${POSTGRES_DBHOST}"},
+                {dbname, "conveyor"},
+                {user, "${POSTGRES_DBUSER}"},
+                {port,        5432},
+                {password, "${POSTGRES_DBPWD}"},
+                %% pool size
+                {start_size,  3},
+                {min_size,    3},
+                {max_size,    10}
+            ]}
+        ]},
 
-    {{- if eq .Values.global.dbcall.enabled true }}
-          {mw_db_call, [
-              {version, 2},
-              {enabled, true},
-              {request_amqp_v2, [
-    {{- if eq .Values.global.mq.internal false }}
-                {host, <<"${MQ_HOST}">>},
-                {port, ${MQ_PORT}},
-                {username, <<"${MQ_USERNAME}">>},
-                {password, <<"${MQ_PASSWORD}">>},
-                {vhost, <<"${MQ_VHOST}">>},
-    {{- else }}
-                {host, <<"rabbit-service">>},
-                {port, 5672},
-                {username, <<"${MQ_USERNAME}">>},
-                {password, <<"${MQ_PASSWORD}">>},
-                {vhost, <<"${MQ_VHOST}">>},
-    {{- end }}
-                {exchange, <<"">>}
-              ]}
-          ]},
+  {{- if eq .Values.global.dbcall.enabled true }}
+        {mw_db_call, [
+            {version, 2},
+            {enabled, true},
+            {request_amqp_v2, [
+  {{- if eq .Values.global.mq.internal false }}
+              {host, <<"${MQ_HOST}">>},
+              {port, ${MQ_PORT}},
+              {username, <<"${MQ_USERNAME}">>},
+              {password, <<"${MQ_PASSWORD}">>},
+              {vhost, <<"${MQ_VHOST}">>},
+  {{- else }}
+              {host, <<"rabbit-service">>},
+              {port, 5672},
+              {username, <<"${MQ_USERNAME}">>},
+              {password, <<"${MQ_PASSWORD}">>},
+              {vhost, <<"${MQ_VHOST}">>},
+  {{- end }}
+              {exchange, <<"">>}
+            ]}
+        ]},
     {{- end }}
 
         {corezoid_sdk, [

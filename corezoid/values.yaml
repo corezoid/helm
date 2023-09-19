@@ -31,7 +31,8 @@ global:
     enabled: true
     className: "private-nginx"
     annotations:
-      ingress.class: private-nginx
+      ingress.class: "private-nginx"
+      nginx.ingress.kubernetes.io/proxy-body-size: "150m"
 #      alb.ingress.kubernetes.io/scheme: internet-facing
 #      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
 #      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
@@ -186,7 +187,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.2.2"
+      version: "6.3.0"
 
     rotation:
       ## enabled: true or false
@@ -280,7 +281,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.2.1.2"
+    tag: "8.3.0.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -466,7 +467,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.0.2.1"
+    tag: "4.1.0.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -517,7 +518,7 @@ global:
 
   # usercode
   usercode:
-    tag: "8.0.3"
+    tag: "8.0.4"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -555,7 +556,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "5.0.1.1"
+    tag: "5.1.0.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -592,7 +593,7 @@ global:
 
   # mult
   mult:
-    tag: "3.1.0.2"
+    tag: "3.2.0.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -635,7 +636,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.2.2"
+    tag: "6.3.0"
     minReplicas: 1
     resources:
       limits:
@@ -669,7 +670,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s"
-    tag: "3.0.2"
+    tag: "3.1.0"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
@@ -749,7 +750,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "2.1.0"
+    tag: "2.2.0"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -784,19 +785,19 @@ global:
 
   # web-superadm
   web_superadm:
-    tag: "2.1.1"
+    tag: "2.2.0"
     subdomain: "superadm-k8s"
     minReplicas: 1
 
   limits:
-    tag: "2.0.2"
+    tag: "2.1.0"
     minReplicas: 2
 
   prometheus_metrics: false
 
   # global log level definition, info - default
   # available value info | warning | error | debug
-  log_level: debug
+  log_level: info
   # allows store crushdumps and send to Telegram chat
   store_dumps:
     enabled: false

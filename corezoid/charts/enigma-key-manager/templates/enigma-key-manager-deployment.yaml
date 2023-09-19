@@ -26,13 +26,13 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait-postgres
-          image: docker-hub.middleware.biz/public/pgbouncer:1.17.0-alpine3.18-2
-          command: 
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.pgbouncerClientImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.pgbouncerClientImage.repository }}:{{ .Values.pgbouncerClientImage.tag }}"
+          command:
             - sh
             - -c
             - |
               export PGPASSWORD={{ .Values.global.db.secret.dbsuperuserpwd }}
-              cd /etc/pgbouncer/  
+              cd /etc/pgbouncer/
               psql -h {{ .Values.global.db.secret.data.dbhost }} -U {{ .Values.global.db.secret.dbsuperuser }} -p {{ .Values.global.db.secret.data.dbport }} -d enigma -Atc '\dt' > 1
               base=$(cat 1 | cut -c8-10| head -1)
               if [[ "$base" == "cpk" ]]; then
@@ -67,13 +67,15 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.global.db.secret.name }}
-                  key: dbport 
-      
+                  key: dbport
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
-          image: docker-hub.middleware.biz/public/enigma-key-manager:latest
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+          envFrom:
+            - configMapRef:
+                name: timezone-config
           env:
           - name: POSTGRES_DBHOST
           {{- if .Values.global.db.bouncer }}
