@@ -1,6 +1,10 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.22.8 [ Corezoid 6.3.0 ]
+- 
+
+
 ### Chart 0.22.7 [ Corezoid 6.2.2 ]
 - removed key db_schema_rds in values.yaml (implemented on the application side)
 - fixed enigma subchart
