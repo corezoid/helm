@@ -144,6 +144,7 @@ spec:
           ports:
             - containerPort: 8090
             - containerPort: {{ .Values.containers.prometheusMetricsPort }}
+            - containerPort: 8385
           lifecycle:
             preStop:
               exec:
@@ -165,8 +166,8 @@ spec:
             {{ .Values.global.syncapi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
             httpGet:
-              path: /is_ready
-              port: 8383
+              path: /is_ready/liveness
+              port: 8385
             initialDelaySeconds: 30
             periodSeconds: 3
             timeoutSeconds: 5
@@ -174,8 +175,8 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /is_ready
-              port: 8383
+              path: /is_ready/readiness
+              port: 8385
             initialDelaySeconds: 30
             periodSeconds: 3
             timeoutSeconds: 5

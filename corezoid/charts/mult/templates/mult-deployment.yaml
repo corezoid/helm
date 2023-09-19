@@ -160,6 +160,7 @@ spec:
           ports:
           - containerPort: 9082
           - containerPort: {{ .Values.containers.prometheusMetricsPort }}
+          - containerPort: 8385
           lifecycle:
             preStop:
               exec:
@@ -181,28 +182,20 @@ spec:
           resources:
             {{ .Values.global.mult.resources | toYaml | indent 12 | trim }}
           livenessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/conveyor_api_multipart liveness
-            initialDelaySeconds: 20
-            periodSeconds: 20
+            httpGet:
+              path: /is_ready/liveness
+              port: 8385
+            initialDelaySeconds: 30
+            periodSeconds: 3
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
           readinessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/conveyor_api_multipart readiness
-            initialDelaySeconds: 15
-            periodSeconds: 5
+            httpGet:
+              path: /is_ready/readiness
+              port: 8385
+            initialDelaySeconds: 30
+            periodSeconds: 3
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3

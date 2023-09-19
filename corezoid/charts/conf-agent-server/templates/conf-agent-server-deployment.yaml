@@ -149,6 +149,7 @@ spec:
                   key: dbport
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
+          - containerPort: 8385
           lifecycle:
             preStop:
               exec:

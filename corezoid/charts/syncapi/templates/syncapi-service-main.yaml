@@ -14,4 +14,8 @@ spec:
     protocol: TCP
     port: 8090
     targetPort: 8090
+  - protocol: TCP
+    name: isready
+    port: 8385
+    targetPort: 8385
   type: NodePort
