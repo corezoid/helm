@@ -104,7 +104,7 @@ data:
 
         {is_ready, [
           {port, 8383},
-          {disabled, true}
+          {enabled, true}
         ]},
 
         {mw_metrics, [
