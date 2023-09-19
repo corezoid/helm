@@ -8,3 +8,4 @@ alpineImage:
   tag: 3.17
 containers:
   containerPort: 9080
+  prometheusMetricsPort: 9100

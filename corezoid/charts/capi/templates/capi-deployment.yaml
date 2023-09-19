@@ -289,6 +289,7 @@ spec:
                 key: dbport
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
+          - containerPort: {{ .Values.containers.prometheusMetricsPort }}
           - containerPort: 8585
           volumeMounts:
             {{- if eq .Values.global.capi.auth_providers_saml_enable true }}

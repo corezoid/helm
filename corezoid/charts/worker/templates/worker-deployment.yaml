@@ -207,6 +207,7 @@ spec:
                   key: dbport
           ports:
           - containerPort: 9080
+          - containerPort: {{ .Values.containers.prometheusMetricsPort }}
           volumeMounts:
             - name: workerconfig
               mountPath: /ebsmnt/conf/worker.config
