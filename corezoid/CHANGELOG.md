@@ -1,6 +1,6 @@
 ## Changelog
 
-### Chart 0.21.10 [ Corezoid 5.11.5 ]
+### Chart 0.21.12 [ Corezoid 5.11.5 ]
 - bugfix in capi
 
 ### Chart 0.21.6 [ Corezoid 5.11.0 ]
