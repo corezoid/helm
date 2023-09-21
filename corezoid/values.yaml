@@ -1,6 +1,6 @@
 global:
   # second level domain only! / core domain (example: corezoid.com)
-  domain: "devops.corezoid.com"
+  domain: "dev-devops.corezoid.com"
   # subdomain / sitename - dev.mpo.corezoid.com (example: dev.mpo)
   subdomain: "corezoid-k8s-public"
 
@@ -14,8 +14,9 @@ global:
   useCentos8: false
   # Ingress annotations
   ingress:
+    className: private-nginx
     annotations:
-      kubernetes.io/ingress.class: "nginx"
+      kubernetes.io/ingress.class: "private-nginx"
 
 #      kubernetes.io/ingress.class: alb
 #      alb.ingress.kubernetes.io/scheme: internet-facing
@@ -35,11 +36,11 @@ global:
 
   storage: nfs
   # Define global storageClass name
-  storageClassName: "corezoid-storage-class-default"
+  storageClassName: "corezoid-storage-class-default-public"
   ######## Settings AWS EFS filesystem   ########
   efs:
     awsRegion: "eu-west-1"
-    efsFileSystemId: "fs-3de75409"
+    efsFileSystemId: "fs-00b8a4b9489e767a1"
     ## set true if you choose storage: efs
     enabled: false
   ######## Settings NFS filesystem   ########
@@ -89,13 +90,12 @@ global:
       ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
       dbsuperuser: "postgres"
       ## password - for dbsuperuser
-      dbsuperuserpwd: "Corezoid1234!b"
+      dbsuperuserpwd: "kcu0rFn6XkDVJ4CGTe4H"
       data:
-        #dbhost: "postgresql.postgresql.svc.cluster.local"
-        dbhost: "pg-postgresql" # if internal=true
+        dbhost: "pg-postgresql"
         dbport: "5432"
-        dbuser: "internal_user"
-        dbpwd: "8hhgasdgiufghrtrnr4"
+        dbuser: "dbuser"
+        dbpwd: "kjnlqefgsfdgslqmlfq"
         dbuser_fdw: "fdw_user"
         dbpwd_fdw: "fdw_user_passwd123"
 
@@ -165,7 +165,6 @@ global:
     # Postgres corezoid schema version
     postgres_schema:
       version: "5.10.0.5"
-      db_schema_rds: true  # if RDS base then set to true, if standard PostgreSQL then false
 
     rotation:
       ## enabled: true or false
@@ -181,12 +180,12 @@ global:
   redis:
     # if internal true - create and use internal k8s redis container
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
-    internal: false
+    internal: true
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
     sentinel:
-      enable: true
+      enable: false
       master_name: "mymaster"
     secret:
       ## true - secret will be created automatically with provided values
@@ -195,17 +194,17 @@ global:
       name: "redis-secret"
       # you can specify different servers for redis for counters, cache and timers  - or specify the same server in variables
       data:
-        host: "redis-sentinel.redis-sentinel.svc.cluster.local"
-        port: "26379"
-        password: "redispassword"
+        host: "redis-master"
+        port: "6379"
+        password: ""
         # default redis for cache
-        host_cache: "redis-sentinel.redis-sentinel.svc.cluster.local"
-        port_cache: "26379"
-        password_cache: "redispassword"
+        host_cache: "redis-master"
+        port_cache: "6379"
+        password_cache: ""
         # default redis for timers
-        host_timers: "redis-sentinel.redis-sentinel.svc.cluster.local"
-        port_timers: "26379"
-        password_timers: "redispassword"
+        host_timers: "redis-master"
+        port_timers: "6379"
+        password_timers: ""
 
 
 
@@ -215,7 +214,7 @@ global:
     tag: "7.17.5"
     # if internal true - create and use internal elasticsearch container
     # if internal false - enable external elasticsearch, like aws elasticsearch service
-    internal: false
+    internal: true
     ## secret configuration for elasticsearch
     secret:
       ## true - secret will be created automaticaly with provided values
@@ -223,8 +222,7 @@ global:
       create: true
       name: "elasticsearch-secret"
       data:
-        host: "elasticsearch-service.elasticsearch.svc.cluster.local"
-        #host: "elasticsearch-service" # if internal=true
+        host: "elasticsearch-service"
         ## be careful with port - in internal install used 9200, in aws uses 443
         port: "9200"
         schema: "http"
@@ -240,7 +238,7 @@ global:
   mq:
     # if internal true - create and use internal rmq container
     # if internal false - enable external rmq (on aws ec2 instances as example)
-    internal: false
+    internal: true
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values
@@ -248,8 +246,7 @@ global:
       create: true
       name: "rabbitmq-secret"
       data:
-        host: "rabbitmq.rabbitmq.svc.cluster.local"
-#        host: "rabbit-service" # if internal=true
+        host: "rabbit-service"
         port: "5672"
         vhost: "/conveyor"
         username: "rabbituser"
@@ -261,7 +258,7 @@ global:
   use_limits_from_server: false
   ## Settings for API Corezoid
   capi:
-    tag: "7.12.0.2"
+    tag: "7.12.0.3"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -281,7 +278,7 @@ global:
       allowed_domains:
         - "gmail.com"
         - "yahoo.com"
-    check_2fa: true
+    check_2fa: false
     # Enable cookie secure for api
     secure: true
     # Auth provider
@@ -486,7 +483,7 @@ global:
     # application resources limits and requests
     resources:
       limits:
-        cpu: 4
+        cpu: 2
         memory: 2000Mi
       requests:
         cpu: 1
@@ -812,4 +809,3 @@ global:
       interval: daily
       # number of rotation
       copies: 7
-

@@ -1,5 +1,8 @@
 ## Changelog
 
+### Chart 0.21.10 [ Corezoid 5.11.5 ]
+- bugfix in capi
+
 ### Chart 0.21.6 [ Corezoid 5.11.0 ]
 - The “conv_title” method was removed from Corezoid API 
 - The Aliases tab was moved to the Folders section of the workspace menu 

@@ -411,6 +411,8 @@ data:
                 {{- end }}
 
                 {pg_fdw, [
+                  {host, "localhost"}, %% by default host will get from pgsql.host
+                  {reinit_if_changed, true}, %% by default false ( it will drop foreign server and create again )
                   {username, "${FDW_POSTGRES_DBUSER}"},
                   {password, "${FDW_POSTGRES_DBPWD}"}
                 ]},

@@ -10,6 +10,7 @@ metadata:
     app: {{ .Values.global.product }}
     tier: {{ .Values.appName }}
 spec:
+  ingressClassName: {{ .Values.global.ingress.className }}
   rules:
     - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
       http:
