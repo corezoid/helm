@@ -106,7 +106,7 @@ spec:
           terminationMessagePolicy: File
         {{- if eq .Values.global.enigma.enabled true }}
         - name: init-wait-enigma
-          image: docker-hub.middleware.biz/public/enigma-init-conteiner:latest
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}enigma-init-conteiner:latest"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           command:
             - sh
@@ -132,6 +132,9 @@ spec:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.capi.tag }}"
+          envFrom:
+            - configMapRef:
+                name: timezone-config
           env:
           - name: POD_NAME
             valueFrom:
@@ -291,6 +294,7 @@ spec:
           - containerPort: {{ .Values.containers.containerPort }}
           - containerPort: {{ .Values.containers.prometheusMetricsPort }}
           - containerPort: 8585
+          - containerPort: 8385
           volumeMounts:
             {{- if eq .Values.global.capi.auth_providers_saml_enable true }}
             {{- range $k, $v := $.Values.global.capi.saml_idp }}
@@ -339,28 +343,20 @@ spec:
           resources:
             {{ .Values.global.capi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/capi liveness
+            httpGet:
+              path: /is_ready/liveness
+              port: 8385
             initialDelaySeconds: 30
-            periodSeconds: 30
+            periodSeconds: 3
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
           readinessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/capi readiness
-            initialDelaySeconds: 10
-            periodSeconds: 5
+            httpGet:
+              path: /is_ready/readiness
+              port: 8385
+            initialDelaySeconds: 30
+            periodSeconds: 3
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3

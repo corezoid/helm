@@ -11,5 +11,10 @@ spec:
     tier: {{ .Values.appName }}
   ports:
   - protocol: TCP
+    name: main
     port: 9082
     targetPort: 9082
+  - protocol: TCP
+    name: isready
+    port: 8385
+    targetPort: 8385

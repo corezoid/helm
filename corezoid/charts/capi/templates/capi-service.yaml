@@ -18,3 +18,7 @@ spec:
     name: confagent
     port: 8585
     targetPort: 8585
+  - protocol: TCP
+    name: isready
+    port: 8385
+    targetPort: 8385
