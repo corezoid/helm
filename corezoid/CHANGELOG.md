@@ -1,7 +1,7 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
-### Chart 0.22.8 [ Corezoid 6.3.0 ]
+### Chart 0.22.8 [ Corezoid 6.3.1 ]
 - 
 
 
