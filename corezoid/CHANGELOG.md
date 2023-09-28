@@ -2,8 +2,11 @@
 https://doc.corezoid.com/docs/release-notes
 
 ### Chart 0.22.8 [ Corezoid 6.3.1 ]
-- 
-
+- Added shared workspaces in Corezoid and Simulator.Company and creating a new company no longer requires entering an OTP password
+- Added the option to share immutable Stages and objects inside them
+- For private cloud and on-premises installations, support for PostgreSQL versions older than 10 has been discontinued.
+- The Sender action and Sender form nodes have been removed from the node list
+- Now creating a Communications Orchestrator by clicking the Create button is available only from Project Stages
 
 ### Chart 0.22.7 [ Corezoid 6.2.2 ]
 - removed key db_schema_rds in values.yaml (implemented on the application side)
