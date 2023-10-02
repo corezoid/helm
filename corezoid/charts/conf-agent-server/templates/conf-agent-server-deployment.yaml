@@ -25,8 +25,12 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.postgresqlClientImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.postgresqlClientImage.repository }}:{{ .Values.postgresqlClientImage.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.postgresqlClientImage.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.postgresqlClientImage.repository }}:{{ .Values.postgresqlClientImage.tag }}"
+          {{- if eq .Values.global.db.serverTlsSslenabled true }}
+          command: ["sh", "-c", "until PGPASSWORD=${POSTGRES_DBPWD} psql --set=sslmode={{ .Values.global.db.serverTlsSslmode }} -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBUSER} -d settings -c \"select 1\" > /dev/null 2>&1 ; do echo Waiting while postgres created settings db ...; sleep 3; done"]
+          {{- else }}
           command: ["sh", "-c", "until PGPASSWORD=${POSTGRES_DBPWD} psql -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBUSER} -d settings -c \"select 1\" > /dev/null 2>&1 ; do echo Waiting while postgres created settings db ...; sleep 3; done"]
+          {{- end }}
           env:
             - name: MQ_HOST
               valueFrom:
@@ -66,7 +70,7 @@ spec:
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.conf_agent_server.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos9 }}{{ .Values.global.centos9Repo }}/{{ else if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.conf_agent_server.tag }}"
           envFrom:
             - configMapRef:
                 name: timezone-config
@@ -160,6 +164,10 @@ spec:
               subPath: conf_agent_server.config
             - name: corezoid-license
               mountPath: /ebsmnt/certs
+            {{- if .Values.global.mq.tls.enabled }}
+            - name: corezoid-tls
+              mountPath: /ebsmnt/tls
+            {{- end }}
             {{- if .Values.global.store_dumps.enabled }}
             - name: dumps-volume
               mountPath: /var/dumps
@@ -179,6 +187,11 @@ spec:
         - name: corezoid-license
           secret:
             secretName: {{ .Values.global.licenseSecretName | default "license-share-new" }}
+        {{- if .Values.global.mq.tls.enabled }}
+        - name: corezoid-tls
+          secret:
+            secretName: {{ .Values.global.tlsSecretName | default "tls-secret" }}
+        {{- end }}
         {{- if .Values.global.store_dumps.enabled }}
         - name: dumps-volume
           hostPath:

@@ -65,7 +65,7 @@ spec:
                 port:
                   number: 80
     {{- end }}
-  {{- if .Values.global.ingress_tls }}
+  {{- if .Values.global.ingress.tls.enabled }}
   tls:
     - hosts:
         {{- if .Values.global.store_dumps.enabled }}
@@ -77,6 +77,6 @@ spec:
         {{- if .Values.global.sa.enabled }}
         - {{ .Values.global.sa.subDomain}}.{{ .Values.global.domain }}
       {{- end }}
-      secretName: tls-{{ .Values.appName }}-{{ .Release.Namespace }}
+      secretName: {{ .Values.global.ingress.tls.SecretName | default "tls-ingress-secret" }}
   {{- end }}
 {{- end -}}
