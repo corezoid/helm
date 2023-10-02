@@ -1,6 +1,25 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.22.9 [ Corezoid 6.4.0 ]
+
+### Helm changes  
+- Applications versions:  
+   - capi - 8.3.1.0 
+   - mult - 3.2.1.0  
+   - webadm - 6.4.0  
+   - http-worker - 4.1.1.0  
+   - usercode - 8.1.0  
+   - worker - 5.1.1.0  
+   - syncapi - 3.1.1  
+   - web_superadm - 2.2.0  
+   - conf_agent_server - 2.2.1  
+   - limits - 2.1.1  
+
+### Improvements
+- Added tls connection option for external RabbitMQ, ElastiCache(Redis), Ingress, PgBouncer  
+
+
 ### Chart 0.22.8 [ Corezoid 6.3.1 ]
 - Added shared workspaces in Corezoid and Simulator.Company and creating a new company no longer requires entering an OTP password
 - Added the option to share immutable Stages and objects inside them

@@ -13,6 +13,11 @@ data:
                     {host, "${REDIS_HOST}"},
                     {port, ${REDIS_PORT}},
                     {password,"${REDIS_PASSWORD}"},
+                    {{- if eq .Values.global.redis.tls.enabled true }}
+                      {ssl, [
+                        {tls, true}
+                      ]},
+                    {{- end }}
                     {{- else }}
                     {host, "redis-master"},
                     {port, 6379},
@@ -71,6 +76,11 @@ data:
                 {host, "${REDIS_HOST}"},
                 {port, ${REDIS_PORT}},
                 {password,"${REDIS_PASSWORD}"},
+                {{- if eq .Values.global.redis.tls.enabled true }}
+                  {ssl, [
+                    {tls, true}
+                  ]},
+                {{- end }}
             {{- else }}
                 {host, "redis-master"},
                 {port, 6379},
@@ -92,6 +102,11 @@ data:
                 {host, "${REDIS_HOST}"},
                 {port, ${REDIS_PORT}},
                 {password,"${REDIS_PASSWORD}"},
+                {{- if eq .Values.global.redis.tls.enabled true }}
+                  {ssl, [
+                    {tls, true}
+                  ]},
+                {{- end }}
             {{- else }}
                 {host, "redis-master"},
                 {port, 6379},
@@ -143,6 +158,13 @@ data:
               {port, ${MQ_PORT}},
               {username, <<"${MQ_USERNAME}">>},
               {password, <<"${MQ_PASSWORD}">>},
+              {{- if eq .Values.global.mq.tls.enabled true }}
+                {ssl, [
+                  {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                  {cacertfile, "/ebsmnt/tls/ca.crt"},
+                  {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                ]},
+              {{- end }}
               {vhost, <<"${MQ_VHOST}">>},
   {{- else }}
               {host, <<"rabbit-service">>},
@@ -171,6 +193,13 @@ data:
               {port, ${MQ_PORT}},
               {username, <<"${MQ_USERNAME}">>},
               {password, <<"${MQ_PASSWORD}">>},
+              {{- if eq .Values.global.mq.tls.enabled true }}
+                {ssl, [
+                  {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                  {cacertfile, "/ebsmnt/tls/ca.crt"},
+                  {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                ]},
+              {{- end }}
               {vhost, <<"${MQ_VHOST}">>}
             ],
             [
@@ -179,6 +208,13 @@ data:
                 {username, <<"${MQ_USERNAME}">>},
                 {password, <<"${MQ_PASSWORD}">>},
                 {vhost, <<"${MQ_VHOST}">>},
+                {{- if eq .Values.global.mq.tls.enabled true }}
+                  {ssl, [
+                    {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                    {cacertfile, "/ebsmnt/tls/ca.crt"},
+                    {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                  ]},
+                {{- end }}
                 {pools, [dbcall]}
             ]
           {{- else }}
@@ -213,6 +249,13 @@ data:
                     {port, ${MQ_PORT}},
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
+                    {{- if eq .Values.global.mq.tls.enabled true }}
+                      {ssl, [
+                        {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                        {cacertfile, "/ebsmnt/tls/ca.crt"},
+                        {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                      ]},
+                    {{- end }}
                     {vhost, <<"${MQ_VHOST}">>}
                 ],
                 [
@@ -221,6 +264,13 @@ data:
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>},
+                    {{- if eq .Values.global.mq.tls.enabled true }}
+                      {ssl, [
+                        {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                        {cacertfile, "/ebsmnt/tls/ca.crt"},
+                        {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                      ]},
+                    {{- end }}
                     {pools, [dbcall]}
                 ]
           {{- else }}
@@ -343,6 +393,11 @@ data:
                   {host, "${REDIS_HOST}"},
                   {port, ${REDIS_PORT}},
                   {password,"${REDIS_PASSWORD}"},
+                  {{- if eq .Values.global.redis.tls.enabled true }}
+                    {ssl, [
+                      {tls, true}
+                    ]},
+                  {{- end }}
         {{- else }}
                   {host, "redis-master"},
                   {port, 6379},
@@ -632,6 +687,11 @@ data:
                     {host, "${REDIS_HOST}"},
                     {port, ${REDIS_PORT}},
                     {password,"${REDIS_PASSWORD}"},
+                    {{- if eq .Values.global.redis.tls.enabled true }}
+                      {ssl, [
+                         {tls, true}
+                      ]},
+                    {{- end }}
                     {{- else }}
                     {host, "redis-master"},
                     {port, 6379},
@@ -655,6 +715,11 @@ data:
                     {host, "${REDIS_HOST_CACHE}"},
                     {port, ${REDIS_PORT_CACHE}},
                     {password,"${REDIS_PASSWORD_CACHE}"},
+                    {{- if eq .Values.global.redis.tls.enabled true }}
+                      {ssl, [
+                         {tls, true}
+                      ]},
+                    {{- end }}
                     {{- else }}
                     {host, "redis-master"},
                     {port, 6379},
@@ -678,6 +743,11 @@ data:
                     {host, "${REDIS_HOST}"},
                     {port, ${REDIS_PORT}},
                     {password,"${REDIS_PASSWORD}"},
+                    {{- if eq .Values.global.redis.tls.enabled true }}
+                      {ssl, [
+                        {tls, true}
+                      ]},
+                    {{- end }}
                     {{- else }}
                     {host, "redis-master"},
                     {port, 6379},
@@ -705,6 +775,13 @@ data:
                 {port, ${MQ_PORT} },
                 {username, <<"${MQ_USERNAME}">>},
                 {password, <<"${MQ_PASSWORD}">>},
+                {{- if eq .Values.global.mq.tls.enabled true }}
+                   {ssl, [
+                      {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                      {cacertfile, "/ebsmnt/tls/ca.crt"},
+                      {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                   ]},
+                {{- end }}
           {{- else }}
                         {host, "rabbit-service"}
                     ]}
@@ -728,6 +805,13 @@ data:
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                            {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                          ]},
+                        {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
@@ -756,6 +840,13 @@ data:
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                           {ssl, [
+                              {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                              {cacertfile, "/ebsmnt/tls/ca.crt"},
+                              {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                           ]},
+                        {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
@@ -769,7 +860,7 @@ data:
           {{- end }}
                 ]},
                 {order_by, true},
-                {queues_count, 1},
+                {queues_count, 5},
                 {connections_per_queue, 1},
                 {channels_per_connection, 1},
                 {messages_prefetch_size_per_channel, 50}
@@ -784,6 +875,13 @@ data:
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                            {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                          ]},
+                        {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
@@ -811,6 +909,13 @@ data:
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                            {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                          ]},
+                        {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
@@ -838,6 +943,13 @@ data:
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                             {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                             {cacertfile, "/ebsmnt/tls/ca.crt"},
+                             {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                          ]},
+                        {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
@@ -867,6 +979,13 @@ data:
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                            {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                          ]},
+                        {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
@@ -894,6 +1013,13 @@ data:
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                           {ssl, [
+                              {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                              {cacertfile, "/ebsmnt/tls/ca.crt"},
+                              {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                           ]},
+                        {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
@@ -921,6 +1047,13 @@ data:
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                            {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                          ]},
+                        {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
@@ -947,6 +1080,13 @@ data:
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                           {ssl, [
+                              {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                              {cacertfile, "/ebsmnt/tls/ca.crt"},
+                              {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                           ]},
+                        {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}
@@ -975,6 +1115,13 @@ data:
                         {port, ${MQ_PORT}},
                         {username, <<"${MQ_USERNAME}">>},
                         {password, <<"${MQ_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                             {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                             {cacertfile, "/ebsmnt/tls/ca.crt"},
+                             {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                          ]},
+                        {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- else }}

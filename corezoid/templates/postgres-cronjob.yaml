@@ -33,8 +33,13 @@ spec:
                 - -c
                 - |
                   echo  "$POSTGRES_DBHOST:*:*:$POSTGRES_DBSUPERUSER:$POSTGRES_DBSUPERUSERPWD" > ~/.pgpass; chmod 0600 ~/.pgpass;
+          {{- if eq .Values.global.db.serverTlsSslenabled true }}
+                  for i in $(seq 0 $(($SHARD_COUNT-1))); do psql --set=sslmode={{ .Values.global.db.serverTlsSslmode }} -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "TRUNCATE TABLE tasks_archive;"; done;
+                  for i in $(seq 0 $(($SHARD_COUNT-1))); do psql --set=sslmode={{ .Values.global.db.serverTlsSslmode }} -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "select count(*) from tasks_archive;"; done;
+          {{- else }}
                   for i in $(seq 0 $(($SHARD_COUNT-1))); do psql -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "TRUNCATE TABLE tasks_archive;"; done;
                   for i in $(seq 0 $(($SHARD_COUNT-1))); do psql -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "select count(*) from tasks_archive;"; done;
+          {{- end }}
               securityContext:
                 runAsUser: 70
               env:

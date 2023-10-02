@@ -21,10 +21,10 @@ spec:
                 name: capi-service-node
                 port:
                   number: 9080
-  {{- if .Values.global.ingress_tls }}
+  {{- if .Values.global.ingress.tls.enabled }}
   tls:
     - hosts:
         - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
-      secretName: tls-{{ .Values.appName }}-{{ .Release.Namespace }}
+      secretName: {{ .Values.global.ingress.tls.SecretName | default "tls-ingress-secret" }}
   {{- end }}
 {{- end -}}

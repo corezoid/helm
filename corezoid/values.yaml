@@ -22,13 +22,15 @@ global:
     type: RollingUpdate
 
   imageInit:
-    repository: docker-hub.middleware.biz/public/alpine
+    repository: alpine
     pullPolicy: IfNotPresent
-    tag: "3.17"
+    tag: "3.18.3"
 
   # Ingress annotations
   ingress:
     enabled: true
+    tls:
+      enabled: false
     className: "private-nginx"
     annotations:
       ingress.class: "private-nginx"
@@ -178,6 +180,7 @@ global:
     serverConnectTimeout: "15"
     # Pgbouncer -> PostgreSQL connection mode. TLS connection is always requested first from PostgreSQL. If refused, the connection will be established over plain TCP. Server certificate is not validated. http://www.pgbouncer.org/config.html
     serverTlsSslmode: "prefer"
+    serverTlsSslenabled: false
     # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
     # transaction | session
     default_pool_mode: transaction
@@ -187,7 +190,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.3.0"
+      version: "6.4.0"
 
     rotation:
       ## enabled: true or false
@@ -196,14 +199,15 @@ global:
       # minute hour day month dayofweek
       schedule: "0 0 1 * *"
 
-  #######  Redis  ########
-  ## Supported version  from > 3.2.4 - 3.2.12
 
   ## NO CLUSTER Mode!
   redis:
     # if internal true - create and use internal k8s redis container
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
     internal: true
+    # tls true only for aws elasticache
+    tls:
+      enabled: false
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
@@ -228,7 +232,6 @@ global:
         host_timers: ""
         port_timers: ""
         password_timers: ""
-
 
 
   #######  Elasticsearch  ########
@@ -262,6 +265,9 @@ global:
     # if internal true - create and use internal rmq container
     # if internal false - enable external rmq (on aws ec2 instances as example)
     internal: true
+    # tls true only for external rabbitmq
+    tls:
+      enabled: false
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values
@@ -281,7 +287,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.3.0.3"
+    tag: "8.3.1.0"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -467,7 +473,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.1.0.1"
+    tag: "4.1.1.0"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -518,7 +524,7 @@ global:
 
   # usercode
   usercode:
-    tag: "8.0.4"
+    tag: "8.1.0"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -556,7 +562,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "5.1.0.1"
+    tag: "5.1.1.0"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -593,7 +599,7 @@ global:
 
   # mult
   mult:
-    tag: "3.2.0.1"
+    tag: "3.2.1.0"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -636,7 +642,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.3.0"
+    tag: "6.4.0"
     minReplicas: 1
     resources:
       limits:
@@ -670,7 +676,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s"
-    tag: "3.1.0"
+    tag: "3.1.1"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
@@ -750,7 +756,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "2.2.0"
+    tag: "2.2.1"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -790,7 +796,7 @@ global:
     minReplicas: 1
 
   limits:
-    tag: "2.1.0"
+    tag: "2.1.1"
     minReplicas: 2
 
   prometheus_metrics: false

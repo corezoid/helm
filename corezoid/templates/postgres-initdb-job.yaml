@@ -31,8 +31,10 @@ spec:
           env:
             - name: SCHEMA_VERSION
               value: {{ .Values.global.db.postgres_schema.version }}
-            - name: DB_RDS_KEY
-              value: {{ .Values.global.db.postgres_schema.db_schema_rds | quote }}
+            - name: POSTGRES_SSLMODE
+              value: {{ .Values.global.db.serverTlsSslenabled | quote }}
+            - name: SERVER_TLS_SSLMODE
+              value: {{ .Values.global.db.serverTlsSslmode | quote }}
             - name: SHARD_COUNT
               value: '{{ .Values.global.db.shards_count }}'
             - name: POSTGRES_DBHOST
