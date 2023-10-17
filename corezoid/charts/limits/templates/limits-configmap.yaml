@@ -45,6 +45,11 @@ data:
                 {host, "${REDIS_HOST}"},
                 {port, ${REDIS_PORT}},
                 {password,"${REDIS_PASSWORD}"},
+                {{- if eq .Values.global.redis.tls.enabled true }}
+                  {ssl, [
+                    {tls, true}
+                  ]},
+                {{- end }}
             {{- else }}
                 {host, "redis-master"},
                 {port, 6379},
@@ -84,6 +89,13 @@ data:
               {port, ${MQ_PORT}},
               {username, <<"${MQ_USERNAME}">>},
               {password, <<"${MQ_PASSWORD}">>},
+              {{- if eq .Values.global.mq.tls.enabled true }}
+                {ssl, [
+                  {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                  {cacertfile, "/ebsmnt/tls/ca.crt"},
+                  {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                ]},
+              {{- end }}
               {vhost, <<"${MQ_VHOST}">>}
             ]
     {{- else }}
@@ -110,6 +122,13 @@ data:
                     {port, ${MQ_PORT}},
                     {username, <<"${MQ_USERNAME}">>},
                     {password, <<"${MQ_PASSWORD}">>},
+                    {{- if eq .Values.global.mq.tls.enabled true }}
+                      {ssl, [
+                        {certfile, "/ebsmnt/tls/tls-cert.crt"},
+                        {cacertfile, "/ebsmnt/tls/ca.crt"},
+                        {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                      ]},
+                    {{- end }}
                     {vhost, <<"${MQ_VHOST}">>}
                 ]
     {{- else }}

@@ -2,8 +2,9 @@ appName: enigma-key-manager
 image:
   registry: docker-hub.middleware.biz
   repository: enigma-key-manager
+  tag: latest
 
-alpineImage:
+pgbouncerClientImage:
   registry: docker-hub.middleware.biz
-  repository: alpine
-  tag: 3.15
+  repository: pgbouncer
+  tag: 1.20.1-alpine3.18-2

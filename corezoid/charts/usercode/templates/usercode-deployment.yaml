@@ -32,7 +32,7 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 {{- else }} nc -zvw1  ${MQ_HOST} ${MQ_PORT}{{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
             - name: MQ_HOST
@@ -60,7 +60,7 @@ spec:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
         - name: init-wait-rmq
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           command: ['sh']
           args:
             - "-c"
@@ -85,8 +85,11 @@ spec:
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.usercode.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos9 }}{{ .Values.global.centos9Repo }}/{{ else if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.usercode.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+          envFrom:
+            - configMapRef:
+                name: timezone-config
           env:
             - name: IPNODEDOMAIN
               valueFrom:
@@ -168,6 +171,7 @@ spec:
                   key: dbport
           ports:
           - containerPort: 9080
+          - containerPort: {{ .Values.containers.prometheusMetricsPort }}
           lifecycle:
             preStop:
               exec:
@@ -178,6 +182,10 @@ spec:
               subPath: usercode.config
             - name: corezoid-license
               mountPath: /ebsmnt/certs
+            {{- if .Values.global.mq.tls.enabled }}
+            - name: corezoid-tls
+              mountPath: /ebsmnt/tls
+            {{- end }}
             {{- if .Values.global.store_dumps.enabled }}
             - name: dumps-volume
               mountPath: /var/dumps
@@ -215,6 +223,11 @@ spec:
         - name: corezoid-license
           secret:
             secretName: {{ .Values.global.licenseSecretName | default "license-share-new" }}
+        {{- if .Values.global.mq.tls.enabled }}
+        - name: corezoid-tls
+          secret:
+            secretName: {{ .Values.global.tlsSecretName | default "tls-secret" }}
+        {{- end }}
         {{- if .Values.global.store_dumps.enabled }}
         - name: dumps-volume
           hostPath:

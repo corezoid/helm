@@ -6,7 +6,7 @@ image:
 postgresqlClientImage:
   registry: docker-hub.middleware.biz
   repository: postgresql-client
-  tag: alpine3.17
+  tag: alpine3.18.3
 
 containers:
   containerPort: 8585

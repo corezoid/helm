@@ -11,5 +11,10 @@ spec:
     tier: {{ .Values.appName }}
   ports:
   - protocol: TCP
+    name: main
     port: {{ .Values.containers.containerPort }}
     targetPort: {{ .Values.containers.containerPort }}
+  - protocol: TCP
+    name: isready
+    port: 8385
+    targetPort: 8385

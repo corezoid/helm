@@ -1,6 +1,32 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.22.9 [ Corezoid 6.4.0 ]
+
+### Helm changes  
+- Applications versions:  
+   - capi - 8.3.1.0 
+   - mult - 3.2.1.0  
+   - webadm - 6.4.0  
+   - http-worker - 4.1.1.0  
+   - usercode - 8.1.0  
+   - worker - 5.1.1.0  
+   - syncapi - 3.1.1  
+   - web_superadm - 2.2.0  
+   - conf_agent_server - 2.2.1  
+   - limits - 2.1.1  
+
+### Improvements
+- Added tls connection option for external RabbitMQ, ElastiCache(Redis), Ingress, PgBouncer  
+
+
+### Chart 0.22.8 [ Corezoid 6.3.1 ]
+- Added shared workspaces in Corezoid and Simulator.Company and creating a new company no longer requires entering an OTP password
+- Added the option to share immutable Stages and objects inside them
+- For private cloud and on-premises installations, support for PostgreSQL versions older than 10 has been discontinued.
+- The Sender action and Sender form nodes have been removed from the node list
+- Now creating a Communications Orchestrator by clicking the Create button is available only from Project Stages
+
 ### Chart 0.22.7 [ Corezoid 6.2.2 ]
 - removed key db_schema_rds in values.yaml (implemented on the application side)
 - fixed enigma subchart

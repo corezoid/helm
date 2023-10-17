@@ -33,7 +33,7 @@ spec:
       terminationGracePeriodSeconds: 60
       initContainers:
         - name: init-wait
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- end }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}; do echo waiting for deps; sleep 2; done;"]
           env:
             - name: MQ_HOST
@@ -61,7 +61,7 @@ spec:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
         - name: init-wait-rmq
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           command: ['sh']
           args:
             - "-c"
@@ -84,7 +84,7 @@ spec:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
         - name: init-wait-elasticsearch
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -106,7 +106,7 @@ spec:
           terminationMessagePolicy: File
         {{- if eq .Values.global.enigma.enabled true }}
         - name: init-wait-enigma
-          image: docker-hub.middleware.biz/public/enigma-init-conteiner:latest
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}enigma-init-conteiner:latest"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           command:
             - sh
@@ -118,7 +118,7 @@ spec:
               subPath: enigma_pk_id
         {{- end }}
         - name: init-wait-mult
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.alpineImage.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.alpineImage.repository }}:{{ .Values.alpineImage.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -131,7 +131,10 @@ spec:
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.capi.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos9 }}{{ .Values.global.centos9Repo }}/{{ else if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.capi.tag }}"
+          envFrom:
+            - configMapRef:
+                name: timezone-config
           env:
           - name: POD_NAME
             valueFrom:
@@ -289,7 +292,9 @@ spec:
                 key: dbport
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
+          - containerPort: {{ .Values.containers.prometheusMetricsPort }}
           - containerPort: 8585
+          - containerPort: 8385
           volumeMounts:
             {{- if eq .Values.global.capi.auth_providers_saml_enable true }}
             {{- range $k, $v := $.Values.global.capi.saml_idp }}
@@ -331,6 +336,10 @@ spec:
               subPath: vm.args
             - name: corezoid-license
               mountPath: /ebsmnt/certs
+            {{- if .Values.global.mq.tls.enabled }}
+            - name: corezoid-tls
+              mountPath: /ebsmnt/tls
+            {{- end }}
             {{- if .Values.global.store_dumps.enabled }}
             - name: dumps-volume
               mountPath: /var/dumps
@@ -338,28 +347,20 @@ spec:
           resources:
             {{ .Values.global.capi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/capi liveness
+            httpGet:
+              path: /is_ready/liveness
+              port: 8385
             initialDelaySeconds: 30
-            periodSeconds: 30
+            periodSeconds: 3
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
           readinessProbe:
-            exec:
-              command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/capi readiness
-            initialDelaySeconds: 10
-            periodSeconds: 5
+            httpGet:
+              path: /is_ready/readiness
+              port: 8385
+            initialDelaySeconds: 30
+            periodSeconds: 3
             timeoutSeconds: 5
             successThreshold: 1
             failureThreshold: 3
@@ -401,6 +402,11 @@ spec:
         - name: corezoid-license
           secret:
             secretName: {{ .Values.global.licenseSecretName | default "license-share-new" }}
+        {{- if .Values.global.mq.tls.enabled }}
+        - name: corezoid-tls
+          secret:
+            secretName: {{ .Values.global.tlsSecretName | default "tls-secret" }}
+        {{- end }}
         {{- if eq .Values.global.capi.auth_providers_saml_enable true }}
         - name: {{ .Values.global.capi.capi_saml_secret_name | default "capi-saml-secret" }}
           secret:

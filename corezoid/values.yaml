@@ -22,16 +22,19 @@ global:
     type: RollingUpdate
 
   imageInit:
-    repository: docker-hub.middleware.biz/public/alpine
+    repository: alpine
     pullPolicy: IfNotPresent
-    tag: "3.17"
+    tag: "3.18.3"
 
   # Ingress annotations
   ingress:
     enabled: true
+    tls:
+      enabled: false
     className: "private-nginx"
     annotations:
-      ingress.class: private-nginx
+      ingress.class: "private-nginx"
+      nginx.ingress.kubernetes.io/proxy-body-size: "150m"
 #      alb.ingress.kubernetes.io/scheme: internet-facing
 #      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:305168114386:certificate/5fad3576-220b-4c69-ac85-e56b3fe684bd
 #      alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
@@ -177,6 +180,7 @@ global:
     serverConnectTimeout: "15"
     # Pgbouncer -> PostgreSQL connection mode. TLS connection is always requested first from PostgreSQL. If refused, the connection will be established over plain TCP. Server certificate is not validated. http://www.pgbouncer.org/config.html
     serverTlsSslmode: "prefer"
+    serverTlsSslenabled: false
     # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
     # transaction | session
     default_pool_mode: transaction
@@ -186,7 +190,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.2.2"
+      version: "6.4.0"
 
     rotation:
       ## enabled: true or false
@@ -195,14 +199,15 @@ global:
       # minute hour day month dayofweek
       schedule: "0 0 1 * *"
 
-  #######  Redis  ########
-  ## Supported version  from > 3.2.4 - 3.2.12
 
   ## NO CLUSTER Mode!
   redis:
     # if internal true - create and use internal k8s redis container
     # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
     internal: true
+    # tls true only for aws elasticache
+    tls:
+      enabled: false
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "redis-pvc"
     ## secret configuration for redis
@@ -227,7 +232,6 @@ global:
         host_timers: ""
         port_timers: ""
         password_timers: ""
-
 
 
   #######  Elasticsearch  ########
@@ -261,6 +265,9 @@ global:
     # if internal true - create and use internal rmq container
     # if internal false - enable external rmq (on aws ec2 instances as example)
     internal: true
+    # tls true only for external rabbitmq
+    tls:
+      enabled: false
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values
@@ -280,7 +287,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.2.1.2"
+    tag: "8.3.1.0"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -380,6 +387,14 @@ global:
     companies_manager: "corezoid_internal"
     # If `fs` gets a license from a file, if `db` gets a license from a database. For new installation use only db
     licensepath: "fs"
+    ## User password strength policy
+    password_policy:
+      min_length: 10     # Min password length
+      max_length: 35     # Max password length
+      lowercase: true    # [a-z]
+      uppercase: true    # [A-Z]
+      number: true       # [0-9]
+      special: true      # [\\!"#$%&'()*+,-./:;<=>?@^_`{|}~\[\]]
     ## Setting for configure frontend
     front_setting:
       # documentation (navigate by clicking on DOCS link)
@@ -458,7 +473,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.0.2.1"
+    tag: "4.1.1.0"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -509,7 +524,7 @@ global:
 
   # usercode
   usercode:
-    tag: "8.0.3"
+    tag: "8.1.0"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -547,7 +562,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "5.0.1.1"
+    tag: "5.1.1.0"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -584,7 +599,7 @@ global:
 
   # mult
   mult:
-    tag: "3.1.0.2"
+    tag: "3.2.1.0"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -627,7 +642,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.2.2"
+    tag: "6.4.0"
     minReplicas: 1
     resources:
       limits:
@@ -661,7 +676,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s"
-    tag: "3.0.2"
+    tag: "3.1.1"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
@@ -741,7 +756,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "2.1.0"
+    tag: "2.2.1"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -776,19 +791,19 @@ global:
 
   # web-superadm
   web_superadm:
-    tag: "2.1.1"
+    tag: "2.2.0"
     subdomain: "superadm-k8s"
     minReplicas: 1
 
   limits:
-    tag: "2.0.2"
+    tag: "2.1.1"
     minReplicas: 2
 
   prometheus_metrics: false
 
   # global log level definition, info - default
   # available value info | warning | error | debug
-  log_level: debug
+  log_level: info
   # allows store crushdumps and send to Telegram chat
   store_dumps:
     enabled: false

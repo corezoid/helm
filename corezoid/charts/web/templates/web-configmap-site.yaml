@@ -53,7 +53,10 @@ data:
            root $static_local_avatars;
         }
         {{- else }}
-        location ~ ^/avatars { return 200; }
+        location ~ ^/avatars {
+           return 200;
+           add_header      Content-Type image/jpeg;
+        }
         {{- end }}
 
         location /favicon/ {
