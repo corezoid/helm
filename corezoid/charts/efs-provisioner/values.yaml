@@ -62,7 +62,6 @@ efsProvisioner:
       # newestAvailable is true, use the last one in the list that
       # does serve StorageClass, otherwise, use the first that does.
       candidateApiVersions:
-        - storage.k8s.io/v1beta1
         - storage.k8s.io/v1
 
 ## Enable RBAC
