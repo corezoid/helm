@@ -53,6 +53,6 @@ spec:
   tls:
     - hosts:
         - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
-      secretName: {{ .Values.global.ingress.tls.SecretName | default "tls-ingress-secret" }}
+      secretName: {{ .Values.global.ingress.tls.secret.name | default "tls-ingress-secret" }}
   {{- end }}
 {{- end -}}
