@@ -77,6 +77,6 @@ spec:
         {{- if .Values.global.sa.enabled }}
         - {{ .Values.global.sa.subDomain}}.{{ .Values.global.domain }}
       {{- end }}
-      secretName: {{ .Values.global.ingress.tls.SecretName | default "tls-ingress-secret" }}
+      secretName: {{ .Values.global.ingress.tls.secret.name | default "tls-ingress-secret" }}
   {{- end }}
 {{- end -}}
