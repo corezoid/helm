@@ -32,7 +32,7 @@ global:
     tls:
       enabled: false
       secret:
-        create: false
+        create: true
     className: "private-nginx"
     annotations:
       ingress.class: "private-nginx"
@@ -271,7 +271,7 @@ global:
     tls:
       enabled: false
       secret:
-        create: false
+        create: true
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values
