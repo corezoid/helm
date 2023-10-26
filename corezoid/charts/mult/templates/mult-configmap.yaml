@@ -42,7 +42,9 @@ data:
                     {{- if eq .Values.global.mq.tls.enabled true }}
                       {ssl, [
                         {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                        {cacertfile, "/ebsmnt/tls/ca.crt"},
+                        {{- if eq .Values.global.mq.tls.tls_verify true }}
+                          {cacertfile, "/ebsmnt/tls/ca.crt"},
+                        {{- end }}
                         {keyfile, "/ebsmnt/tls/tls-cert.key"}
                       ]},
                     {{- end }}
@@ -75,7 +77,9 @@ data:
                     {{- if eq .Values.global.mq.tls.enabled true }}
                       {ssl, [
                         {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                        {cacertfile, "/ebsmnt/tls/ca.crt"},
+                        {{- if eq .Values.global.mq.tls.tls_verify true }}
+                          {cacertfile, "/ebsmnt/tls/ca.crt"},
+                        {{- end }}
                         {keyfile, "/ebsmnt/tls/tls-cert.key"}
                       ]},
                     {{- end }}
@@ -262,7 +266,9 @@ data:
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
                             {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {{- if eq .Values.global.mq.tls.tls_verify true }}
+                              {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {{- end }}
                             {keyfile, "/ebsmnt/tls/tls-cert.key"}
                           ]},
                         {{- end }}
@@ -297,7 +303,9 @@ data:
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
                             {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {{- if eq .Values.global.mq.tls.tls_verify true }}
+                              {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {{- end }}
                             {keyfile, "/ebsmnt/tls/tls-cert.key"}
                           ]},
                         {{- end }}
@@ -334,7 +342,9 @@ data:
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
                             {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {{- if eq .Values.global.mq.tls.tls_verify true }}
+                              {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {{- end }}
                             {keyfile, "/ebsmnt/tls/tls-cert.key"}
                           ]},
                         {{- end }}
@@ -368,7 +378,9 @@ data:
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
                             {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {{- if eq .Values.global.mq.tls.tls_verify true }}
+                              {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {{- end }}
                             {keyfile, "/ebsmnt/tls/tls-cert.key"}
                           ]},
                         {{- end }}
@@ -402,7 +414,9 @@ data:
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
                             {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {{- if eq .Values.global.mq.tls.tls_verify true }}
+                              {cacertfile, "/ebsmnt/tls/ca.crt"},
+                            {{- end }}
                             {keyfile, "/ebsmnt/tls/tls-cert.key"}
                           ]},
                         {{- end }}

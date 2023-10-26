@@ -38,7 +38,11 @@ spec:
             - configMapRef:
                 name: timezone-config
           ports:
-            - containerPort: 8080
+            {{- if .Values.global.ingress.tls.enabled }}
+            - containerPort: {{ .Values.global.webadm.service_port | default 8443 }}
+            {{- else }}
+            - containerPort: {{ .Values.global.webadm.service_port | default 8080 }}
+            {{- end }}
           lifecycle:
             preStop:
               exec:
@@ -51,6 +55,10 @@ spec:
             - name: web-config-site
               mountPath: /etc/nginx/conf.d/corezoid.conf
               subPath: corezoid.conf
+            {{- if .Values.global.ingress.tls.enabled }}
+            - name: ingress-tls
+              mountPath: /etc/nginx/certs
+            {{- end }}
             - name: web-config-logo
               mountPath: /app/logo/logo.svg
               subPath: logo.svg
@@ -68,7 +76,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /nginx_status
-              port: 8080
+              port: {{ .Values.global.webadm.service_port | default 8080 }}
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -77,7 +85,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /nginx_status
-              port: 8080
+              port: {{ .Values.global.webadm.service_port | default 8080 }}
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -96,7 +104,7 @@ spec:
               containerPort: 9113
           args:
             #A URI or unix domain socket path for scraping NGINX
-            - -nginx.scrape-uri=http://localhost:8080/nginx_status
+            - -nginx.scrape-uri=http://localhost:{{ .Values.global.webadm.service_port | default 8080 }}/nginx_status
             #A number of retries the exporter will make on start to connect to the NGINX stub_status page
             - -nginx.retries=2
 {{- if .Values.global.imagePullSecrets }}
@@ -112,6 +120,11 @@ spec:
         - name: web-config-site
           configMap:
             name: {{ .Values.appName }}-site
+        {{- if .Values.global.ingress.tls.enabled }}
+        - name: ingress-tls
+          secret:
+            secretName: {{ .Values.global.ingress.tls.secret.name | default "tls-ingress-secret" }}
+        {{- end }}
         - name: web-config-logo
           configMap:
             name: {{ .Values.appName }}-config-logo

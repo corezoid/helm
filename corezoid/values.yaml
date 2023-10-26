@@ -181,7 +181,7 @@ global:
     # If connection and login won’t finish in this amount of time, the connection will be closed.
     serverConnectTimeout: "15"
     # Pgbouncer -> PostgreSQL connection mode. TLS connection is always requested first from PostgreSQL. If refused, the connection will be established over plain TCP. Server certificate is not validated. http://www.pgbouncer.org/config.html
-    serverTlsSslmode: "prefer"
+    serverTlsSslmode: "disable"  # only "require" (default), "verify-full", "verify-ca", and "disable" supported
     serverTlsSslenabled: false
     # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
     # transaction | session
@@ -192,7 +192,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.4.0"
+      version: "6.4.1"
 
     rotation:
       ## enabled: true or false
@@ -270,6 +270,7 @@ global:
     # tls true only for external rabbitmq
     tls:
       enabled: false
+      tls_verify: false  # CA certificate verification
       secret:
         create: true
     ## secret configuration for rabbitmq
@@ -745,6 +746,10 @@ global:
     enabled: false
     google_client_id: ""
     google_client_secret: ""
+    persistantVolumeClaimShareDir: "/ebsmnt/share"
+    config:
+      client_id: ""
+      client_secret: ""
   sa_web:
     subdomain: ""
 

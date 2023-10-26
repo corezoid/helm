@@ -8,6 +8,9 @@ ingressClassName: {{ .Values.global.ingress.className }}
 {{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
 {{ end -}}
+{{- if .Values.global.ingress.tls.enabled }}
+nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+{{- end }}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
       more_set_headers "Cache-Control: no-cache";
@@ -23,6 +26,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 {{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
 {{ end -}}
+{{- if .Values.global.ingress.tls.enabled }}
+nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+{{- end }}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
@@ -40,6 +46,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 {{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
 {{ end -}}
+{{- if .Values.global.ingress.tls.enabled }}
+nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+{{- end }}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
@@ -54,6 +63,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 {{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
 {{ end -}}
+{{- if .Values.global.ingress.tls.enabled }}
+nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+{{- end }}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
@@ -66,6 +78,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 {{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
 {{ end -}}
+{{- if .Values.global.ingress.tls.enabled }}
+nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+{{- end }}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
@@ -78,6 +93,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 {{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
 {{ end -}}
+{{- if .Values.global.ingress.tls.enabled }}
+nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+{{- end }}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;
@@ -87,6 +105,9 @@ nginx.ingress.kubernetes.io/configuration-snippet: |
 {{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
 {{ end -}}
+{{- if .Values.global.ingress.tls.enabled }}
+nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+{{- end }}
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 nginx.ingress.kubernetes.io/configuration-snippet: |
   more_set_headers X-Content-Type-Options "nosniff" always;

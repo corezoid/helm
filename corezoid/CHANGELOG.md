@@ -1,6 +1,10 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.23.0 [ Corezoid 6.4.1 ]
+
+...
+
 ### Chart 0.22.9 [ Corezoid 6.4.0 ]
 
 ### Helm changes  
