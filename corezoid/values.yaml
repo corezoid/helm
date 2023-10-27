@@ -292,7 +292,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.3.1.0"
+    tag: "8.3.1.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -478,7 +478,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.1.1.0"
+    tag: "4.1.1.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -529,7 +529,7 @@ global:
 
   # usercode
   usercode:
-    tag: "8.1.0"
+    tag: "8.1.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -567,7 +567,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "5.1.1.0"
+    tag: "5.1.1.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -604,7 +604,7 @@ global:
 
   # mult
   mult:
-    tag: "3.2.1.0"
+    tag: "3.2.1.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -647,7 +647,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.4.0"
+    tag: "6.4.1"
     minReplicas: 1
     resources:
       limits:
@@ -681,7 +681,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s"
-    tag: "3.1.1"
+    tag: "3.1.2"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
@@ -765,7 +765,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "2.2.1"
+    tag: "2.2.2"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -805,7 +805,7 @@ global:
     minReplicas: 1
 
   limits:
-    tag: "2.1.1"
+    tag: "2.1.2"
     minReplicas: 2
 
   prometheus_metrics: false
