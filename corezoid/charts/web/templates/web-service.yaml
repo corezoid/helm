@@ -11,6 +11,11 @@ spec:
     tier: {{ .Values.appName }}
   ports:
   - protocol: TCP
-    port: 8080
-    targetPort: 8080
+    {{- if .Values.global.ingress.tls.enabled }}
+    port: {{ .Values.global.webadm.service_port | default 8443 }}
+    targetPort: {{ .Values.global.webadm.service_port | default 8443 }}
+    {{- else }}
+    port: {{ .Values.global.webadm.service_port | default 8080 }}
+    targetPort: {{ .Values.global.webadm.service_port | default 8080 }}
+    {{- end }}
   type: NodePort
