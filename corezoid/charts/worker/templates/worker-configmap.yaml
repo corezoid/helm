@@ -117,11 +117,7 @@ data:
                 {password, <<"${MQ_PASSWORD}">>},
                 {{- if eq .Values.global.mq.tls.enabled true }}
                   {ssl, [
-                    {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                    {{- if eq .Values.global.mq.tls.tls_verify true }}
-                      {cacertfile, "/ebsmnt/tls/ca.crt"},
-                    {{- end }}
-                    {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                    {tls, true}
                   ]},
                 {{- end }}
                 {vhost, <<"${MQ_VHOST}">>}
@@ -134,11 +130,7 @@ data:
                 {vhost, <<"${MQ_VHOST}">>},
                 {{- if eq .Values.global.mq.tls.enabled true }}
                   {ssl, [
-                    {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                    {{- if eq .Values.global.mq.tls.tls_verify true }}
-                      {cacertfile, "/ebsmnt/tls/ca.crt"},
-                    {{- end }}
-                    {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                    {tls, true}
                   ]},
                 {{- end }}
                 {pools, [dbcall]}
@@ -177,11 +169,7 @@ data:
                     {password, <<"${MQ_PASSWORD}">>},
                     {{- if eq .Values.global.mq.tls.enabled true }}
                       {ssl, [
-                        {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                        {{- if eq .Values.global.mq.tls.tls_verify true }}
-                          {cacertfile, "/ebsmnt/tls/ca.crt"},
-                        {{- end }}
-                        {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                        {tls, true}
                       ]},
                     {{- end }}
                     {vhost, <<"${MQ_VHOST}">>}
@@ -194,11 +182,7 @@ data:
                     {vhost, <<"${MQ_VHOST}">>},
                     {{- if eq .Values.global.mq.tls.enabled true }}
                       {ssl, [
-                        {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                        {{- if eq .Values.global.mq.tls.tls_verify true }}
-                          {cacertfile, "/ebsmnt/tls/ca.crt"},
-                        {{- end }}
-                        {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                        {tls, true}
                       ]},
                     {{- end }}
                     {pools, [dbcall]}
@@ -316,11 +300,7 @@ data:
                 {password, <<"${MQ_PASSWORD}">>},
                 {{- if eq .Values.global.mq.tls.enabled true }}
                   {ssl, [
-                    {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                    {{- if eq .Values.global.mq.tls.tls_verify true }}
-                      {cacertfile, "/ebsmnt/tls/ca.crt"},
-                    {{- end }}
-                    {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                    {tls, true}
                   ]},
                 {{- end }}
                 {vhost, <<"${MQ_VHOST}">>},
@@ -598,11 +578,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -637,11 +613,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -675,11 +647,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -712,11 +680,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -747,11 +711,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -782,11 +742,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -817,11 +773,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -853,11 +805,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -889,11 +837,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -926,11 +870,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -962,11 +902,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -998,11 +934,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1034,11 +966,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1077,11 +1005,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1143,11 +1067,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_GITCALL_VHOST}">>}
@@ -1247,11 +1167,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_GITCALL_VHOST}">>}
@@ -1279,11 +1195,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_GITCALL_VHOST}">>}
@@ -1312,11 +1224,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
@@ -1344,11 +1252,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
@@ -1378,11 +1282,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1414,11 +1314,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1451,11 +1347,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1486,11 +1378,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1523,11 +1411,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1559,11 +1443,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1595,11 +1475,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1633,11 +1509,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1670,11 +1542,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -1732,11 +1600,7 @@ data:
           {password, <<"${MQ_PASSWORD}">>},
           {{- if eq .Values.global.mq.tls.enabled true }}
             {ssl, [
-              {certfile, "/ebsmnt/tls/tls-cert.crt"},
-              {{- if eq .Values.global.mq.tls.tls_verify true }}
-                {cacertfile, "/ebsmnt/tls/ca.crt"},
-              {{- end }}
-              {keyfile, "/ebsmnt/tls/tls-cert.key"}
+              {tls, true}
             ]},
           {{- end }}
           {{- else }}
@@ -1767,11 +1631,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {{- if eq .Values.global.mq.tls.tls_verify true }}
-                              {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {{- end }}
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}

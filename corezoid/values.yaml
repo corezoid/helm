@@ -270,9 +270,6 @@ global:
     # tls true only for external rabbitmq
     tls:
       enabled: false
-      tls_verify: false  # CA certificate verification
-      secret:
-        create: true
     ## secret configuration for rabbitmq
     secret:
       ## true - secret will be created automatically with provided values
