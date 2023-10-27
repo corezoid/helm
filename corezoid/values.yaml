@@ -32,7 +32,7 @@ global:
     tls:
       enabled: false
       secret:
-        create: true
+        create: false
     className: "private-nginx"
     annotations:
       ingress.class: "private-nginx"
