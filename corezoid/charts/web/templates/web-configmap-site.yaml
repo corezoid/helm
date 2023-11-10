@@ -6,7 +6,7 @@ data:
     ''      close;
     }
     server {
-        listen 8080;
+        listen {{ .Values.global.webadm.service_port | default 8080 }};
         server_name localhost;
     	  root /app;
 
@@ -15,7 +15,13 @@ data:
     }
 
     server {
-        listen 8080;
+        {{- if .Values.global.ingress.tls.enabled }}
+        listen {{ .Values.global.webadm.service_port | default 8443 }} ssl;
+        ssl_certificate /etc/nginx/certs/ingress-tls.crt;
+        ssl_certificate_key /etc/nginx/certs/ingress-tls.key;
+        {{- else }}
+        listen {{ .Values.global.webadm.service_port | default 8080 }};
+        {{- end }}
         server_name {{ .Values.global.subdomain}}.{{ .Values.global.domain }};
 
         add_header "Cache-Control" "no-store";
@@ -40,8 +46,10 @@ data:
         set $admin_root    "/app";
         set $static_local    "/app/static";
 
+        {{- if .Values.global.sa }}
         {{- if .Values.global.sa.enabled }}
         set $static_local_avatars    {{ .Values.global.sa.persistantVolumeClaimShareDir }};
+        {{- end }}
         {{- end }}
 
         if ($host !~* ^({{ .Values.global.subdomain}}.{{ .Values.global.domain }})$ ) { return 444; }
@@ -84,14 +92,14 @@ data:
             add_header Cache-Control "public";
         }
 
-        location ~ ^(/[a-zA-Z0-9]+)?/dashboard {
+        location ~ ^(/[a-zA-Z0-9-]+)?/dashboard {
             root $admin_root;
             try_files $uri /dashboard.html;
             expires 1y;
             add_header Cache-Control "public";
         }
 
-        location ~ ^(/[a-zA-Z0-9]+)?/process {
+        location ~ ^(/[a-zA-Z0-9-]+)?/process {
             root $admin_root;
             try_files $uri /editor.html;
             expires 1y;
@@ -274,6 +282,29 @@ data:
             proxy_ssl_server_name on;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Real-IP $remote_addr;
+        }
+
+    }
+
+    server {
+        {{- if .Values.global.ingress.tls.enabled }}
+        listen {{ .Values.global.webadm.service_port | default 8443 }} ssl;
+        ssl_certificate /etc/nginx/certs/ingress-tls.crt;
+        ssl_certificate_key /etc/nginx/certs/ingress-tls.key;
+        {{- else }}
+        listen {{ .Values.global.webadm.service_port | default 8080 }};
+        {{- end }}
+        server_name {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }};
+
+        location / {
+            add_header X-Content-Type-Options "nosniff";
+            proxy_pass http://syncapi-main:8090;
+            proxy_set_header Host $host;
+            proxy_http_version 1.1;
+            proxy_ssl_server_name on;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_buffering off;
+            proxy_intercept_errors on;
         }
 
     }

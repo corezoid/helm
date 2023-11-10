@@ -20,17 +20,11 @@ spec:
               service:
                 name: corezoid-web-adm
                 port:
-                  number: 8080
-    - host: {{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: corezoid-web-superadm
-                port:
-                  number: 8081
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
     - host: {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
       http:
         paths:
@@ -38,9 +32,13 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: syncapi-main
+                name: corezoid-web-adm
                 port:
-                  number: 8090
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
     {{- if .Values.global.sa.enabled }}
     - host: {{ .Values.global.sa.subDomain}}.{{ .Values.global.domain }}
       http:
@@ -72,11 +70,10 @@ spec:
         - {{ .Values.global.store_dumps.subdomain }}.{{ .Values.global.domain }}
         {{- end }}
         - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
-        - {{ .Values.global.web_superadm.subdomain}}.{{ .Values.global.domain }}
         - {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
         {{- if .Values.global.sa.enabled }}
         - {{ .Values.global.sa.subDomain}}.{{ .Values.global.domain }}
       {{- end }}
-      secretName: {{ .Values.global.ingress.tls.SecretName | default "tls-ingress-secret" }}
+      secretName: {{ .Values.global.ingress.tls.secret.name | default "tls-ingress-secret" }}
   {{- end }}
 {{- end -}}

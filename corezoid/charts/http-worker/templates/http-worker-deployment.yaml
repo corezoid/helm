@@ -207,10 +207,6 @@ spec:
               subPath: vm.args
             - name: corezoid-license
               mountPath: /ebsmnt/certs
-            {{- if .Values.global.mq.tls.enabled }}
-            - name: corezoid-tls
-              mountPath: /ebsmnt/tls
-            {{- end }}
             {{- if .Values.global.store_dumps.enabled }}
             - name: dumps-volume
               mountPath: /var/dumps
@@ -233,11 +229,6 @@ spec:
         - name: corezoid-license
           secret:
             secretName: {{ .Values.global.licenseSecretName | default "license-share-new" }}
-        {{- if .Values.global.mq.tls.enabled }}
-        - name: corezoid-tls
-          secret:
-            secretName: {{ .Values.global.tlsSecretName | default "tls-secret" }}
-        {{- end }}
         {{- if .Values.global.store_dumps.enabled }}
         - name: dumps-volume
           hostPath:

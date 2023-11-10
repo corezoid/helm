@@ -18,41 +18,61 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: mult-service-node
+                name: corezoid-web-adm
                 port:
-                  number: 9082
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
           - path: /api/2/copy
             pathType: Prefix
             backend:
               service:
-                name: mult-service-node
+                name: corezoid-web-adm
                 port:
-                  number: 9082
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
           - path: /api/2/download
             pathType: Prefix
             backend:
               service:
-                name: mult-service-node
+                name: corezoid-web-adm
                 port:
-                  number: 9082
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
           - path: /api/2/compare
             pathType: Prefix
             backend:
               service:
-                name: mult-service-node
+                name: corezoid-web-adm
                 port:
-                  number: 9082
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
           - path: /api/2/merge
             pathType: Prefix
             backend:
               service:
-                name: mult-service-node
+                name: corezoid-web-adm
                 port:
-                  number: 9082
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
   {{- if .Values.global.ingress.tls.enabled }}
   tls:
     - hosts:
         - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
-      secretName: {{ .Values.global.ingress.tls.SecretName | default "tls-ingress-secret" }}
+      secretName: {{ .Values.global.ingress.tls.secret.name | default "tls-ingress-secret" }}
   {{- end }}
 {{- end -}}

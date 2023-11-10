@@ -139,9 +139,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}
@@ -172,9 +170,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {{- if eq .Values.global.mq.tls.enabled true }}
                           {ssl, [
-                            {certfile, "/ebsmnt/tls/tls-cert.crt"},
-                            {cacertfile, "/ebsmnt/tls/ca.crt"},
-                            {keyfile, "/ebsmnt/tls/tls-cert.key"}
+                            {tls, true}
                           ]},
                         {{- end }}
                         {vhost, <<"${MQ_VHOST}">>}

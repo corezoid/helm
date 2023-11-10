@@ -18,13 +18,17 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: capi-service-node
+                name: corezoid-web-adm
                 port:
-                  number: 9080
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
   {{- if .Values.global.ingress.tls.enabled }}
   tls:
     - hosts:
         - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
-      secretName: {{ .Values.global.ingress.tls.SecretName | default "tls-ingress-secret" }}
+      secretName: {{ .Values.global.ingress.tls.secret.name | default "tls-ingress-secret" }}
   {{- end }}
 {{- end -}}

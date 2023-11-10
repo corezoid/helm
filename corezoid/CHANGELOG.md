@@ -1,6 +1,25 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.23.0 [ Corezoid 6.4.1 ]
+
+### Helm changes
+- Applications versions:
+    - capi - 8.3.1.1
+    - mult - 3.2.1.1
+    - webadm - 6.4.1
+    - http-worker - 4.1.1.1
+    - usercode - 8.1.1
+    - worker - 5.1.1.1
+    - syncapi - 3.1.2
+    - web_superadm - 2.2.0
+    - conf_agent_server - 2.2.2
+    - limits - 2.1.2
+
+### Improvements
+- Fixed tls connection for external RabbitMQ(via AWS NLB balancer TLS protocol), ElastiCache(Redis), Ingress, PgBouncer
+
+
 ### Chart 0.22.9 [ Corezoid 6.4.0 ]
 
 ### Helm changes  
