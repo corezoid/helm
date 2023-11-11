@@ -234,11 +234,11 @@ spec:
               - |
                 ulimit -n 1024
                 exec /usr/bin/worker liveness
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
+            initialDelaySeconds:  {{ .Values.global.worker.livenessProbeInitialDelaySeconds | default "30" }}
+            periodSeconds: {{ .Values.global.worker.livenessProbePeriodSeconds | default "30" }}
+            timeoutSeconds: {{ .Values.global.worker.livenessProbeTimeoutSeconds | default "5" }}
+            successThreshold: {{ .Values.global.worker.livenessProbeSuccessThreshold | default "1" }}
+            failureThreshold: {{ .Values.global.worker.livenessProbeFailureThreshold | default "3" }}
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
