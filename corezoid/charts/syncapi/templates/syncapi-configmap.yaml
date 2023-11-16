@@ -163,7 +163,7 @@ data:
       {corezoid_api_sync, [
       {prometheus_metrics, {{ .Values.global.prometheus_metrics | default false }}  },
       {nodes, []},
-      {domain, <<"http://${IPNODEDOMAIN}:8090">> }, %% callback domain (podIP)
+      {domain, <<"{{ .Values.global.syncapi.callback_domain | default "http://${IPNODEDOMAIN}:8090" }}">> }, %% callback domain (podIP)
       {api_port, 8090},
       {corezoid_host, <<"http://capi-service:9080">>},
 
