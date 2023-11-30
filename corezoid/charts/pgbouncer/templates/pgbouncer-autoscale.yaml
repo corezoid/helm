@@ -13,5 +13,5 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ .Values.appName }}-deployment
-  targetCPUUtilizationPercentage: 70
+  targetCPUUtilizationPercentage: {{ .Values.global.db.bouncer_hpaTargetCPUUtilizationPercentage  | default "70"}}
 {{- end }}
