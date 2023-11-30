@@ -800,6 +800,13 @@ global:
     tag: "2.2.0"
     subdomain: "superadm-k8s"
     minReplicas: 1
+    resources:
+      limits:
+        cpu: 200m
+        memory: 400Mi
+      requests:
+        cpu: 50m
+        memory: 100Mi
 
   limits:
     tag: "2.1.2"
