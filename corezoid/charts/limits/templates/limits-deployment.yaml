@@ -186,6 +186,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.redis.secret.name }}
                   key: password
+          resources:
+            {{ .Values.global.limits.resources | toYaml | indent 12 | trim }}
           ports:
           - containerPort: {{ .Values.containers.containerPort }}
           lifecycle:
