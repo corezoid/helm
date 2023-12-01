@@ -256,6 +256,7 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.elasticsearch.secret.name }}
                 key: schema
+          {{- if eq .Values.global.elasticsearch.secret.auth_enabled true}}
           - name: ELASTICSEARCH_USERNAME
             valueFrom:
               secretKeyRef:
@@ -266,6 +267,7 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.elasticsearch.secret.name }}
                 key: password
+          {{- end }}
           - name: POSTGRES_DBHOST
             {{- if .Values.global.db.bouncer }}
             value: "pgbouncer-service"
