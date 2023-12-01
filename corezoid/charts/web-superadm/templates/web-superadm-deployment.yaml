@@ -44,12 +44,7 @@ spec:
               mountPath: /etc/nginx/conf.d/superadm.conf
               subPath: superadm.conf
           resources:
-            limits:
-              cpu: 200m
-              memory: 400Mi
-            requests:
-              cpu: 50m
-              memory: 100Mi
+            {{ .Values.global.web_superadm.resources | toYaml | indent 12 | trim }}
           readinessProbe:
             tcpSocket:
               port: 8081
