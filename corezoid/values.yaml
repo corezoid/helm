@@ -800,10 +800,24 @@ global:
     tag: "2.2.0"
     subdomain: "superadm-k8s"
     minReplicas: 1
+    resources:
+      limits:
+        cpu: 200m
+        memory: 400Mi
+      requests:
+        cpu: 50m
+        memory: 100Mi
 
   limits:
     tag: "2.1.2"
     minReplicas: 2
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1300Mi
+      requests:
+        cpu: 350m
+        memory: 500Mi
 
   prometheus_metrics: false
 

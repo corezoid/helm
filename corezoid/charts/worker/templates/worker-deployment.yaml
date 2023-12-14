@@ -66,7 +66,7 @@ spec:
           args:
             - "-c"
             - |
-              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" ${MQ_API_SCHEME}://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:${MQ_API_PORT}/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
           env:
             - name: MQ_HOST
               valueFrom:
@@ -83,6 +83,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+            - name: MQ_API_SCHEME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: api_scheme
+            - name: MQ_API_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: api_port
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
@@ -234,11 +244,11 @@ spec:
               - |
                 ulimit -n 1024
                 exec /usr/bin/worker liveness
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
+            initialDelaySeconds:  {{ .Values.global.worker.livenessProbeInitialDelaySeconds | default "30" }}
+            periodSeconds: {{ .Values.global.worker.livenessProbePeriodSeconds | default "30" }}
+            timeoutSeconds: {{ .Values.global.worker.livenessProbeTimeoutSeconds | default "5" }}
+            successThreshold: {{ .Values.global.worker.livenessProbeSuccessThreshold | default "1" }}
+            failureThreshold: {{ .Values.global.worker.livenessProbeFailureThreshold | default "3" }}
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000

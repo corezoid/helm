@@ -66,7 +66,7 @@ spec:
           args:
             - "-c"
             - |
-              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" http://${MQ_HOST}:15672/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" ${MQ_API_SCHEME}://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:${MQ_API_PORT}/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
           env:
             - name: MQ_HOST
               valueFrom:
@@ -83,6 +83,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+            - name: MQ_API_SCHEME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: api_scheme
+            - name: MQ_API_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq.secret.name }}
+                  key: api_port
         - name: init-wait-elasticsearch
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           imagePullPolicy: IfNotPresent
@@ -246,6 +256,7 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.elasticsearch.secret.name }}
                 key: schema
+          {{- if eq .Values.global.elasticsearch.secret.auth_enabled true}}
           - name: ELASTICSEARCH_USERNAME
             valueFrom:
               secretKeyRef:
@@ -256,6 +267,7 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.elasticsearch.secret.name }}
                 key: password
+          {{- end }}
           - name: POSTGRES_DBHOST
             {{- if .Values.global.db.bouncer }}
             value: "pgbouncer-service"
@@ -343,23 +355,43 @@ spec:
           resources:
             {{ .Values.global.capi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
+          {{- if eq .Values.global.capi.livenessProbeType "exec" }}
+            exec:
+              command:
+                - bash
+                - '-ec'
+                - |
+                  ulimit -n 1024
+                  exec /usr/bin/capi liveness  
+          {{- else}}
             httpGet:
               path: /is_ready/liveness
-              port: 8385
-            initialDelaySeconds: 30
-            periodSeconds: 3
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
+              port: 8385        
+          {{- end}}
+            initialDelaySeconds: {{ .Values.global.capi.livenessProbeInitialDelaySeconds  | default "30"}}
+            periodSeconds: {{ .Values.global.capi.livenessProbePeriodSeconds | default "3"}}
+            timeoutSeconds: {{ .Values.global.capi.livenessProbeTimeoutSeconds | default "5"}}
+            successThreshold: {{ .Values.global.capi.livenessProbeSuccessThreshold | default "1"}}
+            failureThreshold: {{ .Values.global.capi.livenessProbeFailureThreshold | default "3"}}
           readinessProbe:
+            {{- if eq .Values.global.capi.readinessProbeType "exec" }}
+            exec:
+              command:
+                - bash
+                - '-ec'
+                - |
+                  ulimit -n 1024
+                  exec /usr/bin/capi readiness  
+            {{- else}}
             httpGet:
               path: /is_ready/readiness
-              port: 8385
-            initialDelaySeconds: 30
-            periodSeconds: 3
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 3
+              port: 8385          
+            {{- end}}
+            initialDelaySeconds: {{ .Values.global.capi.readinessProbeInitialDelaySeconds | default "30" }}
+            periodSeconds:  {{ .Values.global.capi.readinessProbePeriodSeconds | default "3" }}
+            timeoutSeconds:  {{ .Values.global.capi.readinessProbeTimeoutSeconds | default "5" }}
+            successThreshold: {{ .Values.global.capi.readinessProbeSuccessThreshold | default "1" }}
+            failureThreshold: {{ .Values.global.capi.readinessProbeFailureThreshold | default "3" }}
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
