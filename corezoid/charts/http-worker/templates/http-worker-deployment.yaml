@@ -204,6 +204,7 @@ spec:
           ports:
           - containerPort: 9080
           - containerPort: {{ .Values.containers.prometheusMetricsPort }}
+          - containerPort: 8385
           lifecycle:
             preStop:
               exec:
@@ -223,6 +224,24 @@ spec:
             {{- end }}
           resources:
             {{ .Values.global.http.resources | toYaml | indent 12 | trim }}
+          livenessProbe:
+            httpGet:
+              path: /is_ready/liveness
+              port: 8385
+            initialDelaySeconds: 30
+            periodSeconds: 3
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /is_ready/readiness
+              port: 8385
+            initialDelaySeconds: 30
+            periodSeconds: 3
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
 {{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
       {{- range $pullSecret := .Values.global.imagePullSecrets }}

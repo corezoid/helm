@@ -26,6 +26,8 @@ global:
     pullPolicy: IfNotPresent
     tag: "3.18.3"
 
+#  timezone: "Asia/Baku"
+
   # Ingress annotations
   ingress:
     enabled: true
@@ -192,7 +194,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.4.1"
+      version: "6.5.0"
 
     rotation:
       ## enabled: true or false
@@ -289,7 +291,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.3.1.1"
+    tag: "8.3.3.2"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -350,7 +352,7 @@ global:
         login_path: "/auth2/saml/corezoid-support"
         icon_url: "https://upload.wikimedia.org/wikipedia/commons/archive/5/53/20210618182605%21Google_%22G%22_Logo.svg"
         idp_signs_envelopes: false
-        idp_signs_assertions: true
+        idp_signs_assertions: false
         idp_signs_metadata: false
         sp_entity_id: "support"
         sp_consume_url: "/auth2/saml/corezoid-support/return"
@@ -475,7 +477,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.1.1.1"
+    tag: "4.1.2.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -526,7 +528,7 @@ global:
 
   # usercode
   usercode:
-    tag: "8.1.1"
+    tag: "8.2.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -564,7 +566,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "5.1.1.1"
+    tag: "5.1.2.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -601,7 +603,7 @@ global:
 
   # mult
   mult:
-    tag: "3.2.1.1"
+    tag: "3.2.2.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -644,7 +646,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.4.1"
+    tag: "6.5.0"
     minReplicas: 1
     resources:
       limits:
@@ -678,7 +680,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s"
-    tag: "3.1.2"
+    tag: "3.2.2"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
@@ -741,14 +743,15 @@ global:
   sa:
     # true or false
     enabled: false
+    subDomain: "account-k8s"
     google_client_id: ""
     google_client_secret: ""
+    persistantVolumeClaimName: "sa-pvc"
+    persistantVolumeClaimCreate: true
     persistantVolumeClaimShareDir: "/ebsmnt/share"
     config:
       client_id: ""
       client_secret: ""
-  sa_web:
-    subdomain: ""
 
   # gitcall | worker and rabbit settings
   gitcall:
@@ -762,7 +765,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "2.2.2"
+    tag: "2.3.1"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -797,7 +800,7 @@ global:
 
   # web-superadm
   web_superadm:
-    tag: "2.2.0"
+    tag: "2.3.2"
     subdomain: "superadm-k8s"
     minReplicas: 1
     resources:
@@ -809,7 +812,7 @@ global:
         memory: 100Mi
 
   limits:
-    tag: "2.1.2"
+    tag: "2.2.1"
     minReplicas: 2
     resources:
       limits:

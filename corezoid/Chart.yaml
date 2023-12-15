@@ -1,11 +1,11 @@
 apiVersion: v1
 name: corezoid
-version: "0.23.0"
-appVersion: "6.4.1"
+version: "0.23.1"
+appVersion: "6.5.0"
 description: Chart for Corezoid.
 home: https://corezoid.com/
 maintainers:
   - name: Middleware DevOps
     email: devops@corezoid.com
 engine: gotpl
-icon: https://corezoid.com/static/logo_.png
+icon: https://api.corezoid.com/logo/logo_big_small.png

@@ -221,6 +221,7 @@ spec:
           ports:
           - containerPort: 9080
           - containerPort: {{ .Values.containers.prometheusMetricsPort }}
+          - containerPort: 8385
           volumeMounts:
             - name: workerconfig
               mountPath: /ebsmnt/conf/worker.config
@@ -237,13 +238,38 @@ spec:
           resources:
             {{ .Values.global.worker.resources | toYaml | indent 12 | trim }}
           livenessProbe:
+          {{- if eq (toString .Values.global.worker.livenessProbeType) "exec" }}
             exec:
               command:
-              - bash
-              - -ec
-              - |
-                ulimit -n 1024
-                exec /usr/bin/worker liveness
+                - bash
+                - '-ec'
+                - |
+                  ulimit -n 1024
+                  exec /usr/bin/worker liveness
+          {{- else}}
+            httpGet:
+              path: /is_ready/liveness
+              port: 8385
+          {{- end}}
+            initialDelaySeconds:  {{ .Values.global.worker.livenessProbeInitialDelaySeconds | default "30" }}
+            periodSeconds: {{ .Values.global.worker.livenessProbePeriodSeconds | default "30" }}
+            timeoutSeconds: {{ .Values.global.worker.livenessProbeTimeoutSeconds | default "5" }}
+            successThreshold: {{ .Values.global.worker.livenessProbeSuccessThreshold | default "1" }}
+            failureThreshold: {{ .Values.global.worker.livenessProbeFailureThreshold | default "3" }}
+          readinessProbe:
+            {{- if eq (toString .Values.global.worker.readinessProbeType) "exec" }}
+            exec:
+              command:
+                - bash
+                - '-ec'
+                - |
+                  ulimit -n 1024
+                  exec /usr/bin/worker readiness
+            {{- else}}
+            httpGet:
+              path: /is_ready/readiness
+              port: 8385
+            {{- end}}
             initialDelaySeconds:  {{ .Values.global.worker.livenessProbeInitialDelaySeconds | default "30" }}
             periodSeconds: {{ .Values.global.worker.livenessProbePeriodSeconds | default "30" }}
             timeoutSeconds: {{ .Values.global.worker.livenessProbeTimeoutSeconds | default "5" }}

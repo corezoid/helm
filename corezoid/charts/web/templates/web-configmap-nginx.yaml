@@ -11,7 +11,7 @@ data:
     {{- end }}
     pid        /etc/nginx/nginx.pid;
     events {
-        worker_connections  512000;
+        worker_connections  {{ .Values.global.webadm.workerConnections | default 32000 }};
         multi_accept on;
     }
 

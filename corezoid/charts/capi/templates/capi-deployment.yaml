@@ -355,7 +355,7 @@ spec:
           resources:
             {{ .Values.global.capi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
-          {{- if eq .Values.global.capi.livenessProbeType "exec" }}
+          {{- if eq (toString .Values.global.capi.livenessProbeType) "exec" }}
             exec:
               command:
                 - bash
@@ -374,7 +374,7 @@ spec:
             successThreshold: {{ .Values.global.capi.livenessProbeSuccessThreshold | default "1"}}
             failureThreshold: {{ .Values.global.capi.livenessProbeFailureThreshold | default "3"}}
           readinessProbe:
-            {{- if eq .Values.global.capi.readinessProbeType "exec" }}
+            {{- if eq (toString .Values.global.capi.readinessProbeType) "exec" }}
             exec:
               command:
                 - bash

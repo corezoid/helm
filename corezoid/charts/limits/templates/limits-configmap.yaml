@@ -16,6 +16,11 @@ data:
            {path_to_license, "/ebsmnt/certs/corezoid_license"}
          ]},
 
+        {is_ready, [
+            {port, 8385},
+            {enabled, true}
+        ]},
+
         {{- if eq .Values.global.redis.sentinel.enable true }}
         {redis_sentinel, [
               {servers, [

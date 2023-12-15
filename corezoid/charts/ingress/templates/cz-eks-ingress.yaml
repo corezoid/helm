@@ -1,0 +1,178 @@
+{{- if .Values.global.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.appName }}-root-{{ .Release.Namespace }}
+  annotations:
+    {{- include "corezoid-global.ingressAnnotations" . | nindent 4 }}
+  labels:
+    app: {{ .Values.global.product }}
+    tier: {{ .Values.appName }}
+spec:
+  ingressClassName: {{ .Values.global.ingress.className }}
+  rules:
+    - host: {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - path: /api/2/upload
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+          - path: /api/2/copy
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+          - path: /user_downloads
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+          - path: /api/2/download
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+          - path: /api/2/compare
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+          - path: /api/2/merge
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+          - path: /system
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+    - host: {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: corezoid-web-adm
+                port:
+                  {{- if .Values.global.ingress.tls.enabled }}
+                  number: {{ .Values.global.ingress.tls.port | default 8443 }}
+                  {{- else }}
+                  number: {{ .Values.global.webadm.service_port | default 8080 }}
+                  {{- end }}
+    {{- if .Values.global.sa.enabled }}
+    - host: {{ .Values.global.sa.subdomain}}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: single-account-frontend-service
+                port:
+                  number: 80
+    {{- end }}
+    {{- if .Values.global.store_dumps.enabled }}
+    - host: {{ .Values.global.store_dumps.subdomain }}.{{ .Values.global.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dump-service-node
+                port:
+                  number: 80
+    {{- end }}
+  {{- if .Values.global.ingress_tls }}
+  tls:
+    - hosts:
+        {{- if .Values.global.store_dumps.enabled }}
+        - {{ .Values.global.store_dumps.subdomain }}.{{ .Values.global.domain }}
+        {{- end }}
+        - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
+        - {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
+        {{- if .Values.global.sa.enabled }}
+        - {{ .Values.global.sa.subdomain}}.{{ .Values.global.domain }}
+      {{- end }}
+      secretName: {{ .Values.global.ingress.tls.secret.name | default "tls-ingress-secret" }}
+  {{- end }}
+{{- end -}}

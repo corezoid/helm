@@ -102,11 +102,6 @@ spec:
           ports:
             - name: nginx-exp-port
               containerPort: 9113
-          args:
-            #A URI or unix domain socket path for scraping NGINX
-            - -nginx.scrape-uri=http://localhost:{{ .Values.global.webadm.service_port | default 8080 }}/nginx_status
-            #A number of retries the exporter will make on start to connect to the NGINX stub_status page
-            - -nginx.retries=2
 {{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
       {{- range $pullSecret := .Values.global.imagePullSecrets }}
