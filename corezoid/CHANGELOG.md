@@ -1,6 +1,30 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.23.1 [ Corezoid 6.5.0 ]
+
+### Helm changes
+- Applications versions:
+    - capi - 8.3.3.2
+    - mult - 3.2.2.1
+    - webadm - 6.5.0
+    - http-worker - 4.1.2.1
+    - usercode - 8.2.1
+    - worker - 5.1.2.1
+    - syncapi - 3.2.2
+    - web_superadm - 2.3.2
+    - conf_agent_server - 2.3.1
+    - limits - 2.2.1
+
+### Improvements
+
+ - `**Attention!**` In previous releases there were changes, all traffic was sent through web_adm, now before deployment you need to manually delete all ingresses, then perform a deployment, which will install only 1 ingress with different locations (paths)
+ - The basic authentication was added, allowing you to secure receiving requests via Direct URL in Start nodes by enabling username and password authentication. You can use it with aliases and variables.
+ - The ability to change the email link displayed in the "Contact with" section of error messages displayed to users was added.
+ - Operations of users adding and removing from a group are logged in the `capi_user_activity_conv` process.
+ - The rounding of numbers to the specified position after the decimal point was added for responses to the requests made with the GET response method in the API Call node.
+ - The number of tasks received in one response to the request in the list: node method can be limited using the `mult_key_api_throughput_tasks` parameter.
+
 ### Chart 0.23.0 [ Corezoid 6.4.1 ]
 
 ### Helm changes

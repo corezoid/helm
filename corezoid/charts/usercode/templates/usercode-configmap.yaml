@@ -166,8 +166,8 @@ data:
       ]},
 
       {is_ready, [
-        {port, 8383},
-        {disabled, false}
+          {port, 8385},
+          {enabled, true}
       ]},
 
       {cce, [

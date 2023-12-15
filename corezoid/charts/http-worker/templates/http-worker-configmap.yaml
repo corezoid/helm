@@ -105,6 +105,11 @@ data:
         ]}
         ]},
 
+    {is_ready, [
+        {port, 8385},
+        {enabled, true}
+    ]},
+
     {corezoid_global_stats, [
         {disabled, true}
     ]},

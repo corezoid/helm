@@ -35,6 +35,11 @@ data:
         %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
       ]},
 
+      {is_ready, [
+          {port, 8385},
+          {enabled, true}
+      ]},
+
         {mw_metrics, [
           {is_enabled, true},
           {subsystems, [erlprometheus]}
