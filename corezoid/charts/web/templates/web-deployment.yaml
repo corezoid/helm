@@ -95,6 +95,9 @@ spec:
         - name: nginx-exporter
           # https://hub.docker.com/r/nginx/nginx-prometheus-exporter
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.nginxExporter.registry }}/{{ .Values.nginxExporter.repository }}:{{ .Values.nginxExporter.tag }}"
+          args:
+            #A URI or unix domain socket path for scraping NGINX
+            - -nginx.scrape-uri=http://localhost:{{ .Values.global.webadm.service_port | default 8080 }}/nginx_status          
           resources:
             requests:
               cpu: 10m
