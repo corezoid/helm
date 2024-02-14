@@ -343,7 +343,7 @@ spec:
             {{- if eq .Values.global.sa.enabled true }}
             {{- if .Values.global.sa.persistantVolumeClaimCreate }}
             - name: {{ .Values.appName }}-claim-sa
-              mountPath: {{ .Values.global.sa.persistantVolumeClaimShareDir }}
+              mountPath: {{ .Values.global.sa.persistantVolumeClaimShareDir }}/avatars
               readOnly: false
             {{- end }}
             {{- end }}
@@ -372,7 +372,7 @@ spec:
                   exec /usr/bin/capi liveness  
           {{- else}}
             httpGet:
-              path: /is_ready/liveness
+              path: /liveness
               port: 8385        
           {{- end}}
             initialDelaySeconds: {{ .Values.global.capi.livenessProbeInitialDelaySeconds  | default "30"}}
@@ -391,7 +391,7 @@ spec:
                   exec /usr/bin/capi readiness  
             {{- else}}
             httpGet:
-              path: /is_ready/readiness
+              path: /readiness
               port: 8385          
             {{- end}}
             initialDelaySeconds: {{ .Values.global.capi.readinessProbeInitialDelaySeconds | default "30" }}

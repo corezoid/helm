@@ -197,7 +197,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.5.0"
+      version: "6.5.2"
 
     rotation:
       ## enabled: true or false
@@ -294,7 +294,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.3.3.2"
+    tag: "8.3.5.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -323,8 +323,8 @@ global:
     ## false if you already have pvc
     persistantVolumeClaimCreate: true
     # Auth provider
-    auth_providers_enable: true
-    auth_providers_saml_enable: false
+    auth_providers_enable: true            # Default Corezoid auth (login and password)
+    auth_providers_saml_enable: false      # SAML Provider
     capi_saml_secret_name: "capi-saml-secret"
 
     # User requests per second limits
@@ -480,7 +480,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.1.2.1"
+    tag: "4.1.4.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -506,6 +506,16 @@ global:
       consumer_settings_messages_prefetch_size_per_channel: 50
       ## The number of queues within the channel
       consumer_response_prefetch_size_per_channel: 50
+    ## http-worker advanced logging settings
+#     http_worker_log:
+#       info:
+#         status: "on"
+#         headers: "on"
+#         body: "on"
+#       error:
+#         status: "on"
+#         headers: "off"
+#         body: "off"
 
     affinity: {}
   #    # hard AZ-based affinity
@@ -531,7 +541,7 @@ global:
 
   # usercode
   usercode:
-    tag: "8.2.1"
+    tag: "8.3.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -569,7 +579,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "5.1.2.1"
+    tag: "5.1.4.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -606,7 +616,7 @@ global:
 
   # mult
   mult:
-    tag: "3.2.2.1"
+    tag: "3.2.4.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -649,7 +659,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.5.0"
+    tag: "6.5.2"
     minReplicas: 1
     resources:
       limits:
@@ -683,7 +693,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s"
-    tag: "3.2.2"
+    tag: "3.3.2"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
@@ -768,7 +778,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "2.3.1"
+    tag: "2.4.1"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -803,7 +813,7 @@ global:
 
   # web-superadm
   web_superadm:
-    tag: "2.3.2"
+    tag: "2.5.1"
     subdomain: "superadm-k8s"
     minReplicas: 1
     resources:
@@ -815,7 +825,7 @@ global:
         memory: 100Mi
 
   limits:
-    tag: "2.2.1"
+    tag: "2.3.1"
     minReplicas: 2
     resources:
       limits:
