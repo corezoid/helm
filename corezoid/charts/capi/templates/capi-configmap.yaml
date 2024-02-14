@@ -432,7 +432,7 @@ data:
                   {host, "${FDW_POSTGRES_HOST}"}, %% by default host will get from pgsql.host
                 {{- else }}
                   {host, "localhost"}, %% by default host will get from pgsql.host
-                {{- end }}
+                {{- end }} 
                   {reinit_if_changed, true}, %% by default false ( it will drop foreign server and create again )
                   {username, "${FDW_POSTGRES_DBUSER}"},
                   {password, "${FDW_POSTGRES_DBPWD}"}
