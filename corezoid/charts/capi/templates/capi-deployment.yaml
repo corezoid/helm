@@ -287,6 +287,13 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.db.secret.name }}
                 key: dbpwd
+          {{- if .Values.global.db.fdw_use_external_host }}
+          - name: FDW_POSTGRES_HOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secret.name }}
+                key: dbhost
+          {{- end }}
           - name: FDW_POSTGRES_DBUSER
             valueFrom:
               secretKeyRef:

@@ -103,6 +103,9 @@ global:
     # if internal true - create and use internal postgres container
     # if internal false - enable external db, like aws rds
     internal: true
+    # if true external host will be used for foreign data wrapper server creation
+    # if false localhost will be used
+    fdw_use_external_host: false
     ## secret configuration for postgresql
     ## pvc name
     persistantVolumeClaimName: "postgresql-pvc"
