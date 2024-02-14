@@ -176,7 +176,7 @@ spec:
             {{ .Values.global.syncapi.resources | toYaml | indent 12 | trim }}
           livenessProbe:
             httpGet:
-              path: /is_ready/liveness
+              path: /liveness
               port: 8385
             initialDelaySeconds: 30
             periodSeconds: 3
@@ -185,7 +185,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /is_ready/readiness
+              path: /readiness
               port: 8385
             initialDelaySeconds: 30
             periodSeconds: 3

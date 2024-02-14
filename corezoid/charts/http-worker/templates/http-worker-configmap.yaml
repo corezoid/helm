@@ -15,6 +15,11 @@ data:
        ]},
        {path_to_license, "/ebsmnt/certs/corezoid_license"}
      ]},
+
+    {gen_rpc, [
+      {tcp_server_port, false}
+    ]},
+
     {{- if eq .Values.global.redis.sentinel.enable true }}
     {redis_sentinel, [
           {servers, [
@@ -401,8 +406,8 @@ data:
     {{- if eq $loglevel "debug" }}
             {info, [
               {status, on},      % off by default
-              {headers, on},    % on by default (For disable Request and Response headers in logs)
-              {body, on}        % on by default (For disable Request and Response body in logs)
+              {headers, on},     % on by default (For disable Request and Response headers in logs)
+              {body, on}         % on by default (For disable Request and Response body in logs)
             ]},
             {error, [
               {headers, on},
@@ -410,20 +415,27 @@ data:
               {body, on}
             ]}
     {{- else }}
+            {{- if .Values.global.http.http_worker_log }}
             {info, [
-        {{- if .Values.global.http_worker_log_level }}
-              {status, on},      % off by default
-        {{- else }}
+              {status, {{ .Values.global.http.http_worker_log.info.status | default "off" }}},      % off by default
+              {headers, {{ .Values.global.http.http_worker_log.info.headers | default "on" }}},     % on by default (For disable Request and Response headers in logs)
+              {body, {{ .Values.global.http.http_worker_log.info.body | default "on" }}}            % on by default (For disable Request and Response body in logs)
+            ]},
+            {error, [
+              {status, {{ .Values.global.http.http_worker_log.error.status | default "on" }}},
+              {headers, {{ .Values.global.http.http_worker_log.error.headers | default "off" }}},
+              {body, {{ .Values.global.http.http_worker_log.error.body | default "off" }}}
+            ]}
+            {{- else }}
               {status, off},      % off by default
-        {{- end }}
               {headers, on},    % on by default (For disable Request and Response headers in logs)
               {body, on}        % on by default (For disable Request and Response body in logs)
             ]},
             {error, [
-              {headers, off},
               {status, on},
+              {headers, off},
               {body, off}
-            ]}
+            {{- end }}
     {{- end }}
         ]},
         %% Statistics of http logging to elastic

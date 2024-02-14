@@ -43,6 +43,10 @@ data:
           {path_to_license, "/ebsmnt/certs/corezoid_license"}
         ]},
 
+        {gen_rpc, [
+          {tcp_server_port, false}
+        ]},
+
         {corezoid_global_stats, [
           {disabled, true}
         ]},
@@ -424,7 +428,11 @@ data:
                 {{- end }}
 
                 {pg_fdw, [
+                {{- if .Values.global.db.fdw_use_external_host }}
+                  {host, "${FDW_POSTGRES_HOST}"}, %% by default host will get from pgsql.host
+                {{- else }}
                   {host, "localhost"}, %% by default host will get from pgsql.host
+                {{- end }}
                   {reinit_if_changed, true}, %% by default false ( it will drop foreign server and create again )
                   {username, "${FDW_POSTGRES_DBUSER}"},
                   {password, "${FDW_POSTGRES_DBPWD}"}

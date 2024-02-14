@@ -287,6 +287,13 @@ spec:
               secretKeyRef:
                 name: {{ .Values.global.db.secret.name }}
                 key: dbpwd
+          {{- if .Values.global.db.fdw_use_external_host }}
+          - name: FDW_POSTGRES_HOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.db.secret.name }}
+                key: dbhost
+          {{- end }}
           - name: FDW_POSTGRES_DBUSER
             valueFrom:
               secretKeyRef:
@@ -336,7 +343,7 @@ spec:
             {{- if eq .Values.global.sa.enabled true }}
             {{- if .Values.global.sa.persistantVolumeClaimCreate }}
             - name: {{ .Values.appName }}-claim-sa
-              mountPath: {{ .Values.global.sa.persistantVolumeClaimShareDir }}
+              mountPath: {{ .Values.global.sa.persistantVolumeClaimShareDir }}/avatars
               readOnly: false
             {{- end }}
             {{- end }}
@@ -365,7 +372,7 @@ spec:
                   exec /usr/bin/capi liveness  
           {{- else}}
             httpGet:
-              path: /is_ready/liveness
+              path: /liveness
               port: 8385        
           {{- end}}
             initialDelaySeconds: {{ .Values.global.capi.livenessProbeInitialDelaySeconds  | default "30"}}
@@ -384,7 +391,7 @@ spec:
                   exec /usr/bin/capi readiness  
             {{- else}}
             httpGet:
-              path: /is_ready/readiness
+              path: /readiness
               port: 8385          
             {{- end}}
             initialDelaySeconds: {{ .Values.global.capi.readinessProbeInitialDelaySeconds | default "30" }}

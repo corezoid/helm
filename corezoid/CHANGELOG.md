@@ -1,6 +1,29 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+
+### Chart 0.23.2 [ Corezoid 6.5.2 ]
+
+### Helm changes
+- Applications versions:
+  - capi - 8.3.5.1
+  - mult - 3.2.4.1
+  - webadm - 6.5.2
+  - http-worker - 4.1.4.1
+  - usercode - 8.3.1
+  - worker - 5.1.4.1
+  - syncapi - 3.3.2
+  - web_superadm - 2.5.1
+  - conf_agent_server - 2.4.1
+  - limits - 2.3.1
+
+### Improvements
+
+- In the Superadmin menu, the possibility to activate signing with a certificate and key for the SAML authentication provider was added;
+- The format of http_worker info logs was changed: “ConvId” and “TaskId” parameters were added;
+- The sending of user blocking info was added to the “capi-user-activity-conv” system process.
+
+
 ### Chart 0.23.1 [ Corezoid 6.5.0 ]
 
 ### Helm changes
