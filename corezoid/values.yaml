@@ -624,6 +624,7 @@ global:
     ## true if pvc for mult should be created automaticaly
     ## false if you already have pvc
     persistantVolumeClaimCreate: true
+    persistantVolumeClaimSize: 5Gi
     # Support for explicit storage scheduler (eg: Stork)
     schedulerName: ""
     # application resources limits and requests
