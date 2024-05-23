@@ -39,9 +39,9 @@ spec:
                 name: timezone-config
           ports:
             {{- if .Values.global.ingress.tls.enabled }}
-            - containerPort: {{ .Values.global.webadm.service_port | default 8443 }}
+            - containerPort: {{ .Values.global.webadm.service_target_port | default 8443 }}
             {{- else }}
-            - containerPort: {{ .Values.global.webadm.service_port | default 8080 }}
+            - containerPort: {{ .Values.global.webadm.service_target_port | default 8080 }}
             {{- end }}
           lifecycle:
             preStop:
@@ -76,7 +76,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /nginx_status
-              port: {{ .Values.global.webadm.service_port | default 8080 }}
+              port: {{ .Values.global.webadm.service_target_port | default 8080 }}
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -85,7 +85,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /nginx_status
-              port: {{ .Values.global.webadm.service_port | default 8080 }}
+              port: {{ .Values.global.webadm.service_target_port | default 8080 }}
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -97,7 +97,7 @@ spec:
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.nginxExporter.registry }}/{{ .Values.nginxExporter.repository }}:{{ .Values.nginxExporter.tag }}"
           args:
             #A URI or unix domain socket path for scraping NGINX
-            - -nginx.scrape-uri=http://localhost:{{ .Values.global.webadm.service_port | default 8080 }}/nginx_status
+            - -nginx.scrape-uri=http://localhost:{{ .Values.global.webadm.service_target_port | default 8080 }}/nginx_status
           resources:
             requests:
               cpu: 10m
