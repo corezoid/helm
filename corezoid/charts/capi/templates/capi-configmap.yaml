@@ -43,6 +43,10 @@ data:
           {path_to_license, "/ebsmnt/certs/corezoid_license"}
         ]},
 
+        {gen_rpc, [
+          {tcp_server_port, false}
+        ]},
+
         {corezoid_global_stats, [
           {disabled, true}
         ]},

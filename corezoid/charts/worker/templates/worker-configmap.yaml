@@ -61,6 +61,10 @@ data:
           {path_to_license, "/ebsmnt/certs/corezoid_license"}
         ]},
 
+       {gen_rpc, [
+         {tcp_server_port, false}
+       ]},
+
        {corezoid_global_stats, [
          {disabled, true}
        ]},
@@ -569,7 +573,7 @@ data:
         ]},
 
         %% cache size in redis2
-        {redis2_ttl, 43200},
+        {redis2_ttl, {{ .Values.global.worker.redis2_ttl | default 43200 }}},
 
 
         %%These section to publish tasks in rabbitmq
