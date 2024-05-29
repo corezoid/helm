@@ -165,4 +165,8 @@ spec:
       affinity:
         {{ .Values.global.db.bouncer_affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.db.bouncer_topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{ .Values.global.db.bouncer_topologySpreadConstraints | toYaml | nindent 8 | trim }}
+      {{- end}}
 {{- end }}

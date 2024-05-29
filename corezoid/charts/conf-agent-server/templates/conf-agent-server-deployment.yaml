@@ -210,3 +210,7 @@ spec:
       affinity:
         {{ .Values.global.conf_agent_server.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.conf_agent_server.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{ .Values.global.conf_agent_server.topologySpreadConstraints | toYaml | nindent 8 | trim }}
+      {{- end}}

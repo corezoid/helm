@@ -29,6 +29,10 @@ spec:
       affinity:
         {{ .Values.global.mult.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.mult.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{ .Values.global.mult.topologySpreadConstraints | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 300
       {{ if .Values.global.mult.schedulerName }}
       schedulerName: {{ .Values.global.mult.schedulerName }}
