@@ -690,7 +690,10 @@ global:
   #                  values:
   #                    - corezoid-web-adm
   #            topologyKey: failure-domain.beta.kubernetes.io/zone
-
+  # additional allowed URLs that resources (such as JavaScript, CSS, Images, etc.) can be loaded from.
+    content_security_policy:
+      urls:
+        # - https://doc.corezoid.com
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s"
