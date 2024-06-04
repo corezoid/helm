@@ -6,7 +6,7 @@ data:
     ''      close;
     }
     server {
-        listen {{ .Values.global.webadm.service_port | default 8080 }};
+        listen {{ .Values.global.webadm.service_target_port | default 8080 }};
         server_name localhost;
     	  root /app;
 
@@ -16,11 +16,11 @@ data:
 
     server {
         {{- if .Values.global.ingress.tls.enabled }}
-        listen {{ .Values.global.webadm.service_port | default 8443 }} ssl;
+        listen {{ .Values.global.webadm.service_target_port | default 8443 }} ssl;
         ssl_certificate /etc/nginx/certs/ingress-tls.crt;
         ssl_certificate_key /etc/nginx/certs/ingress-tls.key;
         {{- else }}
-        listen {{ .Values.global.webadm.service_port | default 8080 }};
+        listen {{ .Values.global.webadm.service_target_port | default 8080 }};
         {{- end }}
         server_name {{ .Values.global.subdomain}}.{{ .Values.global.domain }};
 
@@ -314,11 +314,11 @@ data:
 
     server {
         {{- if .Values.global.ingress.tls.enabled }}
-        listen {{ .Values.global.webadm.service_port | default 8443 }} ssl;
+        listen {{ .Values.global.webadm.service_target_port | default 8443 }} ssl;
         ssl_certificate /etc/nginx/certs/ingress-tls.crt;
         ssl_certificate_key /etc/nginx/certs/ingress-tls.key;
         {{- else }}
-        listen {{ .Values.global.webadm.service_port | default 8080 }};
+        listen {{ .Values.global.webadm.service_target_port | default 8080 }};
         {{- end }}
         server_name {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }};
 
