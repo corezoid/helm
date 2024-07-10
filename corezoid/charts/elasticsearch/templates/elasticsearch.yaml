@@ -19,21 +19,29 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.elasticsearch.affinity }}
+      affinity:
+        {{ .Values.global.elasticsearch.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
+      {{- if .Values.global.elasticsearch.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{ .Values.global.elasticsearch.topologySpreadConstraints | toYaml | nindent 8 | trim }}
+      {{- end}}
       initContainers:
         - name: increase-vm-max-map
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.busyboxImage.registry }}/{{ .Values.busyboxImage.repository }}"
+          image: "{{ .Values.busyboxImage.registry }}/{{ .Values.busyboxImage.repository }}"
           command: ["sysctl", "-w", "vm.max_map_count=262144"]
           securityContext:
             privileged: true
         - name: increase-fd-ulimit
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.busyboxImage.registry }}/{{ .Values.busyboxImage.repository }}"
+          image: "{{ .Values.busyboxImage.registry }}/{{ .Values.busyboxImage.repository }}"
           command: ["sh", "-c", "ulimit -n 65536"]
           securityContext:
             privileged: true
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ .Values.image.repository }}:{{ .Values.global.elasticsearch.tag }}"
+          image: "{{ .Values.global.imageRegistry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ .Values.image.repository }}:{{ .Values.global.elasticsearch.tag }}"
           env:
             - name: discovery.type
               value: single-node

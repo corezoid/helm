@@ -2,18 +2,17 @@ global:
   # second level domain only! / core domain (example: corezoid.com)
   domain: "dev-devops.corezoid.com"
   # subdomain / sitename - dev.mpo.corezoid.com (example: dev.mpo)
-  subdomain: "corezoid-k8s"
+  subdomain: "corezoid-k8s-develop"
 
   # docker image registry
   imageRegistry: "docker-hub.middleware.biz"
   #IfNotPresent | Always | Never
-  imagePullPolicy: "IfNotPresent"
+  imagePullPolicy: "Always"
   # If specified, use these secrets to access the images, this can be used on mCloud.
-  # imagePullSecrets:
-  #   - corezoid-secret
-  #   - ecr-registry
-  #   - gitlab-registry
+#   imagePullSecrets:
+#     name: corezoid-secret
   repotype: "public"
+  # repotype: "corezoid"
   product: "corezoid"
   centos8Repo: public-corezoid-centos8
   useCentos8: true
@@ -24,7 +23,7 @@ global:
   imageInit:
     repository: alpine
     pullPolicy: IfNotPresent
-    tag: "3.18.3"
+    tag: "3.20.1"
 
 #  timezone: "Asia/Baku"
 
@@ -56,18 +55,28 @@ global:
 
   storage: nfs
   # Define global storageClass name
-  storageClassName: "corezoid-storage-class-default"
+  storageClassName: "corezoid-storage-class-default-develop"
   ######## Settings AWS EFS filesystem   ########
   efs:
     awsRegion: "eu-west-1"
     efsFileSystemId: "fs-00b8a4b9489e767a1"
     ## set true if you choose storage: efs
     enabled: false
+    affinity: {}
   ######## Settings NFS filesystem   ########
   nfs:
     ## set true if you choose storage: nfs
     enabled: true
-
+    affinity: {}
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   ##############################################
   ######## NetworkPolicy########################
@@ -108,7 +117,7 @@ global:
     fdw_use_external_host: false
     ## secret configuration for postgresql
     ## pvc name
-    persistantVolumeClaimName: "postgresql-pvc"
+    persistantVolumeClaimName: "postgresql-pvc-develop"
     secret:
       ## true - secret will be created automaticaly with provided values
       ## false - secret should be created manualy
@@ -118,12 +127,13 @@ global:
       ## for init db and roles dbsuperuser and dbuser cannot be changed (because used as plain text in sql)
       dbsuperuser: "postgres"
       ## password - for dbsuperuser
-      dbsuperuserpwd: "Corezoid1234!b"
+      dbsuperuserpwd: "dGt41jU11!RBespOr"
       data:
+        # dbhost: "10.68.49.188"
         dbhost: "pg-postgresql"
         dbport: "5432"
         dbuser: "dbuser"
-        dbpwd: "8hhgasdgiufghrtrnr4"
+        dbpwd: "kjnlqefgsfdgslqmlfq"
         dbuser_fdw: "fdw_user"
         dbpwd_fdw: "fdw_user_passwd123"
 
@@ -133,7 +143,16 @@ global:
     shards_count: 10
     # count of shards created in psql, if unset, default - 10 - in array format
     shards: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-
+    affinity: {}
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
     bouncer_minReplicas: "2"
@@ -146,26 +165,15 @@ global:
         cpu: "500m"
         memory: "500Mi"
     bouncer_affinity: {}
-    #    # hard AZ-based affinity
-    #      podAntiAffinity:
-    #        requiredDuringSchedulingIgnoredDuringExecution:
-    #          - labelSelector:
-    #              matchExpressions:
-    #              - key: tier
-    #                operator: In
-    #                values:
-    #                  - pgbouncer
-    #            topologyKey: failure-domain.beta.kubernetes.io/zone
-    #    # soft AZ-based affinity
-    #      podAntiAffinity:
-    #        preferredDuringSchedulingIgnoredDuringExecution:
-    #          - labelSelector:
-    #              matchExpressions:
-    #                - key: tier
-    #                  operator: In
-    #                  values:
-    #                    - pgbouncer
-    #            topologyKey: failure-domain.beta.kubernetes.io/zone
+#     bouncer_affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
@@ -197,7 +205,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.5.2"
+      version: "6.5.5"
 
     rotation:
       ## enabled: true or false
@@ -210,13 +218,13 @@ global:
   ## NO CLUSTER Mode!
   redis:
     # if internal true - create and use internal k8s redis container
-    # if internal false - enable external redis, like aws elasticache (Engine Version Compatibility: 3.2.10)
+    # if internal false - enable external redis, like aws elasticache
     internal: true
     # tls true only for aws elasticache
     tls:
       enabled: false
     ## pvc name if it already exist or was created manualy
-    persistantVolumeClaimName: "redis-pvc"
+    persistantVolumeClaimName: "redis-pvc-develop"
     ## secret configuration for redis
     sentinel:
       enable: false
@@ -228,23 +236,37 @@ global:
       name: "redis-secret"
       # you can specify different servers for redis for counters, cache and timers  - or specify the same server in variables
       data:
+        # host: "10.68.49.188"
         host: "redis-master"
         port: "6379"
         password: ""
         # redis for cache (defaults to above redis values if empty ^)
+        # host_cache: "10.68.49.188"
+        # port_cache: "6380"
         host_cache: ""
         port_cache: ""
         password_cache: ""
         # redis for timers (defaults to above redis values if empty ^)
+        # host_timers: "10.68.49.188"
+        # port_timers: "6381"
         host_timers: ""
         port_timers: ""
         password_timers: ""
-
+    affinity: {}
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   #######  Elasticsearch  ########
   ## Supported version 8.6.0
   elasticsearch:
-    tag: "8.6.0"
+    tag: "8.13.4"
     # if internal true - create and use internal elasticsearch container
     # if internal false - enable external elasticsearch, like aws elasticsearch service
     internal: true
@@ -255,16 +277,28 @@ global:
       create: true
       name: "elasticsearch-secret"
       data:
+        # host: "10.68.49.188"
         host: "elasticsearch-service"
         ## be careful with port - in internal install used 9200, in aws uses 443
         port: "9200"
         schema: "http"
+#        port: "443"
+#        schema: "https"
       # Optional
       auth_enabled: false
       auth_data:
         username: ""
         password: ""
-
+    affinity: {}
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   #######  RabbitMQ  ########
   ## Supported version  3.9.*
@@ -282,6 +316,7 @@ global:
       create: true
       name: "rabbitmq-secret"
       data:
+        # host: "10.68.49.188"
         host: "rabbit-service"
         port: "5672"
         vhost: "/conveyor"
@@ -289,21 +324,31 @@ global:
         password: "vefgemknvlwkem"
     # vm_memory_high_watermark.relative
     memoryHighWatermark: 0.3
+    affinity: {}
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   ########  Settings for Corezoid services  ########
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.3.5.1"
+    tag: "8.3.9.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
       limits:
-        cpu: 2
+        cpu: 600m
         memory: 2000Mi
       requests:
         cpu: 500m
-        memory: 500Mi
+        memory: 1500Mi
     ## Allows you to see the api keys of other users in one company
     share_api_keys_in_company: "false"
     ## Init password for admin@corezoid.loc
@@ -318,7 +363,7 @@ global:
     # Enable cookie secure for api
     secure: true
     ## pvc name if it already exist or was created manualy
-    persistantVolumeClaimName: "capi-pvc"
+    persistantVolumeClaimName: "capi-pvc-develop"
     ## true if pvc for capi should be created automaticaly
     ## false if you already have pvc
     persistantVolumeClaimCreate: true
@@ -439,9 +484,9 @@ global:
     ldap_user_nick_entry: "cn"
     ldap_tls: false
     # max task size for process conv
-    max_task_size_for_process_conv: "264000"
+    max_task_size_for_process_conv: "1048576"
     # max task size for state diagramm conv
-    max_task_size_for_st_diagramm_conv: "264000"
+    max_task_size_for_st_diagramm_conv: "1048576"
     logic_settings:
       # max allowed threads for api logic
       api_max_thread: 50000
@@ -451,44 +496,30 @@ global:
     scraper:
       scrap_interval: "1"
       ttl: "30"
-
-
     affinity: {}
-  #    # hard AZ-based affinity
-  #      podAntiAffinity:
-  #        requiredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #              - key: tier
-  #                operator: In
-  #                values:
-  #                  - capi
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
-  #    # soft AZ-based affinity
-  #      podAntiAffinity:
-  #        preferredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #                - key: tier
-  #                  operator: In
-  #                  values:
-  #                    - capi
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
-
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   ########  Settings for services  ########
 
   # http-worker
   http:
-    tag: "4.1.4.1"
+    tag: "4.1.5.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
       limits:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 1000m
+        memory: 1000Mi
       requests:
-        cpu: 1
+        cpu: 700m
         memory: 500Mi
     max_keep_alive_connections_len: "0"
     max_http_resp_size: "5242880"
@@ -516,32 +547,20 @@ global:
 #         status: "on"
 #         headers: "off"
 #         body: "off"
-
     affinity: {}
-  #    # hard AZ-based affinity
-  #      podAntiAffinity:
-  #        requiredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #              - key: tier
-  #                operator: In
-  #                values:
-  #                  - http-worker
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
-  #    # soft AZ-based affinity
-  #      podAntiAffinity:
-  #        preferredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #                - key: tier
-  #                  operator: In
-  #                  values:
-  #                    - http-worker
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   # usercode
   usercode:
-    tag: "8.3.1"
+    tag: "9.0.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -554,73 +573,50 @@ global:
         memory: 1000Mi
     # max time for each execution of code, kill process after this time
     max_exec_code_time: 1000
-
     affinity: {}
-  #    # hard AZ-based affinity
-  #      podAntiAffinity:
-  #        requiredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #              - key: tier
-  #                operator: In
-  #                values:
-  #                  - usercode
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
-  #    # soft AZ-based affinity
-  #      podAntiAffinity:
-  #        preferredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #                - key: tier
-  #                  operator: In
-  #                  values:
-  #                    - usercode
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   # conveyor-worker
   worker:
-    tag: "5.1.4.1"
+    tag: "5.1.6.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
     resources:
       limits:
-        cpu: 2
-        memory: 2000M
+        cpu: 1500m
+        memory: 1500M
       requests:
         cpu: 1
         memory: 500M
     write_data_to_history: false
     worker_write_history_task: true
     affinity: {}
-  #    # hard AZ-based affinity
-  #      podAntiAffinity:
-  #        requiredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #              - key: tier
-  #                operator: In
-  #                values:
-  #                  - worker
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
-  #    # soft AZ-based affinity
-  #      podAntiAffinity:
-  #        preferredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #                - key: tier
-  #                  operator: In
-  #                  values:
-  #                    - worker
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   # mult
   mult:
-    tag: "3.2.4.1"
+    tag: "3.2.7.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
-    persistantVolumeClaimName: "mult-pvc"
+    persistantVolumeClaimName: "mult-pvc-develop"
     ## true if pvc for mult should be created automaticaly
     ## false if you already have pvc
     persistantVolumeClaimCreate: true
@@ -630,37 +626,25 @@ global:
     # application resources limits and requests
     resources:
       limits:
-        cpu: 4
-        memory: 2000Mi
+        cpu: 1000m
+        memory: 1000Mi
       requests:
         cpu: 1
         memory: 500Mi
-
     affinity: {}
-  #    # hard AZ-based affinity
-  #      podAntiAffinity:
-  #        requiredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #              - key: tier
-  #                operator: In
-  #                values:
-  #                  - mult
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
-  #    # soft AZ-based affinity
-  #      podAntiAffinity:
-  #        preferredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #                - key: tier
-  #                  operator: In
-  #                  values:
-  #                    - mult
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   # webadm
   webadm:
-    tag: "6.5.2"
+    tag: "6.5.5"
     minReplicas: 1
     resources:
       limits:
@@ -670,67 +654,45 @@ global:
         cpu: 200m
         memory: 500Mi
     affinity: {}
-  #    # hard AZ-based affinity
-  #      podAntiAffinity:
-  #        requiredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #              - key: tier
-  #                operator: In
-  #                values:
-  #                  - corezoid-web-adm
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
-  #    # soft AZ-based affinity
-  #      podAntiAffinity:
-  #        preferredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #                - key: tier
-  #                  operator: In
-  #                  values:
-  #                    - corezoid-web-adm
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
   # additional allowed URLs that resources (such as JavaScript, CSS, Images, etc.) can be loaded from.
     content_security_policy:
       urls:
         # - https://doc.corezoid.com
+
   # syncapi
   syncapi:
-    subdomain: "syncapi-k8s"
-    tag: "3.3.2"
+    subdomain: "syncapi-k8s-develop"
+    tag: "3.5.1"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
     callback_max_timeout: "60000"
     resources:
       limits:
-        cpu: 2
-        memory: 2000Mi
+        cpu: 1
+        memory: 800Mi
       requests:
         cpu: 1
         memory: 500Mi
-
     affinity: {}
-  #    # hard AZ-based affinity
-  #      podAntiAffinity:
-  #        requiredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #              - key: tier
-  #                operator: In
-  #                values:
-  #                  - syncapi
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
-  #    # soft AZ-based affinity
-  #      podAntiAffinity:
-  #        preferredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #                - key: tier
-  #                  operator: In
-  #                  values:
-  #                    - syncapi
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   # merchant (deprecated)
   merchant:
@@ -742,7 +704,7 @@ global:
     encryption: false
     key_manager:
       aws_region: "eu-west-1"
-      accessKeyId: ""
+      accessKeyId: "AKIAYQAMCNBUQ3PY5FO3"
       secretAccessKey: ""
       minReplicas: 1
       maxReplicas: 1
@@ -758,21 +720,14 @@ global:
 
   # single-account
   sa:
-    # true or false
     enabled: false
-    subDomain: "account-k8s"
+    subDomain: "account-k8s-develop"
     google_client_id: ""
     google_client_secret: ""
-    persistantVolumeClaimName: "sa-pvc"
-    persistantVolumeClaimCreate: true
-    persistantVolumeClaimShareDir: "/ebsmnt/share"
-    config:
-      client_id: ""
-      client_secret: ""
+    admin_bearer_token_secret: ungoh3mohM3valu6Zu1ohdiighie1EemoophaequohMoov
 
-  # gitcall | worker and rabbit settings
+  # gitcall\dbcall | worker and rabbit settings
   gitcall:
-    # true or false
     enabled: false
     mq_vhost: "/conveyor"
     dunder_mq_vhost: "/conveyor"
@@ -782,43 +737,31 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "2.4.1"
+    tag: "2.6.1"
     minReplicas: 1
     maxReplicas: 4
     resources:
       limits:
-        cpu: 1000m
-        memory: 1000Mi
+        cpu: 700m
+        memory: 700Mi
       requests:
-        cpu: 1000m
-        memory: 1000Mi
+        cpu: 700m
+        memory: 700Mi
     affinity: {}
-  #    # hard AZ-based affinity
-  #      podAntiAffinity:
-  #        requiredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #              - key: tier
-  #                operator: In
-  #                values:
-  #                  - conf-agent-server
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
-  #    # soft AZ-based affinity
-  #      podAntiAffinity:
-  #        preferredDuringSchedulingIgnoredDuringExecution:
-  #          - labelSelector:
-  #              matchExpressions:
-  #                - key: tier
-  #                  operator: In
-  #                  values:
-  #                    - conf-agent-server
-  #            topologyKey: failure-domain.beta.kubernetes.io/zone
-
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   # web-superadm
   web_superadm:
-    tag: "2.5.1"
-    subdomain: "superadm-k8s"
+    tag: "2.6.1"
+    subdomain: "superadm-k8s-develop"
     minReplicas: 1
     resources:
       limits:
@@ -827,23 +770,43 @@ global:
       requests:
         cpu: 50m
         memory: 100Mi
+    affinity: {}
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   limits:
-    tag: "2.3.1"
-    minReplicas: 2
+    tag: "2.4.1"
+    minReplicas: 1
     resources:
       limits:
-        cpu: 1000m
-        memory: 1300Mi
+        cpu: 500m
+        memory: 500Mi
       requests:
         cpu: 350m
-        memory: 500Mi
+        memory: 300Mi
+    affinity: {}
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
 
   prometheus_metrics: false
 
   # global log level definition, info - default
   # available value info | warning | error | debug
-  log_level: info
+  log_level: debug
   # allows store crushdumps and send to Telegram chat
   store_dumps:
     enabled: false

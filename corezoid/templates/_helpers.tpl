@@ -14,16 +14,6 @@ nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 nginx.ingress.kubernetes.io/ssl-redirect: "true"
 {{- end -}}
 
-{{- define "saDomain" -}}
-{{- if and .Values.global .Values.global.sa .Values.global.sa.enabled -}}
-  {{- if .Values.global.sa.subDomain -}}
-    {{ .Values.global.sa.subDomain }}.{{ .Values.global.domain }}
-  {{- else -}}
-    {{ .Values.global.domain }}/account
-  {{- end }}
-{{- end }}
-{{- end -}}
-
 {{/*
   Create application name label.
   */}}

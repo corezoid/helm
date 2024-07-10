@@ -1,6 +1,37 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.23.3 [ Corezoid 6.5.5 ]
+- Applications versions:
+  - capi - 8.3.9.1
+  - mult - 3.2.7.1
+  - webadm - 6.5.5
+  - http-worker - 4.1.5.1
+  - usercode - 9.0.1
+  - worker - 5.1.6.1
+  - syncapi - 3.5.1
+  - web_superadm - 2.6.1
+  - conf_agent_server - 2.6.1
+  - limits - 2.4.1
+- Added bitnami RabbitMQ subchart. New RabbitMQ version - 3.12
+- New Redis version - 7.2.4
+- New Elasticsearch version - 8.13.4
+- New PostgreSQL version - 15.*
+- Added affinity to efs\nfs, postgres, elasticsearch, redis subchart
+- Updated imageInit alpine image tag
+
+### Improvements
+
+#### 1. Warning: The OpenSSL 1.* is no longer supported, services that use old cipher protocols may stop operating;
+#### 2. Support for the xregexp library has been added to the Code node.
+#### 3. The format of http_worker info logs was changed: the ConvId and TaskId parameters have been added.
+#### 4. The sending of user blocking info has been added to the capi-user-activity-conv system process.
+#### 5. On the System Settings page, you can switch between dark and light UI themes using the theme toggle.
+#### 6. Fixed the issue that caused the `$.unixtime().tz` function to return an incorrect GMT-2 value for the GMT+2 argument.
+#### 7. For an empty task run through a process, the "show":"task" API method now returns the `"data": {}` empty object in the final node instead of `"data": []` empty array.
+#### 8. Now, in the Header parameters field of the API Call node, when the dynamic diag_id parameter value is transferred using the `conv[{{diag_id}}].ref[{{ref}}].param` construction on processes export/import, the parameter value in the API Call node is updated.
+#### 9. In the Superadmin menu, the `AccountId` parameter (Account ID of the user) and the user's current block status are shown together with the `UserId` parameter.
+
 
 ### Chart 0.23.2 [ Corezoid 6.5.2 ]
 

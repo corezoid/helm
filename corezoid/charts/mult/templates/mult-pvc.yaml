@@ -15,5 +15,5 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: {{ .Values.global.mult.persistantVolumeClaimSize }}
+      storage: {{ .Values.global.mult.persistantVolumeClaimSize | default "1Gi"}}
 {{- end }}

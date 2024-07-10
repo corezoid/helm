@@ -19,6 +19,14 @@ spec:
 {{- include "redis.labels" . | nindent 8 }}
         role: master
     spec:
+      {{ if .Values.global.redis.affinity }}
+      affinity:
+        {{ .Values.global.redis.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
+      {{- if .Values.global.redis.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{ .Values.global.redis.topologySpreadConstraints | toYaml | nindent 8 | trim }}
+      {{- end}}
       {{- if .Values.global.imagePullSecrets }}
       imagePullSecrets:
       {{- range $pullSecret := .Values.global.imagePullSecrets }}
