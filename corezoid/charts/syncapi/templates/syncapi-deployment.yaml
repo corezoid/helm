@@ -69,6 +69,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: api_port
+        - name: init-wait-capi
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - until nc -zvw1 capi-service 9080;
+              do echo waiting for dependencies; sleep 2; done;
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}

@@ -46,26 +46,13 @@ data:
         set $admin_root    "/app";
         set $static_local    "/app/static";
 
-        {{- if .Values.global.sa }}
-        {{- if .Values.global.sa.enabled }}
-        set $static_local_avatars    {{ .Values.global.sa.persistantVolumeClaimShareDir }};
-        {{- end }}
-        {{- end }}
-
         if ($host !~* ^({{ .Values.global.subdomain}}.{{ .Values.global.domain }})$ ) { return 444; }
 
-        {{- if .Values.global.sa.enabled }}
         location /avatars {
-           add_header      Content-Type image/jpeg;
+           alias /app/img;
            error_page  404  =200   /avatars/0.jpg;
-           root $static_local_avatars;
-        }
-        {{- else }}
-        location ~ ^/avatars {
-           return 200;
            add_header      Content-Type image/jpeg;
         }
-        {{- end }}
 
         location /favicon/ {
            root /app;

@@ -200,7 +200,7 @@ data:
         {cnode_min_av_ram_to_clean_isolates, 26400}, %% // 25% from 10 Gb in Kb
         {cnode_min_av_ram_to_clean_isolates_mb, 1024}, %% in Mb
         {cnode_max_used_per_isolate, 20}, %% // in Mb
-        {cnode_max_used_per_isolate_mb, 20}, %% in Mb
+        {cnode_max_used_per_isolate_mb, 100}, %% in Mb
 
         {show_err_resps, false},     %% If true, then more logs are displayed
         {show_ok_resps, false},      %% If true, then more logs are displayed

@@ -45,12 +45,12 @@ You can add separate new SAML providers via the UI. Management (enabling, disabl
 - See [ENIGMA.md](ENIGMA.md)  
 
 #### Dependencies:  
-#####Testing on Kubernetes version 1.26 and helm v3  
+#####Testing on Kubernetes version 1.30 and helm v3  
 #####Supported stateful versions:  
-- Postgresql 13.3  
-- Redis 7.0.8  
-- Elasticsearch 8.6.0
-- RabbitMQ 3.8/3.9  
+- Postgresql 13.*  
+- Redis 7.2.4  
+- Elasticsearch 8.13.*  
+- RabbitMQ 3.8/3.9/3.12   
 
 ### SYSTEM REQUIREMENTS:
 

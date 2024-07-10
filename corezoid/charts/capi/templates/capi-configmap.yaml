@@ -47,6 +47,10 @@ data:
           {tcp_server_port, false}
         ]},
 
+        {actorizer_client, [
+            {enabled, false}
+          ]},
+
         {corezoid_global_stats, [
           {disabled, true}
         ]},
@@ -413,6 +417,21 @@ data:
                 {components, [<<"db_call">>]}, %% Enabling/disabling components. Used mostly by frontend
         {{- end }}
 
+                {{- if .Values.global.sa.enabled }}
+                {sa_initial_credentials, [
+                  {name, "corezoid"},
+                  {redirect_uri, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/auth2/single_account/return/"},
+                  {homepage, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/"},
+                  {logo_url, "https://api.corezoid.com/logo/logo_big_small.png"},
+                  {description, "Corezoid"},
+                  {notify_url, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/api/2/plugins/single_account/callback/"},
+                  {full_name, "Corezoid Corezoid engine"},
+                  {capi_site_auth_single_account, true } %% DEFAULT false, On/off sa authorization on corezoid
+                ]},
+
+                {admin_bearer_token_secret, <<"{{ .Values.global.sa.admin_bearer_token_secret }}">>},
+                {{- end }}
+
                 %% It must be changed to unique name for every api node. It's personal
                 %% queue where will come messages from others api nodes.
                 {api_id, <<"">>},
@@ -432,7 +451,7 @@ data:
                   {host, "${FDW_POSTGRES_HOST}"}, %% by default host will get from pgsql.host
                 {{- else }}
                   {host, "localhost"}, %% by default host will get from pgsql.host
-                {{- end }} 
+                {{- end }}
                   {reinit_if_changed, true}, %% by default false ( it will drop foreign server and create again )
                   {username, "${FDW_POSTGRES_DBUSER}"},
                   {password, "${FDW_POSTGRES_DBPWD}"}
@@ -509,6 +528,8 @@ data:
               %% [\\!"#$%&'()*+,-./:;<=>?@^_`{|}~\[\]]
               {special, {{ .Values.global.capi.password_policy.special | default "true" }}}
             ]},
+
+            {users_password_history_length, {{ .Values.global.capi.users_password_history_length | default 0 }}},
 
             %% FRONT SETTINGS
             {front_settings, [
@@ -1245,17 +1266,10 @@ data:
 
                 %% f3 file storage settings
                 {file_f3,[
-        {{- if .Values.global.sa.enabled }}
-                  {allowed_namespaces, ["avatars"]},
-                  {path_to_dir, "{{ .Values.global.sa.persistantVolumeClaimShareDir }}" },
-                  {network_partition, false}     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
-                  %%{ttl_file, 60}                 %% file ttl in seconds
-        {{- else }}
                   {allowed_namespaces, ["avatars"]},
                   {path_to_dir, "/tmp"},
                   {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
                   {ttl_file, 60}                 %% file ttl in seconds
-        {{- end }}
                 ]}
               ]
             ]}
@@ -1307,15 +1321,13 @@ data:
           {disabled, true}
         {{- else }}
           {pool, [
-            {host, "{{ include "saDomain" . }}"},
+            {host, "{{ .Values.global.sa.subDomain }}.{{ .Values.global.domain }}"},
             {port, 443},
             {start_size, 10},
             {min_size, 10},
             {max_size, 10}
           ]},
           {disabled, false},
-          {client_id, "{{ .Values.global.sa.config.client_id }}"},
-          {client_secret, "{{ .Values.global.sa.config.client_secret }}"},
           {return_url, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/auth2/single_account/return/"},
           {oauth_url, "https://{{ .Values.global.sa.subDomain }}.{{ .Values.global.domain }}/oauth2/authorize"},
           {token_url, "https://{{ .Values.global.sa.subDomain }}.{{ .Values.global.domain }}/oauth2/token"},

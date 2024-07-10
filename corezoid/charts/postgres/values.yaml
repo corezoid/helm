@@ -3,7 +3,7 @@ postgresqlDataDir: /var/lib/pgsql/data
 image:
   #registry: docker-hub.middleware.biz
   repository: postgres
-  tag: 13-alpine
+  tag: 15-alpine
 
 busyboxImage:
   repository: busybox

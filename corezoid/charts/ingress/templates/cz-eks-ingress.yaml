@@ -138,18 +138,6 @@ spec:
                   {{- else }}
                   number: {{ .Values.global.webadm.service_port | default 8080 }}
                   {{- end }}
-    {{- if .Values.global.sa.enabled }}
-    - host: {{ .Values.global.sa.subdomain}}.{{ .Values.global.domain }}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: single-account-frontend-service
-                port:
-                  number: 80
-    {{- end }}
     {{- if .Values.global.store_dumps.enabled }}
     - host: {{ .Values.global.store_dumps.subdomain }}.{{ .Values.global.domain }}
       http:
@@ -170,9 +158,6 @@ spec:
         {{- end }}
         - {{ .Values.global.subdomain}}.{{ .Values.global.domain }}
         - {{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}
-        {{- if .Values.global.sa.enabled }}
-        - {{ .Values.global.sa.subdomain}}.{{ .Values.global.domain }}
-      {{- end }}
       secretName: {{ .Values.global.ingress.tls.secret.name | default "tls-ingress-secret" }}
   {{- end }}
 {{- end -}}

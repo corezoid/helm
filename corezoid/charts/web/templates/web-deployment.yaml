@@ -69,12 +69,6 @@ spec:
             - name: web-config-logo
               mountPath: /app/logo/logo_auth.svg
               subPath: logo_auth.svg
-            {{- if eq .Values.global.sa.enabled true }}
-            {{- if .Values.global.sa.persistantVolumeClaimCreate }}
-            - name: {{ .Values.appName }}-claim
-              mountPath: {{ .Values.global.sa.persistantVolumeClaimShareDir }}
-            {{- end }}
-            {{- end }}
           resources:
             {{ .Values.global.webadm.resources | toYaml | indent 12 | trim }}
           readinessProbe:
@@ -130,11 +124,3 @@ spec:
         - name: web-config-logo
           configMap:
             name: {{ .Values.appName }}-config-logo
-        {{- if eq .Values.global.sa.enabled true }}
-        {{- if .Values.global.sa.persistantVolumeClaimCreate }}
-        - name: {{ .Values.appName }}-claim
-          persistentVolumeClaim:
-            claimName: {{ .Values.global.sa.persistantVolumeClaimName }}
-            readOnly: false
-        {{- end }}
-        {{- end }}
