@@ -13,9 +13,9 @@ spec:
   - protocol: TCP
     {{- if .Values.global.ingress.tls.enabled }}
     port: {{ .Values.global.webadm.service_port | default 8443 }}
-    targetPort: {{ .Values.global.webadm.service_port | default 8443 }}
+    targetPort: {{ .Values.global.webadm.service_target_port | default 8443 }}
     {{- else }}
     port: {{ .Values.global.webadm.service_port | default 8080 }}
-    targetPort: {{ .Values.global.webadm.service_port | default 8080 }}
+    targetPort: {{ .Values.global.webadm.service_target_port | default 8080 }}
     {{- end }}
   type: NodePort

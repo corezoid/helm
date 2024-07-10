@@ -30,6 +30,10 @@ spec:
       affinity:
         {{ .Values.global.syncapi.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.syncapi.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{ .Values.global.syncapi.topologySpreadConstraints | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-wait-rmq
