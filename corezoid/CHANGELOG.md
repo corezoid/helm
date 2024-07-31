@@ -1,6 +1,26 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+
+### Chart 0.23.4 [ Corezoid 6.5.6 ]
+- Applications versions:
+  - capi - 8.3.9.2
+  - mult - 3.2.7.1
+  - webadm - 6.5.6
+  - http-worker - 4.1.5.1
+  - usercode - 9.0.1
+  - worker - 5.1.6.1
+  - syncapi - 3.5.1
+  - web_superadm - 2.6.1
+  - conf_agent_server - 2.6.1
+  - limits - 2.4.1
+
+### Improvements
+
+#### 1. Fixed the vulnerability of possible CRLF (Carriage Return Line Feed) injection for stealing user data.
+#### 2. Fixed the issue of sending duplicates of Corezoid password reset email notifications.
+
+
 ### Chart 0.23.3 [ Corezoid 6.5.5 ]
 - Applications versions:
   - capi - 8.3.9.1

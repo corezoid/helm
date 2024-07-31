@@ -64,6 +64,11 @@ data:
                   {sentinel_password, "${REDIS_PASSWORD}"},  %% Used for connect to redis sentinel (optional) if empty can remove
                   {sentinels, [
                     [
+                      {{- if eq .Values.global.redis.tls.enabled true }}
+                      {ssl, [
+                         {tls, true}
+                      ]},
+                      {{- end }}
                       {host, "${REDIS_HOST}"},
                       {port, ${REDIS_PORT}}
                     ]
@@ -79,6 +84,11 @@ data:
             {redis, [
     {{- if eq .Values.global.redis.sentinel.enable  true }}
                 {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+                {{- if eq .Values.global.redis.tls.enabled true }}
+                  {ssl, [
+                    {tls, true}
+                  ]},
+                {{- end }}
     {{- else }}
             {{- if eq .Values.global.redis.internal false }}
                 {host, "${REDIS_HOST}"},
@@ -105,6 +115,11 @@ data:
             {redis, [
     {{- if eq .Values.global.redis.sentinel.enable  true }}
                 {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+                {{- if eq .Values.global.redis.tls.enabled true }}
+                  {ssl, [
+                    {tls, true}
+                  ]},
+                {{- end }}
     {{- else }}
             {{- if eq .Values.global.redis.internal false }}
                 {host, "${REDIS_HOST}"},
@@ -460,7 +475,7 @@ data:
                 {max_task_size_for_process_conv, {{ .Values.global.capi.max_task_size_for_process_conv | default 264000 }} }, %% max task size for process conv
                 {max_task_size_for_st_diagramm_conv, {{ .Values.global.capi.max_task_size_for_st_diagramm_conv | default 264000 }} }, %% max task size for state diagramm conv
                 {origin_whitelist, [
-                    "{{ .Values.global.subdomain}}.{{ .Values.global.domain }}","{{ .Values.global.syncapi.subdomain}}.{{ .Values.global.domain }}"
+                    "{{ .Values.global.subdomain }}.{{ .Values.global.domain }}","{{ .Values.global.syncapi.subdomain }}.{{ .Values.global.domain }}"{{- if .Values.global.capi.origin_whitelist }}{{- range $index, $element := .Values.global.capi.origin_whitelist }},"{{ $element }}"{{- end }}{{- end }}
                 ]},
 
                 %% cookie name where cookie string will put

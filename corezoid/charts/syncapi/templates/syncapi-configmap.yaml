@@ -37,6 +37,11 @@ data:
                 {sentinel_password, "${REDIS_PASSWORD}"},  %% Used for connect to redis sentinel (optional) if empty can remove
                 {sentinels, [
                   [
+                    {{- if eq .Values.global.redis.tls.enabled true }}
+                    {ssl, [
+                       {tls, true}
+                    ]},
+                    {{- end }}
                     {host, "${REDIS_HOST}"},
                     {port, ${REDIS_PORT}}
                   ]
