@@ -339,7 +339,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.3.9.1"
+    tag: "8.3.9.2"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -644,7 +644,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.5.5"
+    tag: "6.5.6"
     minReplicas: 1
     resources:
       limits:
