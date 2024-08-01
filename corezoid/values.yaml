@@ -15,7 +15,9 @@ global:
   # repotype: "corezoid"
   product: "corezoid"
   centos8Repo: public-corezoid-centos8
-  useCentos8: true
+  centos9Repo: public-corezoid-centos9
+  useCentos8: false
+  useCentos9: true
 
   deploymentStrategy:
     type: RollingUpdate
