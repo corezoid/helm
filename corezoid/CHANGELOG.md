@@ -14,6 +14,7 @@ https://doc.corezoid.com/docs/release-notes
   - web_superadm - 2.6.1
   - conf_agent_server - 2.6.1
   - limits - 2.4.1
+- Added centos9 support for Corezoid apps `.Values.global.centos9Repo` `.Values.global.useCentos9`
 
 ### Improvements
 
