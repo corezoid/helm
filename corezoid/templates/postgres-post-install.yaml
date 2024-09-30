@@ -13,6 +13,10 @@ spec:
   affinity:
     {{ .Values.global.db.bouncer_affinity | toYaml | nindent 4 | trim }}
   {{- end}}
+  {{- with .Values.global.db.bouncer_tolerations }}
+  tolerations:
+    {{- toYaml . | nindent 8 }}
+  {{- end }}
   containers:
     - image: postgres:13-alpine
       imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}

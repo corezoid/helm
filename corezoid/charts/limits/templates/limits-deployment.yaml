@@ -28,6 +28,10 @@ spec:
       affinity:
         {{ .Values.global.limits.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- with .Values.global.limits.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait

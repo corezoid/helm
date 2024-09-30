@@ -65,6 +65,7 @@ global:
     ## set true if you choose storage: efs
     enabled: false
     affinity: {}
+    tolerations: {}
   ######## Settings NFS filesystem   ########
   nfs:
     ## set true if you choose storage: nfs
@@ -155,6 +156,7 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
     bouncer_minReplicas: "2"
@@ -176,6 +178,7 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    bouncer_tolerations: {}
 
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
@@ -207,7 +210,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.5.5"
+      version: "6.6.0"
 
     rotation:
       ## enabled: true or false
@@ -254,6 +257,7 @@ global:
         host_timers: ""
         port_timers: ""
         password_timers: ""
+#     redistype: elasticache  # only to AWS elasticache redis
     affinity: {}
 #     affinity:
 #       nodeAffinity:
@@ -264,6 +268,7 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   #######  Elasticsearch  ########
   ## Supported version 8.6.0
@@ -301,6 +306,7 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   #######  RabbitMQ  ########
   ## Supported version  3.9.*
@@ -336,18 +342,19 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   ########  Settings for Corezoid services  ########
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.3.9.2"
+    tag: "8.4.0.3"
     minReplicas: 2
     maxReplicas: 4
     resources:
       limits:
         cpu: 600m
-        memory: 2000Mi
+        memory: 2Gi
       requests:
         cpu: 500m
         memory: 1500Mi
@@ -440,7 +447,7 @@ global:
     # For create company. We recommend using corezoid_internal for the new installation, if the old installation then use only mapi
     companies_manager: "corezoid_internal"
     # If `fs` gets a license from a file, if `db` gets a license from a database. For new installation use only db
-    licensepath: "fs"
+    licensepath: "db"
     ## User password strength policy
     password_policy:
       min_length: 10     # Min password length
@@ -508,12 +515,13 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   ########  Settings for services  ########
 
   # http-worker
   http:
-    tag: "4.1.5.1"
+    tag: "4.2.0.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -559,6 +567,7 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   # usercode
   usercode:
@@ -585,10 +594,11 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   # conveyor-worker
   worker:
-    tag: "5.1.6.1"
+    tag: "5.2.0.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -611,10 +621,11 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   # mult
   mult:
-    tag: "3.2.7.1"
+    tag: "3.3.0.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -643,10 +654,11 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   # webadm
   webadm:
-    tag: "6.5.6"
+    tag: "6.6.0"
     minReplicas: 1
     resources:
       limits:
@@ -665,6 +677,7 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
   # additional allowed URLs that resources (such as JavaScript, CSS, Images, etc.) can be loaded from.
     content_security_policy:
       urls:
@@ -673,7 +686,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-develop"
-    tag: "3.5.1"
+    tag: "3.6.1"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
@@ -695,6 +708,7 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   # merchant (deprecated)
   merchant:
@@ -739,7 +753,7 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "2.6.1"
+    tag: "2.7.1"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -759,10 +773,11 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   # web-superadm
   web_superadm:
-    tag: "2.6.1"
+    tag: "2.6.2"
     subdomain: "superadm-k8s-develop"
     minReplicas: 1
     resources:
@@ -782,9 +797,10 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   limits:
-    tag: "2.4.1"
+    tag: "2.5.1"
     minReplicas: 1
     resources:
       limits:
@@ -803,6 +819,7 @@ global:
 #                   operator: In
 #                   values:
 #                     - 'corezoid-develop'
+    tolerations: {}
 
   prometheus_metrics: false
 

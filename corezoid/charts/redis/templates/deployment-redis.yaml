@@ -23,6 +23,10 @@ spec:
       affinity:
         {{ .Values.global.redis.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- with .Values.global.redis.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.global.redis.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{ .Values.global.redis.topologySpreadConstraints | toYaml | nindent 8 | trim }}

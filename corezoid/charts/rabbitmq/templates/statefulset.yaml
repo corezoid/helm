@@ -49,6 +49,10 @@ spec:
       affinity:
         {{ .Values.global.mq.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- with .Values.global.mq.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.global.mq.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{ .Values.global.mq.topologySpreadConstraints | toYaml | nindent 8 | trim }}

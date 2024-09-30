@@ -28,6 +28,10 @@ spec:
       affinity:
         {{ .Values.global.web_superadm.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- with .Values.global.web_superadm.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: {{ .Values.appName }}
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.global.web_superadm.tag }}"

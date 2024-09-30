@@ -30,6 +30,10 @@ spec:
       affinity:
         {{ .Values.global.worker.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- with .Values.global.worker.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.global.worker.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{ .Values.global.worker.topologySpreadConstraints | toYaml | nindent 8 | trim }}
