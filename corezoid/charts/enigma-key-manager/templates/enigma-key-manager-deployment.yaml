@@ -23,6 +23,18 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{ if .Values.global.capi.affinity }}
+      affinity:
+        {{ .Values.global.capi.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
+      {{- with .Values.global.capi.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.global.capi.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{ .Values.global.capi.topologySpreadConstraints | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait-postgres

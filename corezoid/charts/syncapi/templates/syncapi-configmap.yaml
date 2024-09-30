@@ -57,9 +57,15 @@ data:
           {redis, [
   {{- if eq .Values.global.redis.sentinel.enable  true }}
               {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+              {{- if eq .Values.global.redis.tls.enabled true }}
+              {ssl, [
+                {tls, true}
+              ]},
+              {{- end }}
   {{- else }}
           {{- if eq .Values.global.redis.internal false }}
               {host, "${REDIS_HOST}"},
+              {instance_type, {{ .Values.global.redis.redistype | default "redis" }}}, %% by default redis.
               {port, ${REDIS_PORT}},
               {password,"${REDIS_PASSWORD}"},
               {{- if eq .Values.global.redis.tls.enabled true }}
@@ -69,6 +75,7 @@ data:
               {{- end }}
           {{- else }}
               {host, "redis-master"},
+              {instance_type, {{ .Values.global.redis.redistype | default "redis" }}}, %% by default redis.
               {port, 6379},
               {password,""},
           {{- end }}

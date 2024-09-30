@@ -31,6 +31,10 @@ spec:
       affinity:
         {{ .Values.global.webadm.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- with .Values.global.webadm.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.global.webadm.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{ .Values.global.webadm.topologySpreadConstraints | toYaml | nindent 8 | trim }}

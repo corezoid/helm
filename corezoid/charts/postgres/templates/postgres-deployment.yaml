@@ -22,6 +22,10 @@ spec:
       affinity:
         {{ .Values.global.db.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- with .Values.global.db.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.global.db.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{ .Values.global.db.topologySpreadConstraints | toYaml | nindent 8 | trim }}

@@ -2,6 +2,27 @@
 https://doc.corezoid.com/docs/release-notes
 
 
+### Chart 0.23.5 [ Corezoid 6.6.0 ]
+- Applications versions:
+  - capi - 8.4.0.3
+  - mult - 3.3.0.1
+  - webadm - 6.6.0
+  - http-worker - 4.2.0.1
+  - usercode - 9.0.1
+  - worker - 5.2.0.1
+  - syncapi - 3.6.1
+  - web_superadm - 2.6.2
+  - conf_agent_server - 2.7.1
+  - limits - 2.5.1
+- Added `tolerations` for pods
+- A new parameter redistype has been added. In environments where AWS Elasticache Redis is used, it is necessary to specify `redistype: elasticache`.
+
+### Improvements
+#### 1. Folder-sharing implementation has been optimized for speed.
+#### 2. The "show","obj":"company_keys" obsolete method was disabled.
+
+
+
 ### Chart 0.23.4 [ Corezoid 6.5.6 ]
 - Applications versions:
   - capi - 8.3.9.2
@@ -14,6 +35,7 @@ https://doc.corezoid.com/docs/release-notes
   - web_superadm - 2.6.1
   - conf_agent_server - 2.6.1
   - limits - 2.4.1
+- Added centos9 support for Corezoid apps `.Values.global.centos9Repo` `.Values.global.useCentos9`
 
 ### Improvements
 

@@ -30,6 +30,10 @@ spec:
       affinity:
         {{ .Values.global.capi.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- with .Values.global.capi.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.global.capi.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{ .Values.global.capi.topologySpreadConstraints | toYaml | nindent 8 | trim }}
@@ -437,4 +441,3 @@ spec:
           hostPath:
             path: /var/dumps
         {{- end }}
-

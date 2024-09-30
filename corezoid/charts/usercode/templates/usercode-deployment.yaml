@@ -29,6 +29,10 @@ spec:
       affinity:
         {{ .Values.global.usercode.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- with .Values.global.usercode.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.global.usercode.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{ .Values.global.usercode.topologySpreadConstraints | toYaml | nindent 8 | trim }}

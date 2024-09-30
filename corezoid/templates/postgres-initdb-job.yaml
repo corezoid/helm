@@ -19,6 +19,10 @@ spec:
       affinity:
         {{ .Values.global.db.bouncer_affinity | toYaml | nindent 8 | trim }}
       {{- end }}
+      {{- with .Values.global.db.bouncer_tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       restartPolicy: OnFailure
       containers:
         - image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.global.db.postgres_schema.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.global.db.postgres_schema.image.repository }}:{{ .Values.global.db.postgres_schema.version }}"
