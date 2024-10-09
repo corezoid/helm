@@ -1,3 +1,7 @@
+{{- $resources := .Values.resources }}
+{{- if .Values.global.db.resources }}
+{{- $resources = .Values.global.db.resources }}
+{{- end }}
 {{- if eq .Values.global.db.internal true }}
 apiVersion: apps/v1
 kind: Deployment
@@ -56,6 +60,10 @@ spec:
           name: {{ .Values.appName }}
           securityContext:
             runAsUser: 70
+          command:
+            - "postgres"
+            - "-c"
+            - "max_connections={{ .Values.global.db.internaldb_maxConnections | default 1200 }}"
           env:
             - name: PGDATA
               value: {{ .Values.postgresqlDataDir }}
@@ -109,8 +117,8 @@ spec:
               cpu: 1500m
               memory: 1500Mi
             requests:
-              cpu: 300m
-              memory: 400Mi
+              cpu: 1500m
+              memory: 1500Mi
       volumes:
         - name: {{ .Values.appName }}-claim
           persistentVolumeClaim:

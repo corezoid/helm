@@ -22,8 +22,12 @@ spec:
         spec:
           {{ if .Values.global.db.bouncer_affinity }}
           affinity:
-            {{ .Values.global.db.bouncer_affinity | toYaml | nindent 12 | trim }}
+            {{ .Values.global.db.bouncer_affinity | toYaml | nindent 12 }}
           {{- end}}
+          {{- with .Values.global.db.bouncer_tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           containers:
             - image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}postgres:13-alpine"
               imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
