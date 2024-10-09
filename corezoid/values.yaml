@@ -571,7 +571,7 @@ global:
 
   # usercode
   usercode:
-    tag: "9.0.1"
+    tag: "9.0.2"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
