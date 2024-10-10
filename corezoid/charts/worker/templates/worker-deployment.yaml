@@ -38,6 +38,10 @@ spec:
       topologySpreadConstraints:
         {{ .Values.global.worker.topologySpreadConstraints | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.worker.priorityClassName }}
+      priorityClassName:
+        {{ .Values.global.worker.priorityClassName | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 600
       initContainers:
         - name: init-wait

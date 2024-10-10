@@ -39,6 +39,10 @@ spec:
       topologySpreadConstraints:
         {{ .Values.global.http.topologySpreadConstraints | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.http.priorityClassName }}
+      priorityClassName:
+        {{ .Values.global.http.priorityClassName | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait

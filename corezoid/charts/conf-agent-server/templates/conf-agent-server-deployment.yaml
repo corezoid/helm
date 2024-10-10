@@ -218,3 +218,7 @@ spec:
       topologySpreadConstraints:
         {{ .Values.global.conf_agent_server.topologySpreadConstraints | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.conf_agent_server.priorityClassName }}
+      priorityClassName:
+        {{ .Values.global.conf_agent_server.priorityClassName | toYaml | nindent 8 | trim }}
+      {{- end}}
