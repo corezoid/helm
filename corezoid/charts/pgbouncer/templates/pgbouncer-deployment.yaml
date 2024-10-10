@@ -173,4 +173,8 @@ spec:
       topologySpreadConstraints:
         {{ .Values.global.db.bouncer_topologySpreadConstraints | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.db.bouncer_priorityClassName }}
+      priorityClassName:
+        {{ .Values.global.db.bouncer_priorityClassName | toYaml | nindent 8 | trim }}
+      {{- end}}
 {{- end }}

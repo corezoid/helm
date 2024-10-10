@@ -32,6 +32,10 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.global.limits.priorityClassName }}
+      priorityClassName:
+        {{ .Values.global.limits.priorityClassName | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait

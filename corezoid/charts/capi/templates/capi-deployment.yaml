@@ -38,6 +38,10 @@ spec:
       topologySpreadConstraints:
         {{ .Values.global.capi.topologySpreadConstraints | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.capi.priorityClassName }}
+      priorityClassName:
+        {{ .Values.global.capi.priorityClassName | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 60
       initContainers:
         - name: init-wait

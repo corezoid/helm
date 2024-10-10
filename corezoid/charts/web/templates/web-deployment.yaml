@@ -39,6 +39,10 @@ spec:
       topologySpreadConstraints:
         {{ .Values.global.webadm.topologySpreadConstraints | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.webadm.priorityClassName }}
+      priorityClassName:
+        {{ .Values.global.webadm.priorityClassName | toYaml | nindent 8 | trim }}
+      {{- end}}
       containers:
         - name: {{ .Values.appName }}
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
