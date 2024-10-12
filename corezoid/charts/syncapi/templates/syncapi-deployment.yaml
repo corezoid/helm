@@ -38,6 +38,10 @@ spec:
       topologySpreadConstraints:
         {{ .Values.global.syncapi.topologySpreadConstraints | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.syncapi.priorityClassName }}
+      priorityClassName:
+        {{ .Values.global.syncapi.priorityClassName | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-wait-rmq

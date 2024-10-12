@@ -30,6 +30,10 @@ spec:
       affinity:
         {{ .Values.global.merchant.affinity | toYaml | nindent 8 | trim }}
       {{- end}}
+      {{- if .Values.global.merchant.priorityClassName }}
+      priorityClassName:
+        {{ .Values.global.merchant.priorityClassName | toYaml | nindent 8 | trim }}
+      {{- end}}
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait

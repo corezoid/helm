@@ -32,6 +32,10 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.global.web_superadm.priorityClassName }}
+      priorityClassName:
+        {{ .Values.global.web_superadm.priorityClassName | toYaml | nindent 8 | trim }}
+      {{- end}}
       containers:
         - name: {{ .Values.appName }}
           image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.global.web_superadm.tag }}"
