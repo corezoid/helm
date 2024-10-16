@@ -21,6 +21,10 @@ spec:
     - from:
         - podSelector:
             matchLabels:
+              tier: corezoid-web-adm
+    - from:
+        - podSelector:
+            matchLabels:
               tier: mult
 {{ .Values.global.networkPolicy.labelsSelector.ingress | toYaml | indent 4 }}
 {{ .Values.global.networkPolicy.labelsSelector.monitoring | toYaml | indent 4 }}
