@@ -299,9 +299,9 @@ data:
               {port, 5432},
               {password, "${POSTGRES_DBPWD}"},
               %% pool size
-              {start_size,  1},
-              {min_size,    1},
-              {max_size,    10}
+              {start_size, {{ .Values.global.worker.psql_start_size | default 1 }}},
+              {min_size, {{ .Values.global.worker.psql_min_size | default 1 }}},
+              {max_size, {{ .Values.global.worker.psql_max_size | default 10 }}}
           ]}
       ]},
 
@@ -422,9 +422,9 @@ data:
             { user, "${POSTGRES_DBUSER}" },
             { password, "${POSTGRES_DBPWD}" },
             { dbname, "conveyor" },
-            { start_size, 0 },
-            { min_size, 0 },
-            { max_size, 50 }
+            { start_size, {{ .Values.global.worker.pgsql_start_size | default 0 }} },
+            { min_size, {{ .Values.global.worker.pgsql_min_size | default 0 }} },
+            { max_size, {{ .Values.global.worker.pgsql_max_size | default 50 }} }
           ]
         },
 
@@ -434,9 +434,9 @@ data:
           {user, "${POSTGRES_DBUSER}"},
           {password, "${POSTGRES_DBPWD}"},
           {dbname, "conveyor_statistics"},
-          {min_size, 0},
-          {max_size, 25},
-          {start_size, 2}
+          {min_size, {{ .Values.global.worker.pgsql_statistics_min_size | default 0 }}},
+          {max_size, {{ .Values.global.worker.pgsql_statistics_max_size | default 25 }}},
+          {start_size, {{ .Values.global.worker.pgsql_statistics_start_size | default 2 }}}
         ]},
 
         {statistics, true},    % true|false for enable or disable statistic workers by default is true
@@ -450,9 +450,9 @@ data:
             ]},
             { user, "${POSTGRES_DBUSER}" },
             { password, "${POSTGRES_DBPWD}" },
-            { start_size, 1 },
-            { min_size, 0 },
-            { max_size, 25 }
+            { start_size, {{ .Values.global.worker.pgsql_archive_start_size | default 1 }} },
+            { min_size, {{ .Values.global.worker.pgsql_archive_min_size | default 0 }} },
+            { max_size, {{ .Values.global.worker.pgsql_archive_max_size | default 25 }} }
           ]},
 
         %% for custom db-s
@@ -468,9 +468,9 @@ data:
                     ]},
                 { user, "${POSTGRES_DBUSER}" },
                 { password, "${POSTGRES_DBPWD}" },
-                {min_size, 0},
-                {max_size, 50},
-                {start_size, 3}
+                {min_size, {{ .Values.global.worker.pgsql2_min_size | default 0 }}},
+                {max_size, {{ .Values.global.worker.pgsql2_max_size | default 50 }}},
+                {start_size, {{ .Values.global.worker.pgsql2_start_size | default 3 }}}
             ]},
         {write_data_to_history, {{ .Values.global.worker.write_data_to_history | default false }} }, %% true|false - write or not tasks data into table
         %% redis sentinel quorum hosts
@@ -506,9 +506,9 @@ data:
           {{- end }}
     {{- end }}
             {database,1},
-            {start_size, 5},
-            {min_size, 5},
-            {max_size, 50}
+            {start_size, {{ .Values.global.worker.redis_start_size | default 5 }}},
+            {min_size, {{ .Values.global.worker.redis_min_size | default 5 }}},
+            {max_size, {{ .Values.global.worker.redis_max_size | default 50 }}}
           ]
         ]},
 
@@ -542,9 +542,9 @@ data:
           {{- end }}
     {{- end }}
             {database,2},
-            {start_size, 5},
-            {min_size, 5},
-            {max_size, 50}
+            {start_size, {{ .Values.global.worker.redis_api_sum_start_size | default 5 }}},
+            {min_size, {{ .Values.global.worker.redis_api_sum_min_size | default 5 }}},
+            {max_size, {{ .Values.global.worker.redis_api_sum_max_size | default 50 }}}
           ]
         ]},
 
@@ -577,9 +577,9 @@ data:
           {{- end }}
     {{- end }}
             {database,3},
-            {start_size, 5},
-            {min_size, 5},
-            {max_size, 100}
+            {start_size, {{ .Values.global.worker.redis2_start_size | default 5 }}},
+            {min_size, {{ .Values.global.worker.redis2_min_size | default 5 }}},
+            {max_size, {{ .Values.global.worker.redis2_max_size | default 100 }}}
           ]
         ]},
 
@@ -613,9 +613,9 @@ data:
           {{- end }}
     {{- end }}
             {database,4},
-            {start_size, 5},
-            {min_size, 5},
-            {max_size, 50}
+            {start_size, {{ .Values.global.worker.redis_timers_start_size | default 5 }}},
+            {min_size, {{ .Values.global.worker.redis_timers_min_size | default 5 }}},
+            {max_size, {{ .Values.global.worker.redis_timers_max_size | default 50 }}}
           ]
         ]},
 
@@ -649,9 +649,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {min_size, 5},
-          {max_size, 5},
-          {start_size, 5}
+          {min_size, {{ .Values.global.worker.publish_unload_archive_task_min_size | default 5 }}},
+          {max_size, {{ .Values.global.worker.publish_unload_archive_task_max_size | default 5 }}},
+          {start_size, {{ .Values.global.worker.publish_unload_archive_task_start_size | default 5 }}}
         ]},
 
         %% These section to consume tasks in rabbitmq
@@ -718,10 +718,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 1},
-          {min_size, 1},
-          {max_size, 5},
-          {start_size, 1}
+          {queues_count, {{ .Values.global.worker.publish_copy_task_request_queues_count | default 1 }}},
+          {min_size, {{ .Values.global.worker.publish_copy_task_request_min_size | default 1 }}},
+          {max_size, {{ .Values.global.worker.publish_copy_task_request_max_size | default 5 }}},
+          {start_size, {{ .Values.global.worker.publish_copy_task_request_start_size | default 1 }}}
           %%{is_sharded, true} %% Legacy: will be removed
         ]},
 
@@ -782,9 +782,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {min_size, 1},
-          {max_size, 1},
-          {start_size, 1}
+          {min_size, {{ .Values.global.worker.publish_timer_request_min_size | default 1 }}},
+          {max_size, {{ .Values.global.worker.publish_timer_request_max_size | default 1 }}},
+          {start_size, {{ .Values.global.worker.publish_timer_request_start_size | default 1 }}}
         ]},
 
         %% consumer for timer responses
@@ -844,10 +844,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 8},
-          {min_size, 30},
-          {max_size, 30},
-          {start_size, 30}
+          {queues_count, {{ .Values.global.worker.publish_http_request_queues_count | default 8 }}},
+          {min_size, {{ .Values.global.worker.publish_http_request_min_size | default 30 }}},
+          {max_size, {{ .Values.global.worker.publish_http_request_max_size | default 30 }}},
+          {start_size, {{ .Values.global.worker.publish_http_request_start_size | default 30 }}}
         ]},
 
         %% consumer for http responses, API logic
@@ -876,9 +876,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
-          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 40}    %% The number of queues within the channel
+          {connections_per_queue, {{ .Values.global.worker.consumer_http_response_connections_per_queue | default 2 }}},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, {{ .Values.global.worker.consumer_http_response_channels_per_connection | default 1 }}},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_http_response_messages_prefetch_size_per_channel | default 40 }}}    %% The number of queues within the channel
         ]},
 
         %% Logic call process
@@ -908,10 +908,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 1},
-          {min_size, 5},
-          {max_size, 5},
-          {start_size, 5},
+          {queues_count, {{ .Values.global.worker.publish_rpc_request_queues_count | default 1 }}},
+          {min_size, {{ .Values.global.worker.publish_rpc_request_min_size | default 5 }}},
+          {max_size, {{ .Values.global.worker.publish_rpc_request_max_size | default 5 }}},
+          {start_size, {{ .Values.global.worker.publish_rpc_request_start_size | default 5 }}},
           {is_sharded, true}   %% Legacy: will be removed
         ]},
 
@@ -941,9 +941,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
-          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+          {connections_per_queue, {{ .Values.global.worker.consumer_rpc_response_connections_per_queue | default 2 }}},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, {{ .Values.global.worker.consumer_rpc_response_channels_per_connection | default 1 }}},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_rpc_response_messages_prefetch_size_per_channel | default 20 }}}    %% The number of queues within the channel
         ]},
 
         %% logic usercode
@@ -973,10 +973,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 5},
-          {min_size, 5},
-          {max_size, 5},
-          {start_size, 5}
+          {queues_count, {{ .Values.global.worker.publish_cce_request_queues_count | default 5 }}},
+          {min_size, {{ .Values.global.worker.publish_cce_request_min_size | default 5 }}},
+          {max_size, {{ .Values.global.worker.publish_cce_request_max_size | default 5 }}},
+          {start_size, {{ .Values.global.worker.publish_cce_request_start_size | default 5 }}}
         ]},
 
         %% consumer for usercode responses, CODE logic
@@ -1005,9 +1005,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
-          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+          {connections_per_queue, {{ .Values.global.worker.consumer_cce_response_connections_per_queue | default 2 }}},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, {{ .Values.global.worker.consumer_cce_response_channels_per_connection | default 1 }}},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_cce_response_messages_prefetch_size_per_channel | default 20 }}}    %% The number of queues within the channel
         ]},
 
         %% logic git call
@@ -1037,16 +1037,16 @@ data:
                     ]
           {{- end }}
                 ]},
-          {build_dep_queues_count, 1},
-          {remove_dep_queues_count, 1},
-          {get_script_queues_count, 1},
-          {remove_script_queues_count, 1},
-          {validate_script_queues_count, 1},
-          {compile_script_queues_count, 1},
-          {run_script_queues_count, 10},
-          {min_size, 2},
-          {max_size, 2},
-          {start_size, 2}
+          {build_dep_queues_count, {{ .Values.global.worker.publish_git_call_request_build_dep_queues_count | default 1 }}},
+          {remove_dep_queues_count, {{ .Values.global.worker.publish_git_call_request_remove_dep_queues_count | default 1 }}},
+          {get_script_queues_count, {{ .Values.global.worker.publish_git_call_request_get_script_queues_count | default 1 }}},
+          {remove_script_queues_count, {{ .Values.global.worker.publish_git_call_request_remove_script_queues_count | default 1 }}},
+          {validate_script_queues_count, {{ .Values.global.worker.publish_git_call_request_validate_script_queues_count | default 1 }}},
+          {compile_script_queues_count, {{ .Values.global.worker.publish_git_call_request_compile_script_queues_count | default 1 }}},
+          {run_script_queues_count, {{ .Values.global.worker.publish_git_call_request_run_script_queues_count | default 10 }}},
+          {min_size, {{ .Values.global.worker.publish_git_call_request_min_size | default 2 }}},
+          {max_size, {{ .Values.global.worker.publish_git_call_request_max_size | default 2 }}},
+          {start_size, {{ .Values.global.worker.publish_git_call_request_start_size | default 2 }}}
         ]},
 
 
@@ -1076,10 +1076,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 1},
-          {connections_per_queue, 1},
-          {channels_per_connection, 1},
-          {messages_prefetch_size_per_channel, 50}
+          {queues_count, {{ .Values.global.worker.consumer_git_call_response_queues_count | default 1 }}},
+          {connections_per_queue, {{ .Values.global.worker.consumer_git_call_response_connections_per_queue | default 1 }}},
+          {channels_per_connection, {{ .Values.global.worker.consumer_git_call_response_channels_per_connection | default 1 }}},
+          {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_git_call_response_messages_prefetch_size_per_channel | default 50 }}}
         ]},
 
 
@@ -1207,9 +1207,9 @@ data:
                 %%{validateservice_queue, <<"gitcall-v2-validateservice-">>},
                 %%{validateservice_queues_count, 1},
 
-                {min_size, 2},
-                {max_size, 2},
-                {start_size, 2}
+                {min_size, {{ .Values.global.worker.publish_git_call_v2_request_min_size | default 2 }}},
+                {max_size, {{ .Values.global.worker.publish_git_call_v2_request_max_size | default 2 }}},
+                {start_size, {{ .Values.global.worker.publish_git_call_v2_request_start_size | default 2 }}}
             ]},
 
             %% Required if git_call_v2.enabled true, otherwise could be omitted.
@@ -1235,9 +1235,9 @@ data:
                         {vhost, <<"${MQ_GITCALL_VHOST}">>}
             {{- end }}
                 ]]},
-                {connections_per_queue, 1},
-                {channels_per_connection, 1},
-                {messages_prefetch_size_per_channel, 50}
+                {connections_per_queue, {{ .Values.global.worker.consumer_git_call_v2_response_connections_per_queue | default 1 }}},
+                {channels_per_connection, {{ .Values.global.worker.consumer_git_call_v2_response_channels_per_connection | default 1 }}},
+                {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_git_call_v2_response_messages_prefetch_size_per_channel | default 50 }}}
             ]},
 
             %% Required if git_call_v2.enabled true, otherwise could be omitted.
@@ -1263,9 +1263,9 @@ data:
                         {vhost, <<"${MQ_GITCALL_VHOST}">>}
             {{- end }}
                 ]]},
-                {connections_per_queue, 1},
-                {channels_per_connection, 1},
-                {messages_prefetch_size_per_channel, 50}
+                {connections_per_queue, {{ .Values.global.worker.consumer_git_call_v2_status_connections_per_queue | default 1 }}},
+                {channels_per_connection, {{ .Values.global.worker.consumer_git_call_v2_status_channels_per_connection | default 1 }}},
+                {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_git_call_v2_status_messages_prefetch_size_per_channel | default 50 }}}
             ]},
 
             %% Required if git_call_v2.enabled true, otherwise could be omitted.
@@ -1292,9 +1292,9 @@ data:
                         {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
             {{- end }}
                 ]]},
-                {min_size, 5},
-                {max_size, 5},
-                {start_size, 5}
+                {min_size, {{ .Values.global.worker.publish_dunder_git_call_v2_request_min_size | default 5 }}},
+                {max_size, {{ .Values.global.worker.publish_dunder_git_call_v2_request_max_size | default 5 }}},
+                {start_size, {{ .Values.global.worker.publish_dunder_git_call_v2_request_start_size | default 5 }}}
             ]},
 
             %% Required if git_call_v2.enabled true, otherwise could be omitted.
@@ -1320,9 +1320,9 @@ data:
                         {vhost, <<"${MQ_DUNDER_GITCALL_VHOST}">>}
             {{- end }}
                 ]]},
-            {connections_per_queue, 1},
-            {channels_per_connection, 1},
-            {messages_prefetch_size_per_channel, 50}
+            {connections_per_queue, {{ .Values.global.worker.consumer_dunder_git_call_v2_response_connections_per_queue | default 1 }}},
+            {channels_per_connection, {{ .Values.global.worker.consumer_dunder_git_call_v2_response_channels_per_connection | default 1 }}},
+            {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_dunder_git_call_v2_response_messages_prefetch_size_per_channel | default 50 }}}
         ]},
       {{- end }}
 
@@ -1353,9 +1353,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {min_size, 3},
-          {max_size, 3},
-          {start_size, 3}
+          {min_size, {{ .Values.global.worker.publish_db_call_request_min_size | default 3 }}},
+          {max_size, {{ .Values.global.worker.publish_db_call_request_max_size | default 3 }}},
+          {start_size, {{ .Values.global.worker.publish_db_call_request_start_size | default 3 }}}
         ]},
 
 
@@ -1385,10 +1385,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 10},
-          {connections_per_queue, 1},
-          {channels_per_connection, 1},
-          {messages_prefetch_size_per_channel, 50}
+          {queues_count, {{ .Values.global.worker.consumer_db_call_response_queues_count | default 10 }}},
+          {connections_per_queue, {{ .Values.global.worker.consumer_db_call_response_connections_per_queue| default 1 }}},
+          {channels_per_connection, {{ .Values.global.worker.consumer_db_call_response_channels_per_connection | default 1 }}},
+          {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_db_call_response_messages_prefetch_size_per_channel | default 50 }}}
         ]},
 
         %% logic deep_memo es call
@@ -1418,9 +1418,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {min_size, 3},
-          {max_size, 3},
-          {start_size, 3}
+          {min_size, {{ .Values.global.worker.publish_es_call_request_min_size | default 3 }}},
+          {max_size, {{ .Values.global.worker.publish_es_call_request_max_size | default 3 }}},
+          {start_size, {{ .Values.global.worker.publish_es_call_request_start_size | default 3 }}}
         ]},
 
         %% consumer
@@ -1449,10 +1449,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          %{queues_count, 10},
-          {connections_per_queue, 1},
-          {channels_per_connection, 2},
-          {messages_prefetch_size_per_channel, 50}
+          %{queues_count, {{ .Values.global.worker.consumer_es_call_response_queues_count | default 10 }}},
+          {connections_per_queue, {{ .Values.global.worker.consumer_es_call_response_connections_per_queue | default 1 }}},
+          {channels_per_connection, {{ .Values.global.worker.consumer_es_call_response_channels_per_connection | default 2 }}},
+          {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_es_call_response_messages_prefetch_size_per_channel | default 50 }}}
         ]},
 
         %% logic get task
@@ -1482,10 +1482,10 @@ data:
                     ]
           {{- end }}
                 ]},
-          {queues_count, 5},
-          {min_size, 3},
-          {max_size, 3},
-          {start_size, 3}
+          {queues_count, {{ .Values.global.worker.publish_get_task_request_queues_count | default 5 }}},
+          {min_size, {{ .Values.global.worker.publish_get_task_request_min_size | default 3 }}},
+          {max_size, {{ .Values.global.worker.publish_get_task_request_max_size | default 3 }}},
+          {start_size, {{ .Values.global.worker.publish_get_task_request_start_size | default 3 }}}
         ]},
 
         %% consumer for get_task requests, QUEUE logic
@@ -1514,9 +1514,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
-          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+          {connections_per_queue, {{ .Values.global.worker.consumer_get_task_response_connections_per_queue | default 2 }}},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, {{ .Values.global.worker.channels_per_connection_connections_per_queue | default 1 }}},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, {{ .Values.global.worker.messages_prefetch_size_per_channel_connections_per_queue | default 20 }}}    %% The number of queues within the channel
         ]},
 
         %% logic modify task
@@ -1546,9 +1546,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {min_size, 5},
-          {max_size, 5},
-          {start_size, 5}
+          {min_size, {{ .Values.global.worker.publish_modify_request_min_size | default 5 }}},
+          {max_size, {{ .Values.global.worker.publish_modify_request_max_size | default 5 }}},
+          {start_size, {{ .Values.global.worker.publish_modify_request_start_size | default 5 }}}
         ]},
 
         %% settings queue
@@ -1580,9 +1580,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {min_size, 2},
-          {max_size, 2},
-          {start_size, 2}
+          {min_size, {{ .Values.global.worker.publish_settings_min_size | default 2 }}},
+          {max_size, {{ .Values.global.worker.publish_settings_max_size | default 2 }}},
+          {start_size, {{ .Values.global.worker.publish_settings_start_size | default 2 }}}
         ]},
 
         %% consumer for settings
@@ -1613,9 +1613,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {connections_per_queue, 1},   %% The specified number of tcp connections will be created for each queue
-          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 20}    %% The number of queues within the channel
+          {connections_per_queue, {{ .Values.global.worker.consumer_settings_connections_per_queue | default 1 }}},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, {{ .Values.global.worker.consumer_settings_channels_per_connection | default 1 }}},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_settings_messages_prefetch_size_per_channel | default 20 }}}    %% The number of queues within the channel
         ]},
 
         %% interconnect cluster workers
@@ -1671,9 +1671,9 @@ data:
           {password, <<"${MQ_PASSWORD}">>},
           {{- end }}
           {vhost, <<"${MQ_VHOST}">>},
-          {min_size, 5},
-          {max_size, 5},
-          {start_size, 5}
+          {min_size, {{ .Values.global.worker.publish_to_worker_request_min_size | default 5 }}},
+          {max_size, {{ .Values.global.worker.publish_to_worker_request_max_size | default 5 }}},
+          {start_size, {{ .Values.global.worker.publish_to_worker_request_start_size | default 5 }}}
         ]},
 
         %% consumer for to_worker
@@ -1702,9 +1702,9 @@ data:
                     ]
           {{- end }}
                 ]},
-          {connections_per_queue, 2},   %% The specified number of tcp connections will be created for each queue
-          {channels_per_connection, 1},   %% Virtual connections for one connections_per_queue
-          {messages_prefetch_size_per_channel, 50}    %% The number of queues within the channel
+          {connections_per_queue, {{ .Values.global.worker.consumer_shard_response_connections_per_queue | default 2 }}},   %% The specified number of tcp connections will be created for each queue
+          {channels_per_connection, {{ .Values.global.worker.consumer_shard_response_channels_per_connection | default 1 }}},   %% Virtual connections for one connections_per_queue
+          {messages_prefetch_size_per_channel, {{ .Values.global.worker.consumer_shard_response_messages_prefetch_size_per_channel | default 50 }}}    %% The number of queues within the channel
         ]}
       ]},
       %% Billing
