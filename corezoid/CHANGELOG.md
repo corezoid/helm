@@ -1,6 +1,21 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.23.7 [ Corezoid 6.6.0 ]
+- Applications versions:
+  - capi - 8.4.0.3
+  - mult - 3.3.0.1
+  - webadm - 6.6.0
+  - http-worker - 4.2.0.1
+  - usercode - 9.0.2
+  - worker - 5.2.0.1
+  - syncapi - 3.6.1
+  - web_superadm - 2.6.2
+  - conf_agent_server - 2.7.1
+  - limits - 2.5.1
+- Added the ability to manage worker parameters
+- Added priority class
+
 ### Chart 0.23.6 [ Corezoid 6.6.0 ]
 - Applications versions:
   - capi - 8.4.0.3
