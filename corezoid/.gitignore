@@ -1,4 +1,4 @@
 .idea/*
-./corezoid/.idea/*
+../.idea/*
 templates/corezoid-secret.yaml
 
