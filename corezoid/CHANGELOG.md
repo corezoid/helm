@@ -15,6 +15,7 @@ https://doc.corezoid.com/docs/release-notes
   - limits - 2.5.1
 - Added the ability to manage worker parameters
 - Added priority class
+- Removed old settings for applications (sbwt and SCHEDULERS)
 
 ### Chart 0.23.6 [ Corezoid 6.6.0 ]
 - Applications versions:
