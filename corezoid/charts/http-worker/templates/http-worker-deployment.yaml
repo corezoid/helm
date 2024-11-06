@@ -119,8 +119,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name: SCHEDULERS
-              value: "4"
             - name: NODE_COOKIE
               value: {{ .Values.appName }}-{{ .Release.Namespace }}
             - name: POD_NAME

@@ -9,6 +9,3 @@ data:
 
     ## Cookie for distributed erlang
     -setcookie ${NODE_COOKIE}
-    +sbwt none
-
-    +S ${SCHEDULERS}
