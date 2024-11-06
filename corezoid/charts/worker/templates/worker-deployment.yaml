@@ -130,8 +130,6 @@ spec:
             {{- end }}
             - name: RELX_REPLACE_OS_VARS
               value: "true"
-            - name: SCHEDULERS
-              value: "4"
             - name: REDIS_HOST
               valueFrom:
                 secretKeyRef:
