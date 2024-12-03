@@ -16,8 +16,8 @@ global:
   product: "corezoid"
   centos8Repo: public-corezoid-centos8
   centos9Repo: public-corezoid-centos9
-  useCentos8: false
-  useCentos9: true
+  useCentos8: true
+  useCentos9: false
 
   deploymentStrategy:
     type: RollingUpdate
@@ -210,7 +210,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.6.0"
+      version: "6.7.0"
 
     rotation:
       ## enabled: true or false
@@ -348,7 +348,7 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.4.0.3"
+    tag: "8.4.1.2"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -521,7 +521,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.2.0.1"
+    tag: "4.2.1.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -598,7 +598,7 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "5.2.0.1"
+    tag: "5.2.1.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -625,7 +625,7 @@ global:
 
   # mult
   mult:
-    tag: "3.3.0.1"
+    tag: "3.3.1.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -658,7 +658,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.6.0"
+    tag: "6.7.0"
     minReplicas: 1
     resources:
       limits:
@@ -686,7 +686,7 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-develop"
-    tag: "3.6.1"
+    tag: "3.7.1"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)

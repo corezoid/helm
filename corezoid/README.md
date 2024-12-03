@@ -47,7 +47,7 @@ You can add separate new SAML providers via the UI. Management (enabling, disabl
 #### Dependencies:  
 #####Testing on Kubernetes version 1.30 and helm v3  
 #####Supported stateful versions:  
-- Postgresql 13.*  
+- Postgresql 13.*/15.*
 - Redis 7.2.4  
 - Elasticsearch 8.13.*  
 - RabbitMQ 3.8/3.9/3.12   
