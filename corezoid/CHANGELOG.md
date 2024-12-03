@@ -1,6 +1,27 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+
+### Chart 0.23.8 [ Corezoid 6.7.0 ]
+- Applications versions:
+  - capi - 8.4.1.2
+  - mult - 3.3.1.1
+  - webadm - 6.7.0
+  - http-worker - 4.2.1.1
+  - usercode - 9.0.2
+  - worker - 5.2.1.1
+  - syncapi - 3.7.1
+  - web_superadm - 2.6.2
+  - conf_agent_server - 2.7.1
+  - limits - 2.5.1
+
+### Improvements
+#### 1. The automatic current date parameter sending when not specified in the $date function has been added.
+#### 2. The current implementation of the randomizer module in Erlang (`rand:uniform/1`) has been made available for use in Corezoid.
+#### 3. Made ID value substitution in the `{{conv[id].ref[ref].key}}` construction to be performed regardless of its position in JSON.
+#### 4. The ability to control My Corezoid accessibility for all environment users has been added to the Superadmin menu.
+
+
 ### Chart 0.23.7 [ Corezoid 6.6.0 ]
 - Applications versions:
   - capi - 8.4.0.3

@@ -402,6 +402,9 @@ data:
         {capi,
             [
                 {init_sso, true},
+                {{- if .Values.global.capi.use_my_corezoid }}
+                {use_my_corezoid, {{ .Values.global.capi.use_my_corezoid | default "true" }}}, %% false | true
+                {{- end }}
                 {cookie, [ {secure, {{ .Values.global.capi.secure | default "false" }} } ]},
                 {check_2fa, {{ .Values.global.capi.check_2fa | default "false" }} },
                 {init_password, <<"{{ .Values.global.capi.init_admin_password }}">>},
