@@ -17,6 +17,7 @@ https://doc.corezoid.com/docs/release-notes
 - bugfix in mult and http-worker
 - With this version we begin a gradual migration to our new Harbor - https://hub.corezoid.com
   Please allow access from your environments.
+- The management of pgbouncer images has been moved to the global Values
 
 
 ### Chart 0.23.9 [ Corezoid 6.7.1 ]
