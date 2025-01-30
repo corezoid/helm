@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: {{ .Values.appName }}
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.global.db.bouncer_image.registry }}/{{ .Values.global.db.bouncer_image.repository }}:{{ .Values.global.db.bouncer_image.tag }}"
           env:
             - name: DB_USER
               valueFrom:
@@ -116,7 +116,7 @@ spec:
             successThreshold: 1
             failureThreshold: 3
         - name: pgbouncer-exporter
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.exporterImage.repository }}:{{ .Values.exporterImage.tag }}"
+          image: "{{ .Values.global.db.bouncer_exporterImage.registry }}/{{ .Values.global.db.bouncer_exporterImage.repository }}:{{ .Values.global.db.bouncer_exporterImage.tag }}"
           env:
             - name: PGBOUNCER_EXPORTER_HOST
               value: 0.0.0.0

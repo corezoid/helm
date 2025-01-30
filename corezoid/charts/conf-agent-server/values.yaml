@@ -3,10 +3,5 @@ image:
   registry: docker-hub.middleware.biz
   repository: conf_agent_server
 
-postgresqlClientImage:
-  registry: docker-hub.middleware.biz
-  repository: postgresql-client
-  tag: alpine3.18.3
-
 containers:
   containerPort: 8585

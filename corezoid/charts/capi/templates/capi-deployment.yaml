@@ -45,7 +45,7 @@ spec:
       terminationGracePeriodSeconds: 60
       initContainers:
         - name: init-wait
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
+          image: "{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- end }}  nc -zvw1  ${MQ_HOST} ${MQ_PORT}; do echo waiting for deps; sleep 2; done;"]
           env:
             - name: MQ_HOST
@@ -73,7 +73,7 @@ spec:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
         - name: init-wait-rmq
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
+          image: "{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           command: ['sh']
           args:
             - "-c"
@@ -106,7 +106,7 @@ spec:
                   name: {{ .Values.global.mq.secret.name }}
                   key: api_port
         - name: init-wait-elasticsearch
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
+          image: "{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - sh

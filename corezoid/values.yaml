@@ -23,9 +23,9 @@ global:
     type: RollingUpdate
 
   imageInit:
-    repository: alpine
+    repository: hub.corezoid.com/hub.docker.com/library/alpine
     pullPolicy: IfNotPresent
-    tag: "3.20.1"
+    tag: "3.21"
 
 #  timezone: "Asia/Baku"
 
@@ -112,6 +112,8 @@ global:
   ## Supported version PostgreSQL-13.*
   ## for RDS minimum instance - db.t2.medium / master user set "postgres"
   db:
+    image: "postgres:15-alpine"
+    imagePullPolicy: "IfNotPresent"
     # if internal true - create and use internal postgres container
     # if internal false - enable external db, like aws rds
     internal: true
@@ -159,6 +161,14 @@ global:
     tolerations: {}
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
+    bouncer_image:
+      registry: hub.corezoid.com
+      repository: public/pgbouncer
+      tag: 1.23.1-alpine3.21-1
+    bouncer_exporterImage:
+      registry: hub.corezoid.com
+      repository: public/prometheus-pgbouncer-exporter
+      tag: 2.1.1-python3.7.17-alpine3.18
     bouncer_minReplicas: "2"
     bouncer_maxReplicas: "6"
     bouncer_resources:
@@ -210,7 +220,7 @@ global:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.7.0"
+      version: "6.7.3"
 
     rotation:
       ## enabled: true or false
@@ -521,7 +531,7 @@ global:
 
   # http-worker
   http:
-    tag: "4.2.1.1"
+    tag: "4.2.1.2"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -625,7 +635,7 @@ global:
 
   # mult
   mult:
-    tag: "3.3.1.1"
+    tag: "3.3.1.2"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -658,7 +668,7 @@ global:
 
   # webadm
   webadm:
-    tag: "6.7.0"
+    tag: "6.7.3"
     minReplicas: 1
     resources:
       limits:

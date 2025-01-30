@@ -6,5 +6,5 @@ image:
   tag: 15-alpine
 
 busyboxImage:
-  repository: busybox
-  tag: latest
+  repository: hub.corezoid.com/hub.docker.com/library/busybox
+  tag: "1.30"

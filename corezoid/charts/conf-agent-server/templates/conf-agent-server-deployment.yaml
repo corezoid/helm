@@ -25,7 +25,8 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.postgresqlClientImage.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.postgresqlClientImage.repository }}:{{ .Values.postgresqlClientImage.tag }}"
+          image: "{{ .Values.global.db.image | default "postgres:15-alpine" }}"
+          imagePullPolicy: {{ .Values.global.db.imagePullPolicy | default "IfNotPresent" }}
           {{- if eq .Values.global.db.serverTlsSslenabled true }}
           command: ["sh", "-c", "until PGPASSWORD=${POSTGRES_DBPWD} psql --set=sslmode={{ .Values.global.db.serverTlsSslmode }} -h ${POSTGRES_DBHOST} -U ${POSTGRES_DBUSER} -d settings -c \"select 1\" > /dev/null 2>&1 ; do echo Waiting while postgres created settings db ...; sleep 3; done"]
           {{- else }}

@@ -240,16 +240,16 @@ data:
           {mult_id, <<"">>},                          %% personal queue for this node
           {port, 9082},
           {garb_timeout,3600000},                                   %% in ms timeout garbage collector
-          {publisher_timeout,1000},                              %% timeout in ms for send packet #csv_info_data{}
-          {api_throughput_tasks,7000000},                              %% limit for download tasks from api
-          {max_filesize, 20000000},                            %% in byte max size to upload .csv file
-          {max_filesize_scheme, 200000000},                            %% in byte max size to upload .json file with scheme
+          {publisher_timeout,{{ .Values.global.mult.publisherTimeout | default 1000 }}},                              %% timeout in ms for send packet #csv_info_data{}
+          {api_throughput_tasks,{{ .Values.global.mult.apiThroughputTasks | default 7000000 }}},                              %% limit for download tasks from api
+          {max_filesize, {{ .Values.global.mult.maxFilesize | default 20000000 }}},                            %% in byte max size to upload .csv file
+          {max_filesize_scheme, {{ .Values.global.mult.maxFilesizeScheme | default 200000000 }}},                            %% in byte max size to upload .json file with scheme
           {list_fileformat, [<<"all">>]},                %% format of file have bin  alowed to upload
           {url, "https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}/api/2/json"},%% url capi when http client send requests
-          {too_many_req_wait, 1000},                                  %% time in ms wait after  capi return <<"too many requests">>
-          {api_res_wait, 5000},                                    %% timeout in ms wait responce after  http_client send request
+          {too_many_req_wait, {{ .Values.global.mult.tooManyReqWait | default 1000 }}},                                  %% time in ms wait after  capi return <<"too many requests">>
+          {api_res_wait, {{ .Values.global.mult.apiResWait | default 5000 }}},                                    %% timeout in ms wait responce after  http_client send request
 
-          {download_limit_request,1000},
+          {download_limit_request,{{ .Values.global.mult.downloadLimitRequest | default 1000 }}},
 
           %%  config for file storage
           {file_storage,f3},            %% f3|s3 - f3 use file storage if s3 use amazons3
@@ -260,7 +260,7 @@ data:
             %% if true, it will check grep /ebsmnt_share/ proc/mounts, if not mounted, the application will crash.
             %% if false, there will be no checks
             {network_partition, false},
-            {ttl_file, 86400}             %% the lifetime of files after which they will be deleted (in seconds)
+            {ttl_file, {{ .Values.global.mult.filef3Ttlfile | default 86400 }}}             %% the lifetime of files after which they will be deleted (in seconds)
             ]
           },
 
@@ -447,7 +447,7 @@ data:
               {allowed_namespaces, ["avatars"]},
               {path_to_dir, "/ebsmnt_share"}, %% todo
               {network_partition, false},     %% Monitor network share process (if true -> grep PATH_TO_DIR /proc/mounts)
-              {ttl_file, 600}                 %% file ttl in seconds
+              {ttl_file, {{ .Values.global.mult.corezoidfsFilef3Ttlfile | default 600 }}}                 %% file ttl in seconds
             ]}
           ],
 

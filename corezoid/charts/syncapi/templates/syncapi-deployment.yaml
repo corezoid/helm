@@ -45,7 +45,7 @@ spec:
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: init-wait-rmq
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
+          image: "{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           command: ['sh']
           args:
             - "-c"
@@ -78,7 +78,7 @@ spec:
                   name: {{ .Values.global.mq.secret.name }}
                   key: api_port
         - name: init-wait-capi
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
+          image: "{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           imagePullPolicy: IfNotPresent
           command:
             - sh
