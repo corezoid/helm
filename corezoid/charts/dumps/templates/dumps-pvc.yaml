@@ -11,7 +11,7 @@ metadata:
 spec:
   storageClassName: {{ .Values.global.storageClassName }}
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: {{ .Values.global.store_dumps.pvc_size}}

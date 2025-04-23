@@ -40,7 +40,7 @@ data:
 
         large_client_header_buffers     4 16k;
         client_body_buffer_size 16k;
-        client_max_body_size 16m;
+        client_max_body_size {{ .Values.global.webadm.clientMaxBodySize | default "16m" }};
 
         set $static_root    "/app/capi-js";
         set $admin_root    "/app";

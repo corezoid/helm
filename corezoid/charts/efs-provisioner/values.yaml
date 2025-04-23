@@ -13,15 +13,15 @@ global:
 replicaCount: 1
 revisionHistoryLimit: 10
 image:
-  repository: quay.io/external_storage/efs-provisioner
-  tag: v2.4.0
+  repository: hub.corezoid.com/public/efs-provisioner
+  tag: latest
   pullPolicy: IfNotPresent
   # If specified, use these secrets to access the images
   # pullSecrets:
   #   - registry-secret
 
 busyboxImage:
-  repository: gcr.io/google_containers/busybox
+  repository: hub.corezoid.com/gcr.io/google_containers/busybox
   tag: 1.27
   pullPolicy: IfNotPresent
 

@@ -1,4 +1,4 @@
-{{- if  (.Values.global.db.rotation.enabled) }}
+{{- if (.Values.global.db.rotation.enabled) }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -7,7 +7,7 @@ metadata:
     app: {{ .Values.global.product }}
     tier: postgres
 spec:
-  schedule: {{ .Values.global.db.rotation.schedule | quote }}
+  schedule: {{ .Values.global.db.rotation.scheduleArchive | quote }}
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
   startingDeadlineSeconds: 120
@@ -29,21 +29,130 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           containers:
-            - image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}postgres:13-alpine"
+            - image: "{{ .Values.global.db.image | default "postgres:15-alpine" }}"
               imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
               name: postgres-taskarchive-cron
               command:
                 - sh
                 - -c
                 - |
-                  echo  "$POSTGRES_DBHOST:*:*:$POSTGRES_DBSUPERUSER:$POSTGRES_DBSUPERUSERPWD" > ~/.pgpass; chmod 0600 ~/.pgpass;
-          {{- if eq .Values.global.db.serverTlsSslenabled true }}
-                  for i in $(seq 0 $(($SHARD_COUNT-1))); do psql --set=sslmode={{ .Values.global.db.serverTlsSslmode }} -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "TRUNCATE TABLE tasks_archive;"; done;
-                  for i in $(seq 0 $(($SHARD_COUNT-1))); do psql --set=sslmode={{ .Values.global.db.serverTlsSslmode }} -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "select count(*) from tasks_archive;"; done;
-          {{- else }}
-                  for i in $(seq 0 $(($SHARD_COUNT-1))); do psql -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "TRUNCATE TABLE tasks_archive;"; done;
-                  for i in $(seq 0 $(($SHARD_COUNT-1))); do psql -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "select count(*) from tasks_archive;"; done;
+                  set -e
+                  echo "Starting tasks_archive cleanup job"
+                  echo "$POSTGRES_DBHOST:*:*:$POSTGRES_DBSUPERUSER:$POSTGRES_DBSUPERUSERPWD" > ~/.pgpass
+                  chmod 0600 ~/.pgpass
+
+                  # Validate SHARD_COUNT
+                  if [ -z "$SHARD_COUNT" ] || [ "$SHARD_COUNT" -lt 1 ]; then
+                    echo "Error: SHARD_COUNT must be a positive number"
+                    exit 1
+                  fi
+
+                  # Set SSL options if needed
+                  SSL_OPTS=""
+                  {{- if eq .Values.global.db.serverTlsSslenabled true }}
+                  SSL_OPTS="--set=sslmode={{ .Values.global.db.serverTlsSslmode }}"
+                  {{- end }}
+
+                  # Truncate tables
+                  echo "Truncating tasks_archive tables across $SHARD_COUNT shards..."
+                  for i in $(seq 0 $(($SHARD_COUNT-1))); do
+                    echo "Processing shard cp${i}..."
+                    psql $SSL_OPTS -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "TRUNCATE TABLE tasks_archive;" || { echo "Failed to truncate tasks_archive in cp${i}"; exit 1; }
+                    COUNT=$(psql $SSL_OPTS -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "SELECT count(*) FROM tasks_archive;")
+                    echo "Shard cp${i} now has $COUNT records in tasks_archive"
+                  done
+
+                  # Cleanup
+                  rm -f ~/.pgpass
+                  echo "Completed tasks_archive cleanup job successfully"
+              securityContext:
+                runAsUser: 70
+              env:
+                - name: POSTGRES_DBHOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.global.db.secret.name }}
+                      key: dbhost
+                - name: POSTGRES_DBSUPERUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.global.db.secret.name }}-root
+                      key: dbsuperuser
+                - name: POSTGRES_DBSUPERUSERPWD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.global.db.secret.name }}-root
+                      key: dbsuperuserpwd
+                - name: SHARD_COUNT
+                  value: '{{ .Values.global.db.shards_count }}'
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-taskhistory-cron
+  labels:
+    app: {{ .Values.global.product }}
+    tier: postgres
+spec:
+  schedule: {{ .Values.global.db.rotation.scheduleHistory | quote }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  startingDeadlineSeconds: 120
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    metadata:
+      labels:
+        app: {{ .Values.global.product }}
+        tier: postgres
+    spec:
+      template:
+        spec:
+          {{ if .Values.global.db.bouncer_affinity }}
+          affinity:
+            {{ .Values.global.db.bouncer_affinity | toYaml | nindent 12 }}
+          {{- end}}
+          {{- with .Values.global.db.bouncer_tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
           {{- end }}
+          containers:
+            - image: "{{ .Values.global.db.image | default "postgres:15-alpine" }}"
+              imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
+              name: postgres-taskhistory-cron
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  echo "Starting tasks_history cleanup job"
+                  echo "$POSTGRES_DBHOST:*:*:$POSTGRES_DBSUPERUSER:$POSTGRES_DBSUPERUSERPWD" > ~/.pgpass
+                  chmod 0600 ~/.pgpass
+
+                  # Validate SHARD_COUNT
+                  if [ -z "$SHARD_COUNT" ] || [ "$SHARD_COUNT" -lt 1 ]; then
+                    echo "Error: SHARD_COUNT must be a positive number"
+                    exit 1
+                  fi
+
+                  # Set SSL options if needed
+                  SSL_OPTS=""
+                  {{- if eq .Values.global.db.serverTlsSslenabled true }}
+                  SSL_OPTS="--set=sslmode={{ .Values.global.db.serverTlsSslmode }}"
+                  {{- end }}
+
+                  # Truncate tables
+                  echo "Truncating tasks_history tables across $SHARD_COUNT shards..."
+                  for i in $(seq 0 $(($SHARD_COUNT-1))); do
+                    echo "Processing shard cp${i}..."
+                    psql $SSL_OPTS -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "TRUNCATE TABLE tasks_history;" || { echo "Failed to truncate tasks_history in cp${i}"; exit 1; }
+                    COUNT=$(psql $SSL_OPTS -h $POSTGRES_DBHOST -U $POSTGRES_DBSUPERUSER -d cp${i} -Atc "SELECT count(*) FROM tasks_history;")
+                    echo "Shard cp${i} now has $COUNT records in tasks_history"
+                  done
+
+                  # Cleanup
+                  rm -f ~/.pgpass
+                  echo "Completed tasks_history cleanup job successfully"
               securityContext:
                 runAsUser: 70
               env:

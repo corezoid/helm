@@ -44,7 +44,7 @@ spec:
       terminationGracePeriodSeconds: 40
       initContainers:
         - name: init-wait
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
+          image: "{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           command: ["sh", "-c", "until {{- if .Values.global.db.bouncer }} nc -zvw1 pgbouncer-service 5432 && {{- else }}  nc -zvw1 ${POSTGRES_DBHOST} ${POSTGRES_DBPORT} && {{- end }} {{- if .Values.global.mq.internal }} nc -zvw1 rabbit-service 5672 {{- else }} nc -zvw1  ${MQ_HOST} ${MQ_PORT}{{- end }}; do echo waiting for dependences; sleep 2; done;"]
           env:
             - name: MQ_HOST
@@ -72,7 +72,7 @@ spec:
                   name: {{ .Values.global.db.secret.name }}
                   key: dbport
         - name: init-wait-rmq
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
+          image: "{{ .Values.global.imageInit.repository }}:{{ .Values.global.imageInit.tag }}"
           command: ['sh']
           args:
             - "-c"
@@ -107,7 +107,7 @@ spec:
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName }}
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos9 }}{{ .Values.global.centos9Repo }}/{{ else if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.usercode.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos9 }}{{ .Values.global.centos9Repo }}/{{ else if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.usercode.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           envFrom:
             - configMapRef:
@@ -167,6 +167,33 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+            {{- if hasKey .Values.global "mq_http" }}
+            - name: MQ_HTTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq_http.secret.name }}
+                  key: host
+            - name: MQ_HTTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq_http.secret.name }}
+                  key: port
+            - name: MQ_HTTP_VHOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq_http.secret.name }}
+                  key: vhost
+            - name: MQ_HTTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq_http.secret.name }}
+                  key: username
+            - name: MQ_HTTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq_http.secret.name }}
+                  key: password
+            {{- end }}
             - name: POSTGRES_DBHOST
               {{- if .Values.global.db.bouncer }}
               value: "pgbouncer-service"

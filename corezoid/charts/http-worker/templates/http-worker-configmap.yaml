@@ -55,6 +55,20 @@ data:
     {ermql, [
         {publish_request, [
           {servers, [
+            {{- if hasKey .Values.global "mq_http" }}
+              [
+                {host, "${MQ_HTTP_HOST}"},
+                {port, ${MQ_HTTP_PORT}},
+                {username, <<"${MQ_HTTP_USERNAME}">>},
+                {password, <<"${MQ_HTTP_PASSWORD}">>},
+                {{- if eq .Values.global.mq.tls.enabled true }}
+                  {ssl, [
+                    {tls, true}
+                  ]},
+                {{- end }}
+                {vhost, <<"${MQ_HTTP_VHOST}">>}
+              ]
+            {{- else }}
             {{- if eq .Values.global.mq.internal false }}
               [
                 {host, "${MQ_HOST}"},
@@ -77,6 +91,7 @@ data:
                 {vhost, <<"${MQ_VHOST}">>}
               ]
     {{- end }}
+    {{- end }}
             ]},
         {queues_count, 1},
         {min_size, 1},
@@ -86,6 +101,20 @@ data:
 
         {consumer_response, [
             {servers, [
+                {{- if hasKey .Values.global "mq_http" }}
+                  [
+                    {host, "${MQ_HTTP_HOST}"},
+                    {port, ${MQ_HTTP_PORT}},
+                    {username, <<"${MQ_HTTP_USERNAME}">>},
+                    {password, <<"${MQ_HTTP_PASSWORD}">>},
+                    {{- if eq .Values.global.mq.tls.enabled true }}
+                      {ssl, [
+                        {tls, true}
+                      ]},
+                    {{- end }}
+                    {vhost, <<"${MQ_HTTP_VHOST}">>}
+                  ]
+                {{- else }}
     {{- if eq .Values.global.mq.internal false }}
                   [
                     {host, "${MQ_HOST}"},
@@ -107,6 +136,7 @@ data:
                     {password, <<"${MQ_PASSWORD}">>},
                     {vhost, <<"${MQ_VHOST}">>}
                 ]
+    {{- end }}
     {{- end }}
             ]},
         {connections_per_queue, 1},
@@ -186,6 +216,12 @@ data:
 
         {corezoid_queues_gc, [
           {enabled, true},
+          {{- if hasKey .Values.global "mq_http" }}
+          {host, "${MQ_HTTP_HOST}"},
+          {port, 15672 },
+          {login, "${MQ_HTTP_USERNAME}"},
+          {password, "${MQ_HTTP_PASSWORD}"},
+          {{- else }}
           {{- if eq .Values.global.mq.internal false }}
            {host, "${MQ_HOST}"},
           {port, 15672},
@@ -196,6 +232,7 @@ data:
           {port, 15672},
           {login, "${MQ_USERNAME}"},
           {password, "${MQ_PASSWORD}"},
+          {{- end }}
           {{- end }}
           {vhost, "${MQ_VHOST}"},
           {gc_queues_regexp, [
@@ -297,6 +334,19 @@ data:
             { [{{- $lastIndex := sub (len .Values.global.db.shards) 1}}
           {{- range $i, $e := .Values.global.db.shards }}
           {{- $i }}{{- if ne $i $lastIndex -}}, {{ end }} {{- end }}], [[
+          {{- if hasKey .Values.global "mq_http" }}
+          {host, "${MQ_HTTP_HOST}"}
+            ]]}
+          ]},
+          {port, ${MQ_HTTP_PORT}},
+          {username, <<"${MQ_HTTP_USERNAME}">>},
+          {password, <<"${MQ_HTTP_PASSWORD}">>},
+          {{- if eq .Values.global.mq.tls.enabled true }}
+            {ssl, [
+              {tls, true}
+            ]},
+          {{- end }}
+          {{- else }}
           {{- if eq .Values.global.mq.internal false }}
     	    {host, "${MQ_HOST}"}
             ]]}
@@ -317,6 +367,7 @@ data:
           {username, <<"${MQ_USERNAME}">>},
           {password, <<"${MQ_PASSWORD}">>},
           {{- end }}
+          {{- end }}
           {vhost, <<"${MQ_VHOST}">>},
           {min_size, 15},
           {max_size, 15},
@@ -326,6 +377,20 @@ data:
         %% consumer http
         {http_consumer, [
                 {servers, [
+                    {{- if hasKey .Values.global "mq_http" }}
+                      [
+                        {host, "${MQ_HTTP_HOST}"},
+                        {port, ${MQ_HTTP_PORT}},
+                        {username, <<"${MQ_HTTP_USERNAME}">>},
+                        {password, <<"${MQ_HTTP_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {tls, true}
+                          ]},
+                        {{- end }}
+                        {vhost, <<"${MQ_HTTP_VHOST}">>}
+                      ]
+                    {{- else }}
           {{- if eq .Values.global.mq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
@@ -347,6 +412,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
+          {{- end }}
           {{- end }}
                 ]},
           {queues_count, {{ .Values.global.http.tune.http_consumer_queues_count | default 8 }} },
@@ -358,6 +424,20 @@ data:
         %% producer of settings
         {publish_settings, [
                 {servers, [
+                    {{- if hasKey .Values.global "mq_http" }}
+                      [
+                        {host, "${MQ_HTTP_HOST}"},
+                        {port, ${MQ_HTTP_PORT}},
+                        {username, <<"${MQ_HTTP_USERNAME}">>},
+                        {password, <<"${MQ_HTTP_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {tls, true}
+                          ]},
+                        {{- end }}
+                        {vhost, <<"${MQ_HTTP_VHOST}">>}
+                      ]
+                    {{- else }}
           {{- if eq .Values.global.mq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
@@ -380,6 +460,7 @@ data:
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- end }}
+          {{- end }}
                 ]},
           {min_size, 2},
           {max_size, 2},
@@ -389,6 +470,20 @@ data:
         %% consumer settings
         {consumer_settings, [
                 {servers, [
+                    {{- if hasKey .Values.global "mq_http" }}
+                      [
+                        {host, "${MQ_HTTP_HOST}"},
+                        {port, ${MQ_HTTP_PORT}},
+                        {username, <<"${MQ_HTTP_USERNAME}">>},
+                        {password, <<"${MQ_HTTP_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {tls, true}
+                          ]},
+                        {{- end }}
+                        {vhost, <<"${MQ_HTTP_VHOST}">>}
+                      ]
+                    {{- else }}
           {{- if eq .Values.global.mq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
@@ -410,6 +505,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
+          {{- end }}
           {{- end }}
                 ]},
           {connections_per_queue, 1},        %% The specified number of tcp connections will be created for each queue

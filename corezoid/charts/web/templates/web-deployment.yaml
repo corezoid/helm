@@ -45,7 +45,7 @@ spec:
       {{- end}}
       containers:
         - name: {{ .Values.appName }}
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.global.webadm.tag | default .Chart.AppVersion }}"
           envFrom:
             - configMapRef:
                 name: timezone-config
@@ -100,7 +100,11 @@ spec:
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
         - name: nginx-exporter
           # https://hub.docker.com/r/nginx/nginx-prometheus-exporter
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.nginxExporter.registry }}/{{ .Values.nginxExporter.repository }}:{{ .Values.nginxExporter.tag }}"
+          image: "{{- if .Values.global.imageRegistryProxy -}}
+                   {{ .Values.global.imageRegistry }}/{{ .Values.global.imageRegistryProxy -}}/{{ .Values.nginxExporter.registry }}/{{ .Values.nginxExporter.repository }}:{{ .Values.nginxExporter.tag }}
+                   {{- else -}}
+                   {{ .Values.nginxExporter.registry }}/{{ .Values.nginxExporter.repository }}:{{ .Values.nginxExporter.tag }}
+                   {{- end }}"
           args:
             #A URI or unix domain socket path for scraping NGINX
             - -nginx.scrape-uri=http://localhost:{{ .Values.global.webadm.service_target_port | default 8080 }}/nginx_status

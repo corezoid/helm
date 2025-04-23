@@ -8,6 +8,7 @@ ingressClassName: {{ .Values.global.ingress.className }}
 {{ if .Values.global.ingress.annotations -}}
 {{ toYaml .Values.global.ingress.annotations }}
 {{ end -}}
+nginx.ingress.kubernetes.io/proxy-body-size: {{ .Values.global.webadm.clientMaxBodySize | default "16m" }}
 {{- if .Values.global.ingress.tls.enabled }}
 nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 {{- end }}

@@ -16,16 +16,16 @@ global:
   product: "corezoid"
   centos8Repo: public-corezoid-centos8
   centos9Repo: public-corezoid-centos9
-  useCentos8: true
-  useCentos9: false
+  useCentos8: false
+  useCentos9: true
 
   deploymentStrategy:
     type: RollingUpdate
 
   imageInit:
-    repository: alpine
+    repository: hub.corezoid.com/hub.docker.com/library/alpine
     pullPolicy: IfNotPresent
-    tag: "3.20.1"
+    tag: "3.21"
 
 #  timezone: "Asia/Baku"
 
@@ -112,6 +112,8 @@ global:
   ## Supported version PostgreSQL-13.*
   ## for RDS minimum instance - db.t2.medium / master user set "postgres"
   db:
+    image: "postgres:15-alpine"
+    imagePullPolicy: "IfNotPresent"
     # if internal true - create and use internal postgres container
     # if internal false - enable external db, like aws rds
     internal: true
@@ -159,6 +161,14 @@ global:
     tolerations: {}
     # set false to disable if you don't want to use PGBouncer recommended - true
     bouncer: true
+    bouncer_image:
+      registry: hub.corezoid.com
+      repository: public/pgbouncer
+      tag: 1.23.1-alpine3.21-1
+    bouncer_exporterImage:
+      registry: hub.corezoid.com
+      repository: public/prometheus-pgbouncer-exporter
+      tag: 2.1.1-python3.7.17-alpine3.18
     bouncer_minReplicas: "2"
     bouncer_maxReplicas: "6"
     bouncer_resources:
@@ -204,20 +214,23 @@ global:
     # Server is released back to pool after transaction finishes. default: session, see man https://wiki.postgresql.org/wiki/PgBouncer
     # transaction | session
     default_pool_mode: transaction
+    # PgBouncer verbosity level (0-3). Controls the VERBOSE parameter for pgbouncer logging.
+    # pgbouncer_log_level: "0"
 
     # Postgres corezoid schema version
     postgres_schema:
       image:
         registry: docker-hub.middleware.biz
         repository: pg_schema
-      version: "6.7.0"
+      version: "6.8.2"
 
     rotation:
       ## enabled: true or false
       enabled: true
       # tasks_archive table cleanup period in crontab format
       # minute hour day month dayofweek
-      schedule: "0 0 1 * *"
+      scheduleArchive: "0 0 1 * *"
+      scheduleHistory: "0 0 1 * *"
 
 
   ## NO CLUSTER Mode!
@@ -348,7 +361,6 @@ global:
   use_limits_from_server: true
   ## Settings for API Corezoid
   capi:
-    tag: "8.4.1.3"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -384,6 +396,15 @@ global:
     # User requests per second limits
     user_limits_interface: "120"  # other requests (anything that is not create/modify task)
     user_limits_max_user_rate: "100" # RPS in the environment
+
+#     copilot_sdk:
+#       enabled: true
+#       private_key:
+#       client_email: ""
+#       token_uri: ""
+#       grant_type: ""
+#       path_completion: ""
+#       path_explanation: ""
 
     #Password hash algorithm
 #    password_salt_algo: sha512
@@ -521,7 +542,6 @@ global:
 
   # http-worker
   http:
-    tag: "4.2.1.1"
     minReplicas: 2
     maxReplicas: 4
     resources:
@@ -571,7 +591,6 @@ global:
 
   # usercode
   usercode:
-    tag: "9.0.2"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -598,7 +617,6 @@ global:
 
   # conveyor-worker
   worker:
-    tag: "5.2.1.1"
     minReplicas: 2
     maxReplicas: 4
     # application resources limits and requests
@@ -625,7 +643,6 @@ global:
 
   # mult
   mult:
-    tag: "3.3.1.1"
     minReplicas: 2
     maxReplicas: 4
     ## pvc name if it already exist or was created manualy
@@ -658,7 +675,6 @@ global:
 
   # webadm
   webadm:
-    tag: "6.7.0"
     minReplicas: 1
     resources:
       limits:
@@ -686,7 +702,6 @@ global:
   # syncapi
   syncapi:
     subdomain: "syncapi-k8s-develop"
-    tag: "3.7.1"
     minReplicas: 2
     maxReplicas: 4
     # Max timeout to receive callbacks (milliseconds)
@@ -753,7 +768,6 @@ global:
 
   # conf-agent-server
   conf_agent_server:
-    tag: "2.7.1"
     minReplicas: 1
     maxReplicas: 4
     resources:
@@ -777,7 +791,6 @@ global:
 
   # web-superadm
   web_superadm:
-    tag: "2.6.2"
     subdomain: "superadm-k8s-develop"
     minReplicas: 1
     resources:
@@ -800,7 +813,6 @@ global:
     tolerations: {}
 
   limits:
-    tag: "2.5.1"
     minReplicas: 1
     resources:
       limits:
@@ -853,3 +865,14 @@ global:
       interval: daily
       # number of rotation
       copies: 7
+    affinity: {}
+#     affinity:
+#       nodeAffinity:
+#         requiredDuringSchedulingIgnoredDuringExecution:
+#           nodeSelectorTerms:
+#             - matchExpressions:
+#                 - key: app
+#                   operator: In
+#                   values:
+#                     - 'corezoid-develop'
+    tolerations: {}

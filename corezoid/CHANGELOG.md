@@ -2,6 +2,100 @@
 https://doc.corezoid.com/docs/release-notes
 
 
+### Chart 0.24.1 [ Corezoid 6.8.2 ]
+- Applications versions:
+  - capi - 8.5.1.2
+  - mult - 3.4.1.1
+  - webadm - 6.8.2
+  - http-worker - 4.3.0.1
+  - usercode - 9.0.2
+  - worker - 5.3.0.1
+  - syncapi - 3.8.1
+  - web_superadm - 2.6.2
+  - conf_agent_server - 2.8.1
+  - limits - 2.5.1
+- Bugfix in mult and capi
+- Added support for a separate RabbitMQ for HTTP queues
+  - Implemented the ability to configure and use a second RabbitMQ instance specifically for HTTP queues
+  - Configuration is done through the new mq_http block in the global values.yml
+  - Parameters include:
+    - TLS settings
+    - Secret configuration (automatic/manual creation)
+    - Connection settings (host, port, vhost, credentials)
+  - Functionality is activated through the `{{- if hasKey .Values.global "mq_http" }}` check in the relevant subcharts
+
+- Added separate CronJob for tasks_history table cleanup
+  - Implemented a new CronJob (postgres-taskhistory-cron) to manage tasks_history table cleanup
+  - The previous CronJob (postgres-taskarchive-cron) now handles only tasks_archive table cleanup
+  - Updated configuration in global values.yaml:
+    - Replaced single schedule parameter with two separate parameters:
+      - `scheduleArchive`: controls the tasks_archive cleanup schedule
+      - `scheduleHistory`: controls the tasks_history cleanup schedule
+  - Both schedules can be configured independently using crontab format
+  - Configuration example:
+    ```yaml
+    db:
+      rotation:
+        enabled: true
+        scheduleArchive: "0 0 1 * *"
+        scheduleHistory: "0 0 1 * *"
+    ```
+- Added ability to configure PgBouncer log verbosity level via `global.db.pgbouncer_log_level` parameter.
+
+
+### Chart 0.24.0 [ Corezoid 6.8.0 ]
+- Applications versions:
+  - capi - 8.5.0.1
+  - mult - 3.4.0.2
+  - webadm - 6.8.0
+  - http-worker - 4.3.0.1
+  - usercode - 9.0.2
+  - worker - 5.3.0.1
+  - syncapi - 3.8.1
+  - web_superadm - 2.6.2
+  - conf_agent_server - 2.8.1
+  - limits - 2.5.1
+
+### New Features
+#### 1. The functionality to delete tasks in End nodes using the `"type": "delete", "obj": "task"` API method has been added.
+#### 2. The interaction between different Stages and Projects has been implemented by adding the "Project" and "Stage" additional fields to Copy Task, Modify Task, and Call a Process.
+#### 3. You can now use environment variables in the following nodes: Copy Task, Modify Task, API Call, DB Call, Condition, Call a Process, Reply to Process, and Set Parameters. Currently, secret variables can only be used within API Call nodes.
+#### 4. A new optional filter for sorting variables in your projects has been added.
+#### 5. The current versions of Erlang and JavaScript installed with Corezoid can now be found displayed in the lower right corner of the Code editor within Code nodes.
+#### 6. The `api_sign_time_window` parameter was added to the Superadmin panel to specify the maximum duration within which the `GMT_UNIXTIME` timestamp sent in a request is deemed valid.
+#### 7. The `max_keep_alive_length, 0` parameter is transferred to the Superadmin panel.
+#### 7. The AI assistant has been integrated into Code nodes for automatic code completion, explanations, and comment additions - `.Values.global.capi.copilot_sdk`
+
+### Bug Fixes
+#### 1. A bug has been fixed that allowed users without Modify permission to create objects using the Corezoid API.
+#### 2. The synchronization error with the Account when changing a Corezoid user group owner has been fixed.
+#### 3. Fixed a bug that allowed workspace admins to modify user groups of other workspace owners.
+#### 4. Fixed the issue with the Sync API timing out when the internet connection is lost.
+#### 5. Fixed the issue where the Dashboard name did not update when copied with a new name.
+#### 6. Fixed the issue of getting an invalid count when using the `conv[conv_id].node[node_id].count` construct after the merge operation.
+#### 7. Fixed the issue where changing a final node (End) type from Success to Error did not properly update the node edge color.
+#### 8. Fixed an issue with displaying icons for operations on user groups when opening them under Superadmin role.
+
+
+### Chart 0.23.10 [ Corezoid 6.7.3 ]
+- Applications versions:
+  - capi - 8.4.1.3
+  - mult - 3.3.1.2
+  - webadm - 6.7.3
+  - http-worker - 4.2.1.2
+  - usercode - 9.0.2
+  - worker - 5.2.1.1
+  - syncapi - 3.7.1
+  - web_superadm - 2.6.2
+  - conf_agent_server - 2.7.1
+  - limits - 2.5.1
+- Bugfix in mult
+- Fixed the issue when the API Call did not return Set-Cookie
+- With this version we begin a gradual migration to our new Harbor - https://hub.corezoid.com
+  Please allow access from your environments.
+- The management of pgbouncer images has been moved to the global Values
+
+
 ### Chart 0.23.9 [ Corezoid 6.7.1 ]
 - Applications versions:
   - capi - 8.4.1.3
