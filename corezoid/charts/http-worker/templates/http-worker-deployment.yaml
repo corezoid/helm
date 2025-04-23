@@ -109,7 +109,7 @@ spec:
       shareProcessNamespace: true
       containers:
         - name: {{ .Values.appName}}
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos9 }}{{ .Values.global.centos9Repo }}/{{ else if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.http.tag }}"
+          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos9 }}{{ .Values.global.centos9Repo }}/{{ else if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ .Values.global.http.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           envFrom:
             - configMapRef:
@@ -187,6 +187,33 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.mq.secret.name }}
                   key: password
+            {{- if hasKey .Values.global "mq_http" }}
+            - name: MQ_HTTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq_http.secret.name }}
+                  key: host
+            - name: MQ_HTTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq_http.secret.name }}
+                  key: port
+            - name: MQ_HTTP_VHOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq_http.secret.name }}
+                  key: vhost
+            - name: MQ_HTTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq_http.secret.name }}
+                  key: username
+            - name: MQ_HTTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.mq_http.secret.name }}
+                  key: password
+            {{- end }}
             - name: POSTGRES_DBHOST
               {{- if .Values.global.db.bouncer }}
               value: "pgbouncer-service"

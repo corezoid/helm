@@ -23,6 +23,21 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}-ui
     spec:
+      {{ if .Values.global.store_dumps.affinity }}
+      affinity:
+        {{ .Values.global.store_dumps.affinity | toYaml | nindent 8 | trim }}
+      {{- end}}
+      {{- with .Values.global.store_dumps.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: init-permissions
+          image: busybox
+          command: ['sh', '-c', 'chmod -R 755 /var/www/dumps']
+          volumeMounts:
+            - name: dumps-volume
+              mountPath: /var/www/dumps
       containers:
         - name: {{ .Values.appName }}-node
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}

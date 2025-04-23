@@ -57,6 +57,77 @@ data:
           {port, 9100}
         ]},
 
+      {corezoid_counters_internal, [
+        {node_counters, [
+              {driver,  {{ .Values.global.redis.corezoid_counters_driver | default "redis" }} }, %% postgres | redis
+              {driver_redis, [[
+              {{- if eq .Values.global.redis.sentinel.enable  true }}
+                {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+              {{- else }}
+                {host, "${REDIS_HOST}"},
+                {port, ${REDIS_PORT}},
+                {password,"${REDIS_PASSWORD}"},
+                {{- if eq .Values.global.redis.tls.enabled true }}
+                {ssl, [
+                  {tls, true}
+                ]},
+                {{- end }}
+              {{- end }}
+                {database, 1},
+                {start_size, 5},
+                {min_size, 5},
+                {max_size, 50}
+              ]]},
+              {driver_postgres, [
+              {{- if .Values.global.db.bouncer }}
+                {host, "pgbouncer-service"},
+              {{- else }}
+                {host, "${POSTGRES_DBHOST}"},
+              {{- end }}
+                {user, "${POSTGRES_DBUSER}"},
+                {dbname, "corezoid_counters"},
+                {password, "${POSTGRES_DBPWD}"},
+                {start_size, 5},
+                {min_size, 5},
+                {max_size, 50}
+              ]}
+            ]},
+            {api_sum_logic, [
+              {driver, {{ .Values.global.redis.corezoid_counters_driver | default "redis" }} }, %% postgres | redis
+              {driver_redis, [[
+              {{- if eq .Values.global.redis.sentinel.enable  true }}
+                {sentinel_master_name, "{{ .Values.global.redis.sentinel.master_name }}"}, %% From redis_sentinel master_name
+              {{- else }}
+                {host, "${REDIS_HOST}"},
+                {port, ${REDIS_PORT}},
+                {password,"${REDIS_PASSWORD}"},
+                {{- if eq .Values.global.redis.tls.enabled true }}
+                {ssl, [
+                  {tls, true}
+                ]},
+                {{- end }}
+              {{- end }}
+                {database, 2},
+                {start_size, 5},
+                {min_size, 5},
+                {max_size, 50}
+              ]]},
+              {driver_postgres, [
+              {{- if .Values.global.db.bouncer }}
+                {host, "pgbouncer-service"},
+              {{- else }}
+                {host, "${POSTGRES_DBHOST}"},
+              {{- end }}
+                {user, "${POSTGRES_DBUSER}"},
+                {dbname, "corezoid_counters"},
+                {password, "${POSTGRES_DBPWD}"},
+                {start_size, 5},
+                {min_size, 5},
+                {max_size, 50}
+              ]}
+            ]}
+      ]},
+
        {corezoid_license_client, [
           {driver, "{{ .Values.global.capi.licensepath | default "db" }}" },
           {pgsql, [
@@ -137,6 +208,33 @@ data:
 
             {publish_request, [
             {servers, [
+            {{- if hasKey .Values.global "mq_http" }}
+                [
+                  {host, "${MQ_HTTP_HOST}"},
+                  {port, ${MQ_HTTP_PORT}},
+                  {username, <<"${MQ_HTTP_USERNAME}">>},
+                  {password, <<"${MQ_HTTP_PASSWORD}">>},
+                  {{- if eq .Values.global.mq.tls.enabled true }}
+                    {ssl, [
+                      {tls, true}
+                    ]},
+                  {{- end }}
+                  {vhost, <<"${MQ_HTTP_VHOST}">>}
+                ],
+                [
+                  {host, "${MQ_HOST}"},
+                  {port, ${MQ_HTTP_PORT}},
+                  {username, <<"${MQ_USERNAME}">>},
+                  {password, <<"${MQ_PASSWORD}">>},
+                  {vhost, <<"${MQ_VHOST}">>},
+                  {{- if eq .Values.global.mq.tls.enabled true }}
+                    {ssl, [
+                      {tls, true}
+                    ]},
+                  {{- end }}
+                  {pools, [dbcall]}
+                ]
+            {{- else }}
       {{- if eq .Values.global.mq.internal false }}
                 [
                 {host, "${MQ_HOST}"},
@@ -180,6 +278,7 @@ data:
                 {pools, [dbcall]}
               ]
       {{- end }}
+      {{- end }}
             ]},
               {queues_count, 1},
               {min_size, 1},
@@ -189,6 +288,33 @@ data:
 
             {consumer_response, [
             {servers, [
+              {{- if hasKey .Values.global "mq_http" }}
+                  [
+                    {host, "${MQ_HTTP_HOST}"},
+                    {port, ${MQ_HTTP_PORT}},
+                    {username, <<"${MQ_HTTP_USERNAME}">>},
+                    {password, <<"${MQ_HTTP_PASSWORD}">>},
+                    {{- if eq .Values.global.mq.tls.enabled true }}
+                      {ssl, [
+                        {tls, true}
+                      ]},
+                    {{- end }}
+                    {vhost, <<"${MQ_HTTP_VHOST}">>}
+                  ],
+                  [
+                    {host, "${MQ_HOST}"},
+                    {port, ${MQ_HTTP_PORT}},
+                    {username, <<"${MQ_USERNAME}">>},
+                    {password, <<"${MQ_PASSWORD}">>},
+                    {vhost, <<"${MQ_VHOST}">>},
+                    {{- if eq .Values.global.mq.tls.enabled true }}
+                      {ssl, [
+                        {tls, true}
+                      ]},
+                    {{- end }}
+                    {pools, [dbcall]}
+                  ]
+              {{- else }}
     {{- if eq .Values.global.mq.internal false }}
                   [
                     {host, "${MQ_HOST}"},
@@ -232,6 +358,7 @@ data:
                     {pools, [dbcall]}
                 ]
     {{- end }}
+    {{- end }}
             ]},
               {connections_per_queue, 1},
               {channels_per_connection, 1},
@@ -270,6 +397,12 @@ data:
 
         {corezoid_queues_gc, [
           {enabled, true},
+          {{- if hasKey .Values.global "mq_http" }}
+          {host, "${MQ_HTTP_HOST}"},
+          {port, 15672 },
+          {login, "${MQ_HTTP_USERNAME}"},
+          {password, "${MQ_HTTP_PASSWORD}"},
+          {{- else }}
           {{- if eq .Values.global.mq.internal false }}
           {host, "${MQ_HOST}"},
           {port, 15672},
@@ -280,6 +413,7 @@ data:
           {port, 15672},
           {login, "${MQ_USERNAME}"},
           {password, "${MQ_PASSWORD}"},
+          {{- end }}
           {{- end }}
           {vhost, "${MQ_VHOST}"},
           {gc_queues_regexp, [
@@ -409,6 +543,9 @@ data:
         %% node[Node].public_callback_corezoid
         %% It should be in binary format
         {public_callback_prefix, <<"https://{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},
+
+        {timer_db_process_workers_per_shard_length, {{ .Values.global.worker.timer_db_process_workers_per_shard_length | default 1 }}},  %% Number of workers per shard used for database operations to fetch tasks
+        {timer_ring_workers_per_shard_length, {{ .Values.global.worker.timer_ring_workers_per_shard_length | default 10 }}},       %% Number of processes per shard that will handle timers
 
         %% DB settings
         { pgsql,
@@ -821,6 +958,20 @@ data:
         %% producer of http reqeuests, API logic
         {publish_http_request, [
                 {servers, [
+                    {{- if hasKey .Values.global "mq_http" }}
+                      [
+                        {host, "${MQ_HTTP_HOST}"},
+                        {port, ${MQ_HTTP_PORT}},
+                        {username, <<"${MQ_HTTP_USERNAME}">>},
+                        {password, <<"${MQ_HTTP_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {tls, true}
+                          ]},
+                        {{- end }}
+                        {vhost, <<"${MQ_HTTP_VHOST}">>}
+                      ]
+                    {{- else }}
           {{- if eq .Values.global.mq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
@@ -843,6 +994,7 @@ data:
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- end }}
+          {{- end }}
                 ]},
           {queues_count, {{ .Values.global.worker.publish_http_request_queues_count | default 8 }}},
           {min_size, {{ .Values.global.worker.publish_http_request_min_size | default 30 }}},
@@ -853,6 +1005,20 @@ data:
         %% consumer for http responses, API logic
         {consumer_http_response, [
                 {servers, [
+                    {{- if hasKey .Values.global "mq_http" }}
+                      [
+                        {host, "${MQ_HTTP_HOST}"},
+                        {port, ${MQ_HTTP_PORT}},
+                        {username, <<"${MQ_HTTP_USERNAME}">>},
+                        {password, <<"${MQ_HTTP_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {tls, true}
+                          ]},
+                        {{- end }}
+                        {vhost, <<"${MQ_HTTP_VHOST}">>}
+                      ]
+                    {{- else }}
           {{- if eq .Values.global.mq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
@@ -874,6 +1040,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
+          {{- end }}
           {{- end }}
                 ]},
           {connections_per_queue, {{ .Values.global.worker.consumer_http_response_connections_per_queue | default 2 }}},   %% The specified number of tcp connections will be created for each queue
@@ -1557,6 +1724,20 @@ data:
         %% through settings queue
         {publish_settings, [
                 {servers, [
+                    {{- if hasKey .Values.global "mq_http" }}
+                      [
+                        {host, "${MQ_HTTP_HOST}"},
+                        {port, ${MQ_HTTP_PORT}},
+                        {username, <<"${MQ_HTTP_USERNAME}">>},
+                        {password, <<"${MQ_HTTP_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {tls, true}
+                          ]},
+                        {{- end }}
+                        {vhost, <<"${MQ_HTTP_VHOST}">>}
+                      ]
+                    {{- else }}
           {{- if eq .Values.global.mq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
@@ -1579,6 +1760,7 @@ data:
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
           {{- end }}
+          {{- end }}
                 ]},
           {min_size, {{ .Values.global.worker.publish_settings_min_size | default 2 }}},
           {max_size, {{ .Values.global.worker.publish_settings_max_size | default 2 }}},
@@ -1590,6 +1772,20 @@ data:
         %% users, rights etc...
         {consumer_settings, [
                 {servers, [
+                    {{- if hasKey .Values.global "mq_http" }}
+                      [
+                        {host, "${MQ_HTTP_HOST}"},
+                        {port, ${MQ_HTTP_PORT}},
+                        {username, <<"${MQ_HTTP_USERNAME}">>},
+                        {password, <<"${MQ_HTTP_PASSWORD}">>},
+                        {{- if eq .Values.global.mq.tls.enabled true }}
+                          {ssl, [
+                            {tls, true}
+                          ]},
+                        {{- end }}
+                        {vhost, <<"${MQ_HTTP_VHOST}">>}
+                      ]
+                    {{- else }}
           {{- if eq .Values.global.mq.internal false }}
                       [
                         {host, "${MQ_HOST}"},
@@ -1611,6 +1807,7 @@ data:
                         {password, <<"${MQ_PASSWORD}">>},
                         {vhost, <<"${MQ_VHOST}">>}
                     ]
+          {{- end }}
           {{- end }}
                 ]},
           {connections_per_queue, {{ .Values.global.worker.consumer_settings_connections_per_queue | default 1 }}},   %% The specified number of tcp connections will be created for each queue
