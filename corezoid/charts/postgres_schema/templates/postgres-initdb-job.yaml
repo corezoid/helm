@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: postgres-init-database-{{ .Values.global.db.postgres_schema.version }}
+  name: postgres-init-database-{{ if hasKey .Values.global.db "postgres_schema" }}{{ if hasKey .Values.global.db.postgres_schema "version" }}{{ .Values.global.db.postgres_schema.version }}{{ else }}{{ .Chart.AppVersion }}{{ end }}{{ else }}{{ .Chart.AppVersion }}{{ end }}
   labels:
     app: {{ .Values.global.product }}
     tier: postgres-job
@@ -25,7 +25,7 @@ spec:
       {{- end }}
       restartPolicy: OnFailure
       containers:
-        - image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.global.db.postgres_schema.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.global.db.postgres_schema.image.repository }}:{{ .Values.global.db.postgres_schema.version }}"
+        - image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{ if .Values.global.useCentos8 }}{{ .Values.global.centos8Repo }}/{{ else }}{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ end }}{{ .Values.image.repository }}:{{ if hasKey .Values.global.db "postgres_schema" }}{{ if hasKey .Values.global.db.postgres_schema "version" }}{{ .Values.global.db.postgres_schema.version }}{{ else }}{{ .Chart.AppVersion }}{{ end }}{{ else }}{{ .Chart.AppVersion }}{{ end }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
           name: postgres-initdb
           args:
@@ -34,7 +34,7 @@ spec:
             - /postgres-schema-versioner/run.sh;
           env:
             - name: SCHEMA_VERSION
-              value: {{ .Values.global.db.postgres_schema.version }}
+              value: {{ if hasKey .Values.global.db "postgres_schema" }}{{ if hasKey .Values.global.db.postgres_schema "version" }}{{ .Values.global.db.postgres_schema.version }}{{ else }}{{ .Chart.AppVersion }}{{ end }}{{ else }}{{ .Chart.AppVersion }}{{ end }}
             - name: POSTGRES_SSLMODE
               value: {{ .Values.global.db.serverTlsSslenabled | quote }}
             - name: SERVER_TLS_SSLMODE
@@ -87,4 +87,3 @@ spec:
         - name: {{ $pullSecret }}
       {{- end }}
 {{- end }}
-

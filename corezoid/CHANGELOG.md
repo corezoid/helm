@@ -2,6 +2,25 @@
 https://doc.corezoid.com/docs/release-notes
 
 
+### Chart 0.24.2 [ Corezoid 6.8.3 ]
+- Applications versions:
+  - capi - 8.5.1.3
+  - mult - 3.4.1.1
+  - webadm - 6.8.3
+  - http-worker - 4.3.0.1
+  - usercode - 9.0.2
+  - worker - 5.3.0.2
+  - syncapi - 3.8.1
+  - web_superadm - 2.6.2
+  - conf_agent_server - 2.8.1
+  - limits - 2.5.1
+
+- Bugfix in worker and capi
+- New Features:
+  - Introduced robust code snippet support in the Start node's webhook panel, inspired by Postman's Code Snippets, enabling users to generate ready-to-use requests in over 20 programming languages (e.g., JavaScript, Python, Go, PHP, Java, C#, SQL, etc.) with full support for headers like Cookie and Origin, as well as Basic Auth
+  - Improved the webhook URL interface, enhanced accessibility via ARIA attributes
+  - Introduced the new "Request Parameters" tab that provides both key-value and raw editing modes
+
 ### Chart 0.24.1 [ Corezoid 6.8.2 ]
 - Applications versions:
   - capi - 8.5.1.2
@@ -302,21 +321,21 @@ https://doc.corezoid.com/docs/release-notes
 
 ### Chart 0.22.9 [ Corezoid 6.4.0 ]
 
-### Helm changes  
-- Applications versions:  
-   - capi - 8.3.1.0 
-   - mult - 3.2.1.0  
-   - webadm - 6.4.0  
-   - http-worker - 4.1.1.0  
-   - usercode - 8.1.0  
-   - worker - 5.1.1.0  
-   - syncapi - 3.1.1  
-   - web_superadm - 2.2.0  
-   - conf_agent_server - 2.2.1  
-   - limits - 2.1.1  
+### Helm changes
+- Applications versions:
+   - capi - 8.3.1.0
+   - mult - 3.2.1.0
+   - webadm - 6.4.0
+   - http-worker - 4.1.1.0
+   - usercode - 8.1.0
+   - worker - 5.1.1.0
+   - syncapi - 3.1.1
+   - web_superadm - 2.2.0
+   - conf_agent_server - 2.2.1
+   - limits - 2.1.1
 
 ### Improvements
-- Added tls connection option for external RabbitMQ, ElastiCache(Redis), Ingress, PgBouncer  
+- Added tls connection option for external RabbitMQ, ElastiCache(Redis), Ingress, PgBouncer
 
 
 ### Chart 0.22.8 [ Corezoid 6.3.1 ]
@@ -352,44 +371,44 @@ https://doc.corezoid.com/docs/release-notes
 
 ### Chart 0.22.0 [ Corezoid 6.0.0 ]
 - Starting from version 6.0, Corezoid uses a new license. When upgrading to Corezoid 6.0 or newer from an older version you must use a new license file for Corezoid (Before upgrading, request a new license file).
-- Erlang was updated to version 24.3 for Corezoid components, increasing data exchange speed between components; 
-- Group owners can now transfer ownership of their user groups. 
-- All newly created API Call nodes will be called API Call v2. The new API Call version will allow users to specify custom Content-type for any data format selected 
-- The current progress will now be displayed when copying large objects in the main menu 
-- Updated alpine version to 3.17 
-- Redesigned ingress to fine-tune annotations for headers  
+- Erlang was updated to version 24.3 for Corezoid components, increasing data exchange speed between components;
+- Group owners can now transfer ownership of their user groups.
+- All newly created API Call nodes will be called API Call v2. The new API Call version will allow users to specify custom Content-type for any data format selected
+- The current progress will now be displayed when copying large objects in the main menu
+- Updated alpine version to 3.17
+- Redesigned ingress to fine-tune annotations for headers
   If you have ingress `enabled: true` in `values.yaml` then, before updating, you need to delete the old ingress in your Corezoid namespace (instead of it there will be new separate ingresses)
-- Elasticsearch was updated to version 8.6.0  
-   After updating Elasticsearch, when the new Elasticsearch starts up, you need to go to one of the capi pods.  
-   Go to remote_console  
-   `/ebsmnt/erlang/capi/bin/capi remote_console`  
-   Execute without interrupting commands:  
-   `capi_elasticsearch:migrate().`  
-   It is enough to perform these actions on one capi pod  
-- Added disable merchant-api  
+- Elasticsearch was updated to version 8.6.0
+   After updating Elasticsearch, when the new Elasticsearch starts up, you need to go to one of the capi pods.
+   Go to remote_console
+   `/ebsmnt/erlang/capi/bin/capi remote_console`
+   Execute without interrupting commands:
+   `capi_elasticsearch:migrate().`
+   It is enough to perform these actions on one capi pod
+- Added disable merchant-api
    You no longer need to use the merchant-api application to create companies in Corezoid 6.0.0. It is enough to set the `companies_manager: "corezoid_internal"` flag in values.yaml and disable the merchant-api for the creation of companies to work.
 
 ### Chart 0.21.6 [ Corezoid 5.11.0 ]
-- The “conv_title” method was removed from Corezoid API 
-- The Aliases tab was moved to the Folders section of the workspace menu 
-- Fixed a bug in the process Activity Monitor, which caused data not displaying for the finish date of a selected date range 
-- jQuery library was updated to version 1.12.4, fixed the vulnerability of missing tokens to prevent CSRF attacks 
-- Changed the logic of the "create","obj":"invite" API method for inviting users to a company 
-- When going through an API Call node, an empty task is passed as an object, not an array 
-- The “Parent REF” task field that contains a parent process ref was added to the task info view in the process editor 
+- The “conv_title” method was removed from Corezoid API
+- The Aliases tab was moved to the Folders section of the workspace menu
+- Fixed a bug in the process Activity Monitor, which caused data not displaying for the finish date of a selected date range
+- jQuery library was updated to version 1.12.4, fixed the vulnerability of missing tokens to prevent CSRF attacks
+- Changed the logic of the "create","obj":"invite" API method for inviting users to a company
+- When going through an API Call node, an empty task is passed as an object, not an array
+- The “Parent REF” task field that contains a parent process ref was added to the task info view in the process editor
 - In the Trash now displays a side panel with the object’s parent object info
 
 ### Chart 0.21.5 [ Corezoid 5.10.1 ]
-- Merge functionality is available 
-- Add support of “map” and “filter” Erlang functions for Set Parameters nodes 
-- Code editor was updated and now supports a correct display and work with code written in the following programming languages: JS, Python, Go, PHP, Java, Erlang, XML, MySQL, Microsoft SQL Server и PostgreSQL 
-- Moment.js library was updated. The library has backward compatibility with the old version 
+- Merge functionality is available
+- Add support of “map” and “filter” Erlang functions for Set Parameters nodes
+- Code editor was updated and now supports a correct display and work with code written in the following programming languages: JS, Python, Go, PHP, Java, Erlang, XML, MySQL, Microsoft SQL Server и PostgreSQL
+- Moment.js library was updated. The library has backward compatibility with the old version
 - Compatibility: elasticsearch 7, Centos 8
 - fix сontent- type xml with parameters
 - added new key db_schema_rds in values.yaml (to work with base in AWS RDS)
 
 ### Chart 0.19.5 [ Corezoid 5.9.0 ]
-- cookie secure flag for api 
+- cookie secure flag for api
 - avalible enable 2fa with check_2fa env in capi block
 - debug mode for http-worker with logs debug on enable
 
@@ -405,20 +424,20 @@ https://doc.corezoid.com/docs/release-notes
 - add worker.write_data_to_history - write or not tasks data into table
 - add prometheus_metrics enable/disable ( default - disable )
 - add optional basic auth to elasticsearch
-- new captcha providers - recaptcha end hcaptcha 
+- new captcha providers - recaptcha end hcaptcha
 - trash scrapper - add capi values to configure the emptying the basket
 
 ### Chart 0.19.2 [ Corezoid 5.7.1 ]
 - add elasticsearch schema variable
 
 ### Chart 0.19.1 [ Corezoid 5.7.1 ]
-- add redis sentinel 
+- add redis sentinel
 - fix store dumps ingress
 - elastic initContainers now pulled from mw repo
 
 ### Chart 0.19 [ Corezoid 5.7.0 ]
 - prometheus_metrics of applications
-- global log_level 
+- global log_level
 - manage vm.args
 
 ### Chart 0.18.1 [ Corezoid 5.6.1 ]
@@ -452,7 +471,7 @@ Improvements:
 - remove http2 from alb - fix MAX_CONCURRENT_STREAMS error for server: Cowboy
 - remove nginx from chain from lb to app
 - remove check connect to elasticsearch as dependency to allow start
-- move queues from config to  values http-worker 
+- move queues from config to  values http-worker
 - testing autoscale CPUUtilizationPercentage
 - add NODE_COOKIE to http-worker
 - add metrics to apps (127.0.0.1:9100/metrics)
@@ -463,9 +482,9 @@ Improvements:
 - Upgrade to Corezoid 5.5.1
 - fix rmq always Running queue
 - fix autoclean queue from rabbit
-- add gitcallv2 support 
+- add gitcallv2 support
 - fix init containers for mult and usercode
-- upgrade pgbouncer 
+- upgrade pgbouncer
 - upgrade Content-Security-Policy
 - fix error "UPGRADE FAILED: cannot patch "postgres-init-database""
 
@@ -479,20 +498,20 @@ Improvements:
 - Added the ability to block ip or domains in apicall
 - Added restricting user registration by domain
 - Fix for captcha configuring
-- add pgboucer min replicas from 2 
-- fix dockerhub rate limit issue  
+- add pgboucer min replicas from 2
+- fix dockerhub rate limit issue
 
 
 
 ### Chart 0.14 [Corezoid 5.4.1]
-Improvements:  
-- MAM-615 - Provide support for running Corezoid in Azure 
+Improvements:
+- MAM-615 - Provide support for running Corezoid in Azure
 - Move init db in job
 - Remove postgres container when db.internal: true
 - Remove nginx pods for syncapi service
-- Add taskarchive-cron for truncating task_archive 
-- Moved the logo in a separate place /files/logo.svg - now everyone can set it individually for themselves 
-- Moved the corporate identity settings into the general configuration 
+- Add taskarchive-cron for truncating task_archive
+- Moved the logo in a separate place /files/logo.svg - now everyone can set it individually for themselves
+- Moved the corporate identity settings into the general configuration
 
 Bugs fixes:
 - Fix Cors for connect-src and Feature-Policy
@@ -500,44 +519,44 @@ Bugs fixes:
 
 
 ### Chart 0.13 [Corezoid 5.3.0]
-Improvements:  
-- MAM-685: Move nginx rps limits to values  
-- MAM-671: Dynamic cookie name  
-- MAM-626: Allow changing cookie_expr_time parameter from the superadmin panel  
-- MAM-588: Add liveness and rediness probes worker and mult  
-- MAM-577: Move capi memory limit values as a parameters into values.yaml  
-- MAM-660: Rotation archive task  
-- MAM-350: Services shutdown gracefully  
-- MAM-675: add patch inbound CIDR limitation  
+Improvements:
+- MAM-685: Move nginx rps limits to values
+- MAM-671: Dynamic cookie name
+- MAM-626: Allow changing cookie_expr_time parameter from the superadmin panel
+- MAM-588: Add liveness and rediness probes worker and mult
+- MAM-577: Move capi memory limit values as a parameters into values.yaml
+- MAM-660: Rotation archive task
+- MAM-350: Services shutdown gracefully
+- MAM-675: add patch inbound CIDR limitation
 
 Bugs fixes:
-- MAM-498: Nothing happens when clicking on Create User/API Key/Group button when user has no rights  
-- MAM-569: Forbid the creation of Companies with same name and Users having the same email address on the backend  
-- MAM-605: Admin users cannot see content of Code nodes and when they deploy changes errors appear  
-- MAM-496: [Multitenancy] Admin user that is part of multiple companies is unable to login in any of them if one of his companies is blocked  
-- MAM-527: Error is displayed when uploading a process for the first time in multi-tenant Corezoid  
-- MAM-542: Creator of Group is not visible in the Group and cannot be added by other Admins 
+- MAM-498: Nothing happens when clicking on Create User/API Key/Group button when user has no rights
+- MAM-569: Forbid the creation of Companies with same name and Users having the same email address on the backend
+- MAM-605: Admin users cannot see content of Code nodes and when they deploy changes errors appear
+- MAM-496: [Multitenancy] Admin user that is part of multiple companies is unable to login in any of them if one of his companies is blocked
+- MAM-527: Error is displayed when uploading a process for the first time in multi-tenant Corezoid
+- MAM-542: Creator of Group is not visible in the Group and cannot be added by other Admins
 
 ### Chart 0.12 [Corezoid 5.1.1]
-Improvements:  
-- MAM-545: Prevent Username/Email Enumeration  
-- MAM-546: Reflected XSS in API  
-- MAM-547: Insufficient Session Timeout  
-- MAM-550: Prevent Folder Name Information Disclosure  
-- MAM-551: Prevent Admin Email Disclosure  
-- MAM-561: Cross-Site Websocket Hijacking (CSWSH)  
-- MAM-131: SSRF via Process can be used to leak AWS credentials or to access internal network  
+Improvements:
+- MAM-545: Prevent Username/Email Enumeration
+- MAM-546: Reflected XSS in API
+- MAM-547: Insufficient Session Timeout
+- MAM-550: Prevent Folder Name Information Disclosure
+- MAM-551: Prevent Admin Email Disclosure
+- MAM-561: Cross-Site Websocket Hijacking (CSWSH)
+- MAM-131: SSRF via Process can be used to leak AWS credentials or to access internal network
 
 ### Chart 0.11 [Corezoid 5.0]
-- MAM-577: Move capi memory limit values as a parameters into values.yaml  
+- MAM-577: Move capi memory limit values as a parameters into values.yaml
 
-- MAM-578: Add syncapi as deps for api  
+- MAM-578: Add syncapi as deps for api
 
-- Made some autoscale tuning and add ENIGMA.md manual  
+- Made some autoscale tuning and add ENIGMA.md manual
 
 ### Chart 0.10 [Corezoid 5.0]
 
-- MAM-541: Inquiry about k8s config - capi:front_setting:host:doc  
+- MAM-541: Inquiry about k8s config - capi:front_setting:host:doc
 Moving URL for documentation into the values.yaml:
 ```
     front_setting:
@@ -546,7 +565,7 @@ Moving URL for documentation into the values.yaml:
       doc_index: "/docs"
 ```
 
-- MAM-557: Getting folder structure via Corezoid API returns 502 Bad Gateway  
+- MAM-557: Getting folder structure via Corezoid API returns 502 Bad Gateway
 Memory limit increase for capi-deployment
 ```
 resources:
@@ -555,10 +574,10 @@ resources:
   memory: 1500Mi
 ```
 
-- MAM-571: Sync API service not working on sandbox and production multi-tenant  
+- MAM-571: Sync API service not working on sandbox and production multi-tenant
 Moving SyncAPI to the single POD, resolve issue with 504 error, when back-end was restarted. Tuning configuration and performance.
 
-- MAM-574: Make skip_otp configurable per environment, in capi-configmap  
+- MAM-574: Make skip_otp configurable per environment, in capi-configmap
 Allow parameterizing {skip_otp, true} for capi-configmap in values.yaml:
 ```
     # merchant_api settings
@@ -566,5 +585,5 @@ Allow parameterizing {skip_otp, true} for capi-configmap in values.yaml:
       skip_otp: true
 ```
 
-- MAM-549: Missing HTTP Security Headers  
+- MAM-549: Missing HTTP Security Headers
 Update web-configmap-site.yaml for some security issues.
