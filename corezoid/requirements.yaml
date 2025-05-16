@@ -30,3 +30,49 @@ dependencies:
   - name: dumps
     version: "0.0.1"
     condition: global.store_dumps.enabled
+
+  - name: limits
+    version: "1.0.0"
+
+  - name: web
+    version: "1.0.0"
+
+  - name: syncapi
+    version: "1.0.0"
+    condition: global.syncapi.enabled
+
+  - name: usercode
+    version: "1.0.0"
+
+  - name: worker
+    version: "1.0.0"
+
+  - name: capi
+    version: "1.0.0"
+
+  - name: conf-agent-server
+    version: "1.0.0"
+
+  - name: enigma-key-manager
+    version: "1.0.0"
+    condition: global.enigma.enabled
+
+  - name: merchant
+    version: "1.0.0"
+    condition: global.merchant.enabled
+
+  - name: mult
+    version: "1.0.0"
+
+  - name: pgbouncer
+    version: "1.0.0"
+    condition: global.db.bouncer
+
+  - name: http-worker
+    version: "1.0.0"
+
+  - name: web-superadm
+    version: "1.0.0"
+
+  - name: postgres_schema
+    version: "1.0.0"

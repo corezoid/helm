@@ -109,8 +109,8 @@ global:
   ########  Settings for stateful services  ########
 
   #######  PostgreSQL  ########
-  ## Supported version PostgreSQL-13.*
-  ## for RDS minimum instance - db.t2.medium / master user set "postgres"
+  ## Supported version PostgreSQL-15.*
+  ## for RDS minimum instance - db.t4g.large / master user set "postgres"
   db:
     image: "postgres:15-alpine"
     imagePullPolicy: "IfNotPresent"
@@ -189,7 +189,6 @@ global:
 #                   values:
 #                     - 'corezoid-develop'
     bouncer_tolerations: {}
-
     # Maximum number of client connections allowed.
     maxclientconn: "100000"
     # How many server connections to allow per user/database pair. Can be overridden in the per-database configuration.
@@ -216,14 +215,6 @@ global:
     default_pool_mode: transaction
     # PgBouncer verbosity level (0-3). Controls the VERBOSE parameter for pgbouncer logging.
     # pgbouncer_log_level: "0"
-
-    # Postgres corezoid schema version
-    postgres_schema:
-      image:
-        registry: docker-hub.middleware.biz
-        repository: pg_schema
-      version: "6.8.2"
-
     rotation:
       ## enabled: true or false
       enabled: true

@@ -1,4 +1,4 @@
-{{- if  eq .Values.global.db.postgres_schema.version "5.7.0" }}
+{{- if or (and (hasKey .Values.global.db "postgres_schema") (hasKey .Values.global.db.postgres_schema "version") (eq .Values.global.db.postgres_schema.version "5.7.0")) (eq .Chart.AppVersion "5.7.0") }}
 apiVersion: v1
 kind: Pod
 metadata:
