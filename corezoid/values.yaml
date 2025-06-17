@@ -594,6 +594,8 @@ global:
         memory: 1000Mi
     # max time for each execution of code, kill process after this time
     max_exec_code_time: 1000
+    # Socket buffer size in MB for net.core.rmem_max and net.core.wmem_max sysctls
+    cnode_socket_buffer_size_mb: 16
     affinity: {}
 #     affinity:
 #       nodeAffinity:

@@ -25,6 +25,18 @@ spec:
         app: {{ .Values.global.product }}
         tier: {{ .Values.appName }}
     spec:
+      {{- if .Values.global.usercode.cnode_socket_buffer_size_mb }}
+      securityContext:
+        sysctls:
+#         - name: net.core.rmem_max
+#           value: {{ mul (.Values.global.usercode.cnode_socket_buffer_size_mb | int) 1048576 | quote }}
+#         - name: net.core.wmem_max
+#           value: {{ mul (.Values.global.usercode.cnode_socket_buffer_size_mb | int) 1048576 | quote }}
+        - name: net.ipv4.tcp_rmem
+          value: "4096 131072 16777216"  # Увеличить максимум до 16MB
+        - name: net.ipv4.tcp_wmem
+          value: "4096 65536 16777216"   # Увеличить send buffer
+      {{- end }}
       {{ if .Values.global.usercode.affinity }}
       affinity:
         {{ .Values.global.usercode.affinity | toYaml | nindent 8 | trim }}

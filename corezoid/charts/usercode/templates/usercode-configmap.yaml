@@ -251,6 +251,8 @@ data:
         {cnode_max_used_per_isolate, 20}, %% // in Mb
         {cnode_max_used_per_isolate_mb, 100}, %% in Mb
 
+        {cnode_socket_buffer_size_mb, {{ .Values.global.usercode.cnode_socket_buffer_size_mb | default 20 }}}, %% in Mb (read, write socket buffers)
+
         {show_err_resps, false},     %% If true, then more logs are displayed
         {show_ok_resps, false},      %% If true, then more logs are displayed
 
