@@ -48,7 +48,7 @@ dependencies:
     version: "1.0.0"
 
   - name: capi
-    version: "1.0.0"
+    version: "1.1.1"
 
   - name: conf-agent-server
     version: "1.0.0"

@@ -2,6 +2,20 @@
 https://doc.corezoid.com/docs/release-notes
 
 
+### Chart 0.24.4 [ Corezoid 6.8.5 ]
+- Applications versions:
+  - capi - 8.5.1.6
+  - mult - 3.4.1.1
+  - webadm - 6.8.5
+  - http-worker - 4.3.0.1
+  - usercode - 9.1.1
+  - worker - 5.3.0.2
+  - syncapi - 3.8.1
+  - web_superadm - 2.6.2
+  - conf_agent_server - 2.8.1
+  - limits - 2.5.1
+- Bugfix in capi
+
 ### Chart 0.24.3 [ Corezoid 6.8.4 ]
 - Applications versions:
   - capi - 8.5.1.3
