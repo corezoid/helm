@@ -1,6 +1,6 @@
 appName: limits
 image:
-  registry: docker-hub.middleware.biz
+  registry: hub.corezoid.com
   repository: corezoid_limits
 
 containers:

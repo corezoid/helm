@@ -1,9 +1,11 @@
 appName: elasticsearch
 
 image:
-  registry: docker-hub.middleware.biz
+  registry: "docker.io"
   repository: elasticsearch
+  tag: "8.13.4"
 
 busyboxImage:
-  registry: docker-hub.middleware.biz
-  repository: hub.docker.com/library/busybox
+  registry: "docker.io"
+  repository: busybox
+  tag: "latest"

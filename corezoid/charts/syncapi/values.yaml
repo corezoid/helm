@@ -1,6 +1,6 @@
 appName: syncapi
 image:
-  registry: docker-hub.middleware.biz
+  registry: hub.corezoid.com
   repository: corezoid_api_sync
 
 containers:

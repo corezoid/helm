@@ -8,7 +8,7 @@ dependencies:
     condition: global.redis.internal
 
   - name: elasticsearch
-    version: "0.1.0"
+    version: "0.1.1"
     condition: global.elasticsearch.internal
 
   - name: rabbitmq
@@ -35,44 +35,40 @@ dependencies:
     version: "1.0.0"
 
   - name: web
-    version: "1.0.0"
+    version: "1.1.2"
 
   - name: syncapi
     version: "1.0.0"
     condition: global.syncapi.enabled
 
   - name: usercode
-    version: "1.0.0"
+    version: "1.0.2"
 
   - name: worker
-    version: "1.0.0"
-
-  - name: capi
     version: "1.1.1"
 
+  - name: capi
+    version: "1.1.2"
+
   - name: conf-agent-server
-    version: "1.0.0"
+    version: "1.0.1"
 
   - name: enigma-key-manager
     version: "1.0.0"
     condition: global.enigma.enabled
 
-  - name: merchant
-    version: "1.0.0"
-    condition: global.merchant.enabled
-
   - name: mult
-    version: "1.0.0"
+    version: "1.0.1"
 
   - name: pgbouncer
     version: "1.0.0"
     condition: global.db.bouncer
 
   - name: http-worker
-    version: "1.0.0"
+    version: "1.0.1"
 
   - name: web-superadm
     version: "1.0.0"
 
   - name: postgres_schema
-    version: "1.0.0"
+    version: "1.1.0"

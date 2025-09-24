@@ -1,6 +1,51 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.24.5 [ Corezoid 6.9.0 ]
+- Applications versions:
+  - capi - 8.6.0.1
+  - cce - 9.1.2
+  - conf_agent_admin - 2.6.2
+  - conf_agent_server - 2.9.1
+  - conveyor_api_multipart - 3.5.0.1
+  - corezoid_api_sync - 3.8.1
+  - corezoid_limits - 2.5.1
+  - http_worker - 4.4.0.1
+  - worker - 5.4.0.2
+  - web - 6.9.0
+  - elasticsearch - 8.19.3
+
+---
+
+## Attention! From this version, all our applications are located only in our new Harbor - https://hub.corezoid.com
+### Don't forget to specify it in values:
+`imageRegistry: "hub.corezoid.com"`
+
+---
+- New Features
+  - Environment variables in Multipart uploads: You can now include variables when importing Projects/Stages. Merged variables appear in the Variables section.
+  - Secret variables are auto-set to a default after upload and must be adjusted manually. The variables' values are updated in target Stages only on the first merge and remain unchanged on succeeding merges.
+  - Changing a secret's type (RAW/JSON) before merge can break existing secrets on merge.
+  - Visible variables update on first merge automatically; subsequent merges do not overwrite their values. You can update their values manually when needed.
+- Improvements
+  - GitHub export for AI workflows: Processes edited in Corezoid can be exported to GitHub for downstream AI processing.
+  - Proxy routing for messengers: Switched from a bypass exclusion list to a simpler inclusion list—only hosts that must go through the proxy need to be listed; local traffic bypasses by default.
+  - Code node library: Lodash v4.17.21 is now available.
+  - Faster statistics collection: Batch query mechanism optimized to reduce lag.
+  - Direct URL UX: Unchecking "Direct URL for tasks upload" now asks for confirmation instead of silently removing the URL.
+  - Security: Highcharts 4.2.5 vulnerability addressed.
+  - Call/Copy Process clarity: If an alias isn't found in the current stage, the UI now shows the current project and stage to aid troubleshooting.
+  - Type auto-casting: Selecting math or unixtime auto-casts values to number.
+  - Node target editing: project, stage, and conv fields can be edited independently without re-entering everything.
+  - Dark theme polish: Improved layout of the Node statistics section.
+  - Dashboard info: Descriptions added via More actions → Info now save correctly.
+  - Alias display: When a process is deleted, only the alias is shown (no stale process reference).
+  - Merge diagnostics: After a merge with errors, you can view them via Stage → Show errors.
+- Bug Fixes
+  - CSV uploads: Tasks with Cyrillic names now upload correctly; error files generate when needed.
+  - Shared dashboards: Share option no longer appears for users without permission.
+  - Activity Monitor accuracy: Corrected previous-week data; fixed duplicated "last 24 hours" entries in Top 10 Processes.
+
 
 ### Chart 0.24.4 [ Corezoid 6.8.5 ]
 - Applications versions:

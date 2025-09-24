@@ -40,8 +40,8 @@ global:
 ## @param image.debug Set to true if you would like to see extra information on logs
 ##
 image:
-  registry: docker.io
-  repository: bitnami/rabbitmq
+  registry: hub.corezoid.com
+  repository: utils/bitnami/rabbitmq
   tag: 3.12.13-debian-12-r2
   digest: ""
   ## set to true if you would like to see extra information on logs
@@ -517,6 +517,9 @@ configurationExistingSecret: ""
 ##
 extraConfiguration: |
   load_definitions = /app/load_definition.json
+  # Enable management plugin
+  management.tcp.port = 15672
+  management.tcp.ip = 0.0.0.0
 # extraConfiguration: |-
   #default_vhost = {{ .Release.Namespace }}-vhost
   #disk_free_limit.absolute = 50MB
@@ -1500,8 +1503,8 @@ volumePermissions:
   ## @param volumePermissions.image.pullSecrets Specify docker-registry secret names as an array
   ##
   image:
-    registry: docker.io
-    repository: bitnami/os-shell
+    registry: hub.corezoid.com
+    repository: utils/bitnami/os-shell
     tag: 12-debian-12-r16
     digest: ""
     ## Specify a imagePullPolicy

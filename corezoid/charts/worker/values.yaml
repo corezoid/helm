@@ -1,6 +1,6 @@
 appName: worker
 image:
-  registry: docker-hub.middleware.biz
+  registry: hub.corezoid.com
   repository: conveyor-worker
 
 containers:

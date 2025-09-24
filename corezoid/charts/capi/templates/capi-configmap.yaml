@@ -725,6 +725,16 @@ data:
             {front_settings, [
                 {is_single_account, {{- .Values.global.sa.enabled }}},	%% enable SingleAccount auth
                 {env, <<"prod">>}, %% Available test|pre|prod
+                {{- if .Values.global.capi.front_setting.widgets }}
+                {widgets, [
+                  {editor_ai, [
+                  {enabled, true},
+                  {src, <<"https://{{ .Values.global.capi.front_setting.widgets.simulator_widget_domain }}/shim.js">>},
+                  {actor_id, <<"{{ .Values.global.capi.front_setting.widgets.actor_id }}">>},
+                  {workspace_whitelist, [<<"{{ .Values.global.capi.front_setting.widgets.workspace_whitelist }}">>]}
+                  ]}
+                ]},
+                {{- end }}
                 {host, [
                     {site, <<"{{ .Values.global.subdomain }}.{{ .Values.global.domain }}">>},   %% main page (navigate by clicking on the corezoid logo)
                     {doc, <<"{{ .Values.global.capi.front_setting.doc_host }}">>}, %% documentation (navigate by clicking on DOCS link)

@@ -33,19 +33,31 @@ spec:
       {{- end}}
       initContainers:
         - name: increase-vm-max-map
-          image: "{{ .Values.busyboxImage.registry }}/{{ .Values.busyboxImage.repository }}"
+          image: {{- if .Values.global.elasticsearch.busyboxImage }}
+                    {{ .Values.global.elasticsearch.busyboxImage }}
+                  {{- else }}
+                    "{{ .Values.busyboxImage.registry }}/{{ .Values.busyboxImage.repository }}:{{ default .Values.busyboxImage.tag .Values.global.elasticsearch.busyboxImagetag }}"
+                  {{- end }}
           command: ["sysctl", "-w", "vm.max_map_count=262144"]
           securityContext:
             privileged: true
         - name: increase-fd-ulimit
-          image: "{{ .Values.busyboxImage.registry }}/{{ .Values.busyboxImage.repository }}"
+          image: {{- if .Values.global.elasticsearch.busyboxImage }}
+                    {{ .Values.global.elasticsearch.busyboxImage }}
+                  {{- else }}
+                    "{{ .Values.busyboxImage.registry }}/{{ .Values.busyboxImage.repository }}:{{ default .Values.busyboxImage.tag .Values.global.elasticsearch.busyboxImagetag }}"
+                  {{- end }}
           command: ["sh", "-c", "ulimit -n 65536"]
           securityContext:
             privileged: true
       containers:
         - name: {{ .Values.appName }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" }}
-          image: "{{ .Values.global.imageRegistry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{- end }}{{ .Values.image.repository }}:{{ .Values.global.elasticsearch.tag }}"
+          image: {{- if .Values.global.elasticsearch.image }}
+                   {{ .Values.global.elasticsearch.image }}
+                 {{- else }}
+                   "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ default .Values.image.tag .Values.global.elasticsearch.tag }}"
+                 {{- end }}
           env:
             - name: discovery.type
               value: single-node
@@ -98,6 +110,4 @@ spec:
   - protocol: TCP
     port: 9200
     targetPort: 9200
-
-
 {{- end }}

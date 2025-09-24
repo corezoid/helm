@@ -5,7 +5,7 @@ global:
   subdomain: "corezoid-k8s-develop"
 
   # docker image registry
-  imageRegistry: "docker-hub.middleware.biz"
+  imageRegistry: "hub.corezoid.com"
   #IfNotPresent | Always | Never
   imagePullPolicy: "Always"
   # If specified, use these secrets to access the images, this can be used on mCloud.
@@ -16,8 +16,8 @@ global:
   product: "corezoid"
   centos8Repo: public-corezoid-centos8
   centos9Repo: public-corezoid-centos9
-  useCentos8: false
-  useCentos9: true
+  useCentos8: true
+  useCentos9: false
 
   deploymentStrategy:
     type: RollingUpdate
@@ -112,7 +112,7 @@ global:
   ## Supported version PostgreSQL-15.*
   ## for RDS minimum instance - db.t4g.large / master user set "postgres"
   db:
-    image: "postgres:15-alpine"
+    image: "hub.corezoid.com/public/postgres-postgis:15-alpine3.21-1"
     imagePullPolicy: "IfNotPresent"
     # if internal true - create and use internal postgres container
     # if internal false - enable external db, like aws rds
@@ -229,11 +229,21 @@ global:
     # if internal true - create and use internal k8s redis container
     # if internal false - enable external redis, like aws elasticache
     internal: true
+    image:
+      registry: hub.corezoid.com
+      repository: /public/redis
+      tag: 7.2.4
     # tls true only for aws elasticache
     tls:
       enabled: false
     ## pvc name if it already exist or was created manualy
     persistantVolumeClaimName: "redis-pvc-develop"
+    ## Optional: Override Redis image settings globally
+    ## If not specified, values from charts/redis/values.yaml will be used
+    # image:
+    #   registry: "custom-registry.com"
+    #   repository: "/custom-redis"
+    #   tag: "6.2.0"
     ## secret configuration for redis
     sentinel:
       enable: false
@@ -277,7 +287,7 @@ global:
   #######  Elasticsearch  ########
   ## Supported version 8.6.0
   elasticsearch:
-    tag: "8.13.4"
+    tag: "8.19.3"
     # if internal true - create and use internal elasticsearch container
     # if internal false - enable external elasticsearch, like aws elasticsearch service
     internal: true
@@ -494,6 +504,11 @@ global:
         color_main: "#0791e5"
         color_logo: "#0791e5"
         color_logo_hover: "#056cab"
+      # widgets configuration (optional)
+      # widgets:
+      #   simulator_widget_domain: "SIMULATOR_WIDGET_DOMAIN"
+      #   actor_id: "ACTOR_ID"
+      #   workspace_whitelist: "WORKSPACE_WHITELIST"
     ldap_server: "ldap.middleware.loc"
     ldap_port: "389"
     ldap_base: "ou=people,o=middleware"
@@ -715,10 +730,6 @@ global:
 #                   values:
 #                     - 'corezoid-develop'
     tolerations: {}
-
-  # merchant (deprecated)
-  merchant:
-    enabled: false
 
   # enigma global settings
   enigma:

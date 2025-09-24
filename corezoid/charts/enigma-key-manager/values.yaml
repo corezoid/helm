@@ -1,10 +1,10 @@
 appName: enigma-key-manager
 image:
-  registry: docker-hub.middleware.biz
+  registry: hub.corezoid.com
   repository: enigma-key-manager
   tag: latest
 
 pgbouncerClientImage:
-  registry: docker-hub.middleware.biz
+  registry: hub.corezoid.com
   repository: pgbouncer
   tag: 1.20.1-alpine3.18-2

@@ -43,7 +43,7 @@ spec:
       {{- if .Values.global.arm64 }}
         image: "{{ .Values.image.registry }}/public/arm64/redis:{{ .Values.image.tag }}"
       {{- else }}
-        image: "{{ .Values.image.registry }}{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ include "redis.image" . }}"
       {{- end }}
         imagePullPolicy: Always
         resources:

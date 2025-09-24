@@ -1,7 +1,7 @@
 appName: http-worker
 
 image:
-  registry: docker-hub.middleware.biz
+  registry: hub.corezoid.com
   repository: http-worker
 
 containers:
