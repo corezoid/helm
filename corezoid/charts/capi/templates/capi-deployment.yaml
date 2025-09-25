@@ -314,6 +314,18 @@ spec:
                 name: {{ .Values.global.mq_http.secret.name }}
                 key: password
           {{- end }}
+          {{- if eq .Values.global.merchant.enabled true }}
+          - name: MERCHANT_LOGIN
+            valueFrom:
+              secretKeyRef:
+                name: merchant-secret
+                key: merchant_login
+          - name: MERCHANT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: merchant-secret
+                key: merchant_secret
+          {{- end }}
           - name: ELASTICSEARCH_HOST
             valueFrom:
               secretKeyRef:

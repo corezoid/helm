@@ -1,0 +1,13 @@
+appName: merchant
+image:
+  registry: hub.corezoid.com
+  repository: merchant
+
+postgresqlClientImage:
+  registry: hub.corezoid.com
+  repository: postgresql-client
+  tag: alpine3.18.3
+
+port:
+containers:
+  containerPort: 8080

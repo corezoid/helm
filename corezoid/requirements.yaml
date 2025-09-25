@@ -57,6 +57,10 @@ dependencies:
     version: "1.0.0"
     condition: global.enigma.enabled
 
+  - name: merchant
+    version: "1.0.0"
+    condition: global.merchant.enabled
+
   - name: mult
     version: "1.0.1"
 

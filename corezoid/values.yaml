@@ -731,6 +731,10 @@ global:
 #                     - 'corezoid-develop'
     tolerations: {}
 
+  # merchant (deprecated)
+  merchant:
+    enabled: false
+
   # enigma global settings
   enigma:
     enabled: false
