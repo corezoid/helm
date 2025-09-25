@@ -1,6 +1,6 @@
 appName: usercode
 image:
-  registry: docker-hub.middleware.biz
+  registry: hub.corezoid.com
   repository: usercode
 
 containers:

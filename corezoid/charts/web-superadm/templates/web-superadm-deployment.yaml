@@ -38,7 +38,7 @@ spec:
       {{- end}}
       containers:
         - name: {{ .Values.appName }}
-          image: "{{- if and (ne .Values.global.imageRegistry "") (ne .Values.global.imageRegistry "docker-hub.middleware.biz") }}{{ .Values.global.imageRegistry }}/{{- end}}{{ .Values.image.registry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.global.web_superadm.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.global.imageRegistry }}/{{- if not (eq .Values.global.repotype "") }}{{ .Values.global.repotype }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.global.web_superadm.tag | default .Chart.AppVersion }}"
           envFrom:
             - configMapRef:
                 name: timezone-config

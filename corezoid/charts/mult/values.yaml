@@ -1,6 +1,6 @@
 appName: mult
 image:
-  registry: docker-hub.middleware.biz
+  registry: hub.corezoid.com
   repository: conveyor_api_multipart
 
 containers:

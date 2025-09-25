@@ -1,6 +1,6 @@
 appName: conf-agent-server
 image:
-  registry: docker-hub.middleware.biz
+  registry: hub.corezoid.com
   repository: conf_agent_server
 
 containers:

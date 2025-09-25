@@ -1,6 +1,6 @@
 appName: redis
 appPort: 6379
 image:
-  registry: docker-hub.middleware.biz
-  repository: /public/redis
+  registry: docker.io
+  repository: /redis
   tag: "7.2.4"
