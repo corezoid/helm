@@ -17,8 +17,6 @@ https://doc.corezoid.com/docs/release-notes
 
 #### Updated applications
 
----
-
 ### Chart 0.24.5 [ Corezoid 6.9.0 ]
 - Applications versions:
   - capi - 8.6.0.1

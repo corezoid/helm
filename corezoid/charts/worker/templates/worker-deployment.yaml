@@ -78,7 +78,67 @@ spec:
           args:
             - "-c"
             - |
-              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" ${MQ_API_SCHEME}://{{- if .Values.global.mq.internal }}rabbit-service{{- else }}${MQ_HOST}{{- end }}:${MQ_API_PORT}/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do echo "waiting for exchanges to be ready..."; sleep 2; done
+              echo "Starting RabbitMQ initialization check..."
+              echo "MQ_HOST: ${MQ_HOST}"
+              echo "MQ_API_PORT: ${MQ_API_PORT}"
+              echo "MQ_API_SCHEME: ${MQ_API_SCHEME}"
+
+              # Determine the target host
+              {{- if .Values.global.mq.internal }}
+              TARGET_HOST="rabbit-service"
+              echo "Using internal RabbitMQ service: $TARGET_HOST"
+              {{- else }}
+              TARGET_HOST="${MQ_HOST}"
+              echo "Using external RabbitMQ host: $TARGET_HOST"
+              {{- end }}
+
+              # Test DNS resolution
+              echo "Testing DNS resolution for $TARGET_HOST..."
+              if nslookup $TARGET_HOST > /dev/null 2>&1; then
+                echo "DNS resolution successful for $TARGET_HOST"
+                nslookup $TARGET_HOST
+              else
+                echo "WARNING: DNS resolution failed for $TARGET_HOST"
+                echo "Attempting to continue anyway..."
+              fi
+
+              # Wait for RabbitMQ Management API to be ready
+              echo "Waiting for RabbitMQ Management API to be available on $TARGET_HOST:${MQ_API_PORT}..."
+              RETRY_COUNT=0
+              MAX_RETRIES=60  # 2 minutes with 2s intervals
+              until nc -zvw1 $TARGET_HOST ${MQ_API_PORT}; do
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -gt $MAX_RETRIES ]; then
+                  echo "ERROR: Timeout waiting for RabbitMQ Management API on $TARGET_HOST:${MQ_API_PORT}"
+                  echo "Please check:"
+                  echo "1. RabbitMQ is running and accessible"
+                  echo "2. Management plugin is enabled"
+                  echo "3. Port ${MQ_API_PORT} is open"
+                  echo "4. Network connectivity from pod to $TARGET_HOST"
+                  exit 1
+                fi
+                echo "Attempt $RETRY_COUNT/$MAX_RETRIES: Waiting for RabbitMQ Management API on $TARGET_HOST:${MQ_API_PORT}...";
+                sleep 2;
+              done
+              echo "RabbitMQ Management API is available!"
+
+              # Wait for exchanges to be ready
+              echo "Checking for required exchanges..."
+              RETRY_COUNT=0
+              until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" ${MQ_API_SCHEME}://$TARGET_HOST:${MQ_API_PORT}/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -gt $MAX_RETRIES ]; then
+                  echo "ERROR: Timeout waiting for exchange 'conf_agent_direct'"
+                  echo "Please check:"
+                  echo "1. RabbitMQ load definitions are properly configured"
+                  echo "2. User $MQ_USERNAME has access to vhost /conveyor"
+                  echo "3. Exchange 'conf_agent_direct' is created"
+                  exit 1
+                fi
+                echo "Attempt $RETRY_COUNT/$MAX_RETRIES: waiting for exchanges to be ready...";
+                sleep 2;
+              done
+              echo "Exchange 'conf_agent_direct' is ready!"
           env:
             - name: MQ_HOST
               valueFrom:
