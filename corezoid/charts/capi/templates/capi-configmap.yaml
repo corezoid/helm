@@ -791,6 +791,7 @@ data:
                     {tab_name, <<{{ .Values.global.capi.front_setting.ui.tab_name | quote }}>>},
                     {disabled_auth_logo, {{ .Values.global.capi.front_setting.ui.disabled_auth_logo }}},            %% disable or enable logo on main page
                     {default_company, << {{ quote .Values.global.capi.front_setting.ui.default_company }} >> },     %% Set default company name
+                    {stub_node, {{ .Values.global.capi.stub_node | default "true" }}},
                     {color, [
                               {main, << {{ quote .Values.global.capi.front_setting.ui.color_main }} >>},            %% main color
                               {logo, << {{ quote .Values.global.capi.front_setting.ui.color_logo }} >>},             %% logo color

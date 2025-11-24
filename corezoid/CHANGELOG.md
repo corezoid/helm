@@ -1,6 +1,24 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.24.6 [ Corezoid 6.10.2 ]
+
+#### Applications versions:
+- capi - 8.7.1.1
+- mult - 3.6.1.1
+- web - 6.10.2
+- http-worker - 4.4.0.1
+- usercode - 9.2.0
+- worker - 5.5.1.1
+- syncapi - 3.8.1
+- web_superadm - 2.6.2
+- conf_agent_server - 2.9.1
+- limits - 2.5.1
+
+#### Updated applications
+
+---
+
 ### Chart 0.24.5 [ Corezoid 6.9.0 ]
 - Applications versions:
   - capi - 8.6.0.1
