@@ -128,12 +128,24 @@ spec:
               RETRY_COUNT=0
               until wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" ${MQ_API_SCHEME}://$TARGET_HOST:${MQ_API_PORT}/api/exchanges/%2Fconveyor/ | grep -qF "conf_agent_direct"; do
                 RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -eq 1 ] || [ $RETRY_COUNT -eq 10 ]; then
+                  echo "DEBUG: Fetching exchanges list from RabbitMQ API..."
+                  RESPONSE=$(wget -O - -q --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" ${MQ_API_SCHEME}://$TARGET_HOST:${MQ_API_PORT}/api/exchanges/%2Fconveyor/ 2>&1)
+                  if [ $? -eq 0 ]; then
+                    echo "API Response (first 500 chars): ${RESPONSE:0:500}"
+                  else
+                    echo "ERROR: Failed to fetch exchanges. Response: $RESPONSE"
+                  fi
+                fi
                 if [ $RETRY_COUNT -gt $MAX_RETRIES ]; then
                   echo "ERROR: Timeout waiting for exchange 'conf_agent_direct'"
                   echo "Please check:"
                   echo "1. RabbitMQ load definitions are properly configured"
                   echo "2. User $MQ_USERNAME has access to vhost /conveyor"
                   echo "3. Exchange 'conf_agent_direct' is created"
+                  echo ""
+                  echo "Final API check:"
+                  wget -O - --header "Authorization: Basic `echo -n \"$MQ_USERNAME:$MQ_PASSWORD\" | base64`" ${MQ_API_SCHEME}://$TARGET_HOST:${MQ_API_PORT}/api/exchanges/%2Fconveyor/
                   exit 1
                 fi
                 echo "Attempt $RETRY_COUNT/$MAX_RETRIES: waiting for exchanges to be ready...";

@@ -244,6 +244,21 @@ data:
       {http_worker, [
         {prometheus_metrics, {{ .Values.global.prometheus_metrics | default false }}  },
         {worker_id, <<"">>},
+
+        {{- if and (hasKey .Values.global.http "proxy") (.Values.global.http.proxy.enabled) (.Values.global.http.proxy.host) (.Values.global.http.proxy.port) }}
+        {proxy, [
+          {host, "{{ .Values.global.http.proxy.host }}"},
+          {port, {{ .Values.global.http.proxy.port }}},
+          {excluded_hosts, [
+        {{- if .Values.global.http.proxy.excluded_hosts }}
+        {{- range $index, $item := .Values.global.http.proxy.excluded_hosts }}
+            "{{ $item.host }}"{{ if ne (add1 $index) (len $.Values.global.http.proxy.excluded_hosts) }},{{ end }}
+        {{- end }}
+        {{- end }}
+          ]}
+        ]},
+        {{- end }}
+
         {max_keep_alive_connections_len, {{ .Values.global.http.max_keep_alive_connections_len | default "0" }} }, %% use for poolling keep-alive connections. If zerro it'll open new connection each query
         {blocked_domains, [
         {{- range .Values.global.http.blocked_domains  }}

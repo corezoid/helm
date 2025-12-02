@@ -1,6 +1,29 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.24.7 [ Corezoid 6.10.2 ]
+
+#### Applications versions:
+- capi - 8.7.1.1
+- mult - 3.6.1.1
+- web - 6.10.2
+- http-worker - 4.4.0.1
+- usercode - 9.2.0
+- worker - 5.5.1.1
+- syncapi - 3.8.1
+- web_superadm - 2.6.2
+- conf_agent_server - 2.9.1
+- limits - 2.5.1
+
+#### Updated applications
+- No application version changes
+
+#### New Features
+- Added proxy configuration support for http-worker subchart
+  - Configurable proxy host and port via `global.http.proxy.enabled`, `global.http.proxy.host`, and `global.http.proxy.port`
+  - Support for excluded hosts list via `global.http.proxy.excluded_hosts`
+  - Proxy block is conditionally added to http_worker.config only when enabled
+
 ### Chart 0.24.6 [ Corezoid 6.10.2 ]
 
 #### Applications versions:

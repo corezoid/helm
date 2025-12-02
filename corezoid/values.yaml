@@ -562,6 +562,15 @@ global:
     blocked_domains:
       - "169.254.169.254"
       - "mail.ru"
+    # Proxy configuration for http-worker
+    # proxy:
+    #   enabled: false
+    #   host: "proxy.example.com"
+    #   port: 3128
+    #   excluded_hosts:
+    #     - host: "localhost"
+    #     - host: "127.0.0.1"
+    #     - host: "internal.example.com"
     tune:
       http_consumer_queues_count: 8
       ## The specified number of tcp connections will be created for each queue
