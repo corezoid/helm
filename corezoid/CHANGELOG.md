@@ -1,6 +1,30 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.24.9 [ Corezoid 6.11.0 ]
+
+#### Applications versions:
+- capi - 8.8.1.1
+- mult - 3.7.0.1
+- web - 6.11.1
+- http-worker - 4.5.1.2
+- usercode - 9.2.2
+- worker - 5.6.0.1
+- syncapi - 3.8.1
+- web_superadm - 2.6.2
+- conf_agent_server - 2.10.1
+- conf_agent_admin - 2.6.2
+- limits - 2.5.1
+
+#### Configmap fix
+- Added ability to configure a second Redis cache instance in `redis2` block for **worker**, **capi**, and **http-worker** configmaps
+  - Configuration is centralized in `global.redis.secret.data` (`host_cache_second`, `port_cache_second`, `password_cache_second`)
+  - Set once — applies to all three services automatically
+  - Second instance block is only added when `host_cache_second` is defined
+- Added ability to configure a second Redis timers instance in `redis_timers` block for **worker** configmap only
+  - Configuration in `global.redis.secret.data` (`host_timers_second`, `port_timers_second`, `password_timers_second`)
+  - Second instance block is only added when `host_timers_second` is defined
+
 ### Chart 0.24.8 [ Corezoid 6.11.0 ]
 
 #### Applications versions:

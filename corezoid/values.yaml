@@ -271,6 +271,14 @@ global:
         host_timers: ""
         port_timers: ""
         password_timers: ""
+        # Second redis for cache - set host to enable second instance in redis2 block (capi, http-worker, worker)
+        # host_cache_second: "REDIS_CACHE_SECOND_HOST"
+        # port_cache_second: "6382"
+        # password_cache_second: ""
+        # Second redis for timers - set host to enable second instance in redis_timers block (worker only)
+        # host_timers_second: "REDIS_TIMERS_SECOND_HOST"
+        # port_timers_second: "6383"
+        # password_timers_second: ""
 #     redistype: elasticache  # only to AWS elasticache redis
     affinity: {}
 #     affinity:
