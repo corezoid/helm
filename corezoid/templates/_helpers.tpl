@@ -51,6 +51,32 @@ app: {{ .Values.global.product | quote }}
 {{- .Values.global.redis.secret.data.password_timers | default .Values.global.redis.secret.data.password -}}
 {{- end -}}
 
+## cache second instance
+{{- define "redis.host_cache_second" -}}
+{{- .Values.global.redis.secret.data.host_cache_second | default "" -}}
+{{- end -}}
+
+{{- define "redis.port_cache_second" -}}
+{{- .Values.global.redis.secret.data.port_cache_second | default "" -}}
+{{- end -}}
+
+{{- define "redis.password_cache_second" -}}
+{{- .Values.global.redis.secret.data.password_cache_second | default "" -}}
+{{- end -}}
+
+## timers second instance
+{{- define "redis.host_timers_second" -}}
+{{- .Values.global.redis.secret.data.host_timers_second | default "" -}}
+{{- end -}}
+
+{{- define "redis.port_timers_second" -}}
+{{- .Values.global.redis.secret.data.port_timers_second | default "" -}}
+{{- end -}}
+
+{{- define "redis.password_timers_second" -}}
+{{- .Values.global.redis.secret.data.password_timers_second | default "" -}}
+{{- end -}}
+
 {{- define "common.imagePullSecrets" -}}
 {{- if not (eq .Values.global.repotype "public") }}
 imagePullSecrets:

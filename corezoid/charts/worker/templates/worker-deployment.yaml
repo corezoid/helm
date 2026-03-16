@@ -247,6 +247,40 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.global.redis.secret.name }}
                   key: password_timers
+            {{- if and (hasKey .Values.global.redis.secret.data "host_cache_second") .Values.global.redis.secret.data.host_cache_second }}
+            - name: REDIS_HOST_CACHE_SECOND
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: host_cache_second
+            - name: REDIS_PORT_CACHE_SECOND
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: port_cache_second
+            - name: REDIS_PASSWORD_CACHE_SECOND
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: password_cache_second
+            {{- end }}
+            {{- if and (hasKey .Values.global.redis.secret.data "host_timers_second") .Values.global.redis.secret.data.host_timers_second }}
+            - name: REDIS_HOST_TIMERS_SECOND
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: host_timers_second
+            - name: REDIS_PORT_TIMERS_SECOND
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: port_timers_second
+            - name: REDIS_PASSWORD_TIMERS_SECOND
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.redis.secret.name }}
+                  key: password_timers_second
+            {{- end }}
             - name: MQ_HOST
               valueFrom:
                 secretKeyRef:

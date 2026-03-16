@@ -968,6 +968,19 @@ data:
                     {min_size, 10},
                     {max_size, 50}
                 ]
+    {{- if and (hasKey .Values.global.redis.secret.data "host_cache_second") .Values.global.redis.secret.data.host_cache_second }}
+                ,
+                [
+                    {host, "${REDIS_HOST_CACHE_SECOND}"},
+                    {instance_type, {{ .Values.global.redis.redistype | default "redis" }}},
+                    {port, ${REDIS_PORT_CACHE_SECOND}},
+                    {password,"${REDIS_PASSWORD_CACHE_SECOND}"},
+                    {database, {{ .Values.global.capi.redis2_second_database | default 3 }}},
+                    {start_size, {{ .Values.global.capi.redis2_second_start_size | default 10 }}},
+                    {min_size, {{ .Values.global.capi.redis2_second_min_size | default 10 }}},
+                    {max_size, {{ .Values.global.capi.redis2_second_max_size | default 50 }}}
+                ]
+    {{- end }}
             ]},
 
             %% redis pool for api_sum logic

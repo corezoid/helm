@@ -750,6 +750,19 @@ data:
             {min_size, {{ .Values.global.worker.redis2_min_size | default 5 }}},
             {max_size, {{ .Values.global.worker.redis2_max_size | default 100 }}}
           ]
+    {{- if and (hasKey .Values.global.redis.secret.data "host_cache_second") .Values.global.redis.secret.data.host_cache_second }}
+          ,
+          [
+            {host, "${REDIS_HOST_CACHE_SECOND}"},
+            {instance_type, {{ .Values.global.redis.redistype | default "redis" }}},
+            {port, ${REDIS_PORT_CACHE_SECOND}},
+            {password,"${REDIS_PASSWORD_CACHE_SECOND}"},
+            {database, {{ .Values.global.worker.redis2_second_database | default 3 }}},
+            {start_size, {{ .Values.global.worker.redis2_second_start_size | default 5 }}},
+            {min_size, {{ .Values.global.worker.redis2_second_min_size | default 5 }}},
+            {max_size, {{ .Values.global.worker.redis2_second_max_size | default 100 }}}
+          ]
+    {{- end }}
         ]},
 
         %% memory redis for timer calls
@@ -786,6 +799,19 @@ data:
             {min_size, {{ .Values.global.worker.redis_timers_min_size | default 5 }}},
             {max_size, {{ .Values.global.worker.redis_timers_max_size | default 50 }}}
           ]
+    {{- if and (hasKey .Values.global.redis.secret.data "host_timers_second") .Values.global.redis.secret.data.host_timers_second }}
+          ,
+          [
+            {host, "${REDIS_HOST_TIMERS_SECOND}"},
+            {instance_type, {{ .Values.global.redis.redistype | default "redis" }}},
+            {port, ${REDIS_PORT_TIMERS_SECOND}},
+            {password,"${REDIS_PASSWORD_TIMERS_SECOND}"},
+            {database, {{ .Values.global.worker.redis_timers_second_database | default 4 }}},
+            {start_size, {{ .Values.global.worker.redis_timers_second_start_size | default 5 }}},
+            {min_size, {{ .Values.global.worker.redis_timers_second_min_size | default 5 }}},
+            {max_size, {{ .Values.global.worker.redis_timers_second_max_size | default 50 }}}
+          ]
+    {{- end }}
         ]},
 
         %% cache size in redis2
