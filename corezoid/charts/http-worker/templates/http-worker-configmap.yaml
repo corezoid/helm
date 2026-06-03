@@ -215,7 +215,7 @@ data:
            ]},
 
         {corezoid_queues_gc, [
-          {enabled, true},
+          {disabled, false},
           {{- if hasKey .Values.global "mq_http" }}
           {host, "${MQ_HTTP_HOST}"},
           {port, 15672 },
@@ -344,10 +344,10 @@ data:
     {{- if and (hasKey .Values.global.redis.secret.data "host_cache_second") .Values.global.redis.secret.data.host_cache_second }}
           ,
           [
-            {host, "${REDIS_HOST_CACHE_SECOND}"},
+            {host, "{{ .Values.global.redis.secret.data.host_cache_second }}"},
             {instance_type, {{ .Values.global.redis.redistype | default "redis" }}},
-            {port, ${REDIS_PORT_CACHE_SECOND}},
-            {password,"${REDIS_PASSWORD_CACHE_SECOND}"},
+            {port, {{ .Values.global.redis.secret.data.port_cache_second }}},
+            {password,"{{ .Values.global.redis.secret.data.password_cache_second }}"},
             {database, {{ .Values.global.http.redis_second_database | default 3 }}},
             {start_size, {{ .Values.global.http.redis_second_start_size | default 20 }}},
             {min_size, {{ .Values.global.http.redis_second_min_size | default 20 }}},

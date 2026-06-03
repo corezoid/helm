@@ -134,7 +134,7 @@ data:
         ]},
 
         {corezoid_queues_gc, [
-          {enabled, true},
+          {disabled, false},
           {{- if hasKey .Values.global "mq_http" }}
           {host, "${MQ_HTTP_HOST}"},
           {port, 15672 },
