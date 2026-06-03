@@ -1,6 +1,33 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.25.0 [ Corezoid 6.12.0 ]
+
+#### Applications versions:
+- capi - 8.9.0.4
+- mult - 3.9.0.6
+- web - 6.12.0
+- http-worker - 4.5.1.3
+- usercode - 9.2.2
+- worker - 5.6.0.3
+- syncapi - 3.8.1
+- web_superadm - 2.6.3
+- conf_agent_server - 2.11.2
+- conf_agent_admin - 2.6.3
+- limits - 2.5.1
+
+#### Updated applications
+- capi - 8.9.0.4
+- mult (conveyor_api_multipart) - 3.9.0.6
+- web (webadm) - 6.12.0
+- http-worker - 4.5.1.3
+- worker - 5.6.0.3
+- web_superadm (conf_agent_admin) - 2.6.3
+- conf_agent_server - 2.11.2
+
+#### Bug Fixes
+- Fixed Erlang config parse error on pod startup when `global.redis.secret.data.host_cache_second` (or `host_timers_second`) is set: configmaps for `capi`, `worker`, `http-worker` now use direct Helm template values instead of env-var placeholders for the second Redis instance — affects only deployments that enable the second Redis cache/timers instance (AE-14124).
+
 ### Chart 0.24.9 [ Corezoid 6.11.0 ]
 
 #### Applications versions:
