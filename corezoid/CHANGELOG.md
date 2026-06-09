@@ -1,6 +1,27 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.25.1 [ Corezoid 6.12.0 ]
+
+#### Applications versions:
+- capi - 8.9.0.4
+- mult - 3.9.0.6
+- web - 6.12.0
+- http-worker - 4.5.1.3
+- usercode - 9.2.2
+- worker - 5.6.0.3
+- syncapi - 3.8.1
+- web_superadm - 2.6.3
+- conf_agent_server - 2.11.2
+- conf_agent_admin - 2.6.3
+- limits - 2.5.1
+
+#### Updated applications
+- (no application version changes)
+
+#### Bug Fixes
+- Added `global.http.dns_rebinding_protection` toggle for http-worker (default `false`): renders `{dns_rebinding_protection, true|false}` into the http_worker config to enable DNS rebinding / SSRF protection. Active only together with a non-empty `global.http.blocked_domains`. Available since http-worker 4.5.1.1 (current chart ships 4.5.1.3) (MAM-1269).
+
 ### Chart 0.25.0 [ Corezoid 6.12.0 ]
 
 #### Applications versions:

@@ -260,6 +260,9 @@ data:
         {{- end }}
 
         {max_keep_alive_connections_len, {{ .Values.global.http.max_keep_alive_connections_len | default "0" }} }, %% use for poolling keep-alive connections. If zerro it'll open new connection each query
+        %% DNS rebinding protection (SSRF). Resolves host to IP once and pins it.
+        %% Active only when enabled AND blocked_domains is non-empty.
+        {dns_rebinding_protection, {{ .Values.global.http.dns_rebinding_protection | default false }} },
         {blocked_domains, [
         {{- range .Values.global.http.blocked_domains  }}
         {{ . | quote }},{{- end }}
