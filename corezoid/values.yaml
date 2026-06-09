@@ -567,6 +567,8 @@ global:
         memory: 500Mi
     max_keep_alive_connections_len: "0"
     max_http_resp_size: "5242880"
+    # DNS rebinding (SSRF) protection. Requires a non-empty blocked_domains to be active.
+    dns_rebinding_protection: false
     blocked_domains:
       - "169.254.169.254"
       - "mail.ru"
