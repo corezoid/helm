@@ -626,6 +626,9 @@ global:
       requests:
         cpu: 1
         memory: 1000Mi
+    # add SYS_PTRACE capability so eu-stack/gdb can dump native stacks of a
+    # stuck cnode; disable on clusters with baseline/restricted Pod Security
+    sys_ptrace: true
     # max time for each execution of code, kill process after this time
     max_exec_code_time: 1000
     affinity: {}
