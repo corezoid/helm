@@ -42,6 +42,21 @@ data:
         %% We have in database conveyor table conveyors field version. If version in DB >= min_version in config we run validator else ignore.
       ]},
 
+      %% task store settings host (root conveyor db), shard pools and redis
+      %% cache are reused from existing pgsql/redis2/shards_count settings
+      %% POSTGRES_DBHOST resolves to pgbouncer-service when global.db.bouncer is on
+      {conveyor_task_store, [
+        {pgsql, [
+          {host, "${POSTGRES_DBHOST}"},
+          {dbname, "conveyor"},
+          {user, "${POSTGRES_DBUSER}"},
+          {password, "${POSTGRES_DBPWD}"},
+          {start_size, 2},
+          {min_size, 2},
+          {max_size, 10}
+        ]}
+      ]},
+
       {is_ready, [
           {port, 8385},
           {enabled, true}

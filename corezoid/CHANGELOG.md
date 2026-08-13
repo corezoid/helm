@@ -1,6 +1,35 @@
 ## Changelog
 https://doc.corezoid.com/docs/release-notes
 
+### Chart 0.25.2 [ Corezoid 6.13.0 ]
+
+#### Applications versions:
+- capi - 9.0.0.1
+- mult - 3.10.0.1
+- web - 6.13.0
+- http-worker - 5.0.0.1
+- usercode - 10.0.1
+- worker - 6.0.0.2
+- syncapi - 3.8.1
+- web_superadm - 2.6.3
+- conf_agent_server - 3.0.1
+- conf_agent_admin - 2.6.3
+- limits - 2.5.1
+
+#### Updated applications
+- capi - 9.0.0.1
+- mult (conveyor_api_multipart) - 3.10.0.1
+- web (webadm) - 6.13.0
+- http-worker - 5.0.0.1
+- usercode (cce) - 10.0.1
+- worker - 6.0.0.2
+- conf_agent_server - 3.0.1
+
+#### New features
+- Added the `conveyor_task_store` block to the `capi`, `worker`, `http-worker` and `conf-agent-server` configmaps — required by the Corezoid 6.13.0 task store. It points at the root `conveyor` database via `POSTGRES_DBHOST` (resolves to `pgbouncer-service` when `global.db.bouncer` is enabled); shard pools and the Redis cache are reused from the existing `pgsql` / `redis2` settings (COR-13028).
+- Added the `global.usercode.sys_ptrace` toggle (default `true`): adds the `SYS_PTRACE` capability to the usercode container so `eu-stack` / `gdb` can dump native stacks of a stuck cnode. Disable it on clusters with a baseline/restricted Pod Security admission policy.
+- `postgres_schema` bumped to 6.13.0: creates `task_store_settings` on the main conveyor database and `tasks_payload` + `tasks_commit_log` on every shard.
+
 ### Chart 0.25.1 [ Corezoid 6.12.0 ]
 
 #### Applications versions:

@@ -38,6 +38,21 @@ data:
           ]}
       ]},
 
+      %% task store settings host (root conveyor db) — conf-agent is the
+      %% settings host: stores and distributes (ermql) task store modes
+      %% POSTGRES_DBHOST resolves to pgbouncer-service when global.db.bouncer is on
+      {conveyor_task_store, [
+        {pgsql, [
+          {host, "${POSTGRES_DBHOST}"},
+          {dbname, "conveyor"},
+          {user, "${POSTGRES_DBUSER}"},
+          {password, "${POSTGRES_DBPWD}"},
+          {start_size, 2},
+          {min_size, 2},
+          {max_size, 10}
+        ]}
+      ]},
+
       {is_ready, [
           {port, 8385},
           {enabled, true}
